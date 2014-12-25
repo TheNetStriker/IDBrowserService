@@ -1,0 +1,18 @@
+﻿<UserControl x:Class="IDBrowserServiceStandalone.TrayToolTipControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d">
+    <Border
+        Background="White"
+        BorderBrush="Orange"
+        BorderThickness="2"
+        CornerRadius="4"
+        Opacity="0.8">
+        <TextBlock
+            Name="txtToolTipText"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center" Margin="10" />
+    </Border>
+</UserControl>

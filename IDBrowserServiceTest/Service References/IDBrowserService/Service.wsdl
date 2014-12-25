@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:wsap="http://schemas.xmlsoap.org/ws/2004/08/addressing/policy" xmlns:wsa10="http://www.w3.org/2005/08/addressing" xmlns:tns="http://tempuri.org/" xmlns:msc="http://schemas.microsoft.com/ws/2005/12/wsdl/contract" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:wsx="http://schemas.xmlsoap.org/ws/2004/09/mex" xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata" xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema" name="Service" targetNamespace="http://tempuri.org/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <xsd:schema targetNamespace="http://tempuri.org/Imports">
+      <xsd:import schemaLocation="http://localhost:2646/Service.svc?xsd=xsd0" namespace="http://tempuri.org/" />
+      <xsd:import schemaLocation="http://localhost:2646/Service.svc?xsd=xsd1" namespace="http://schemas.microsoft.com/2003/10/Serialization/" />
+      <xsd:import schemaLocation="http://localhost:2646/Service.svc?xsd=xsd2" namespace="http://schemas.datacontract.org/2004/07/IDBrowserServiceCode" />
+      <xsd:import schemaLocation="http://localhost:2646/Service.svc?xsd=xsd3" namespace="http://schemas.microsoft.com/Message" />
+      <xsd:import schemaLocation="http://localhost:2646/Service.svc?xsd=xsd4" namespace="http://schemas.microsoft.com/2003/10/Serialization/Arrays" />
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="IRestService_GetImageProperties_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetImageProperties" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_GetImageProperties_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetImagePropertiesResponse" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_GetImagePropertyThumbnail_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetImagePropertyThumbnail" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_GetImagePropertyThumbnail_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetImagePropertyThumbnailResponse" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_GetCatalogItems_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetCatalogItems" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_GetCatalogItems_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetCatalogItemsResponse" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_GetImageThumbnail_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetImageThumbnail" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_GetImageThumbnail_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetImageThumbnailResponse" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_GetImage_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetImage" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_GetImage_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetImageResponse" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_GetResizedImage_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetResizedImage" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_GetResizedImage_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetResizedImageResponse" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_GetImageInfo_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetImageInfo" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_GetImageInfo_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetImageInfoResponse" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_GetRandomImageGuids_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetRandomImageGuids" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_GetRandomImageGuids_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetRandomImageGuidsResponse" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_GetImagePropertiesSoap_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetImagePropertiesSoap" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_GetImagePropertiesSoap_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetImagePropertiesSoapResponse" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_GetImagePropertyThumbnailSoap_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetImagePropertyThumbnailSoap" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_GetImagePropertyThumbnailSoap_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetImagePropertyThumbnailSoapResponse" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_GetCatalogItemsSoap_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetCatalogItemsSoap" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_GetCatalogItemsSoap_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetCatalogItemsSoapResponse" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_GetImageThumbnailSoap_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetImageThumbnailSoap" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_GetImageThumbnailSoap_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetImageThumbnailSoapResponse" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_GetImageSoap_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetImageSoap" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_GetImageSoap_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetImageSoapResponse" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_GetResizedImageSoap_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetResizedImageSoap" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_GetResizedImageSoap_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetResizedImageSoapResponse" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_GetImageInfoSoap_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetImageInfoSoap" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_GetImageInfoSoap_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetImageInfoSoapResponse" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_GetRandomImageGuidsSoap_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetRandomImageGuidsSoap" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_GetRandomImageGuidsSoap_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetRandomImageGuidsSoapResponse" />
+  </wsdl:message>
+  <wsdl:portType name="IRestService">
+    <wsdl:operation name="GetImageProperties">
+      <wsdl:input wsaw:Action="http://tempuri.org/IRestService/GetImageProperties" message="tns:IRestService_GetImageProperties_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IRestService/GetImagePropertiesResponse" message="tns:IRestService_GetImageProperties_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetImagePropertyThumbnail">
+      <wsdl:input wsaw:Action="http://tempuri.org/IRestService/GetImagePropertyThumbnail" message="tns:IRestService_GetImagePropertyThumbnail_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IRestService/GetImagePropertyThumbnailResponse" message="tns:IRestService_GetImagePropertyThumbnail_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetCatalogItems">
+      <wsdl:input wsaw:Action="http://tempuri.org/IRestService/GetCatalogItems" message="tns:IRestService_GetCatalogItems_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IRestService/GetCatalogItemsResponse" message="tns:IRestService_GetCatalogItems_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetImageThumbnail">
+      <wsdl:input wsaw:Action="http://tempuri.org/IRestService/GetImageThumbnail" message="tns:IRestService_GetImageThumbnail_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IRestService/GetImageThumbnailResponse" message="tns:IRestService_GetImageThumbnail_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetImage">
+      <wsdl:input wsaw:Action="http://tempuri.org/IRestService/GetImage" message="tns:IRestService_GetImage_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IRestService/GetImageResponse" message="tns:IRestService_GetImage_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetResizedImage">
+      <wsdl:input wsaw:Action="http://tempuri.org/IRestService/GetResizedImage" message="tns:IRestService_GetResizedImage_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IRestService/GetResizedImageResponse" message="tns:IRestService_GetResizedImage_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetImageInfo">
+      <wsdl:input wsaw:Action="http://tempuri.org/IRestService/GetImageInfo" message="tns:IRestService_GetImageInfo_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IRestService/GetImageInfoResponse" message="tns:IRestService_GetImageInfo_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetRandomImageGuids">
+      <wsdl:input wsaw:Action="http://tempuri.org/IRestService/GetRandomImageGuids" message="tns:IRestService_GetRandomImageGuids_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IRestService/GetRandomImageGuidsResponse" message="tns:IRestService_GetRandomImageGuids_OutputMessage" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:portType name="ISoapService">
+    <wsdl:operation name="GetImagePropertiesSoap">
+      <wsdl:input wsaw:Action="http://tempuri.org/ISoapService/GetImagePropertiesSoap" message="tns:ISoapService_GetImagePropertiesSoap_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/ISoapService/GetImagePropertiesSoapResponse" message="tns:ISoapService_GetImagePropertiesSoap_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetImagePropertyThumbnailSoap">
+      <wsdl:input wsaw:Action="http://tempuri.org/ISoapService/GetImagePropertyThumbnailSoap" message="tns:ISoapService_GetImagePropertyThumbnailSoap_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/ISoapService/GetImagePropertyThumbnailSoapResponse" message="tns:ISoapService_GetImagePropertyThumbnailSoap_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetCatalogItemsSoap">
+      <wsdl:input wsaw:Action="http://tempuri.org/ISoapService/GetCatalogItemsSoap" message="tns:ISoapService_GetCatalogItemsSoap_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/ISoapService/GetCatalogItemsSoapResponse" message="tns:ISoapService_GetCatalogItemsSoap_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetImageThumbnailSoap">
+      <wsdl:input wsaw:Action="http://tempuri.org/ISoapService/GetImageThumbnailSoap" message="tns:ISoapService_GetImageThumbnailSoap_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/ISoapService/GetImageThumbnailSoapResponse" message="tns:ISoapService_GetImageThumbnailSoap_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetImageSoap">
+      <wsdl:input wsaw:Action="http://tempuri.org/ISoapService/GetImageSoap" message="tns:ISoapService_GetImageSoap_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/ISoapService/GetImageSoapResponse" message="tns:ISoapService_GetImageSoap_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetResizedImageSoap">
+      <wsdl:input wsaw:Action="http://tempuri.org/ISoapService/GetResizedImageSoap" message="tns:ISoapService_GetResizedImageSoap_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/ISoapService/GetResizedImageSoapResponse" message="tns:ISoapService_GetResizedImageSoap_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetImageInfoSoap">
+      <wsdl:input wsaw:Action="http://tempuri.org/ISoapService/GetImageInfoSoap" message="tns:ISoapService_GetImageInfoSoap_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/ISoapService/GetImageInfoSoapResponse" message="tns:ISoapService_GetImageInfoSoap_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetRandomImageGuidsSoap">
+      <wsdl:input wsaw:Action="http://tempuri.org/ISoapService/GetRandomImageGuidsSoap" message="tns:ISoapService_GetRandomImageGuidsSoap_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/ISoapService/GetRandomImageGuidsSoapResponse" message="tns:ISoapService_GetRandomImageGuidsSoap_OutputMessage" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="BasicHttpBinding_ISoapService" type="tns:ISoapService">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="GetImagePropertiesSoap">
+      <soap:operation soapAction="http://tempuri.org/ISoapService/GetImagePropertiesSoap" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetImagePropertyThumbnailSoap">
+      <soap:operation soapAction="http://tempuri.org/ISoapService/GetImagePropertyThumbnailSoap" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetCatalogItemsSoap">
+      <soap:operation soapAction="http://tempuri.org/ISoapService/GetCatalogItemsSoap" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetImageThumbnailSoap">
+      <soap:operation soapAction="http://tempuri.org/ISoapService/GetImageThumbnailSoap" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetImageSoap">
+      <soap:operation soapAction="http://tempuri.org/ISoapService/GetImageSoap" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetResizedImageSoap">
+      <soap:operation soapAction="http://tempuri.org/ISoapService/GetResizedImageSoap" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetImageInfoSoap">
+      <soap:operation soapAction="http://tempuri.org/ISoapService/GetImageInfoSoap" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetRandomImageGuidsSoap">
+      <soap:operation soapAction="http://tempuri.org/ISoapService/GetRandomImageGuidsSoap" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="Service">
+    <wsdl:port name="BasicHttpBinding_ISoapService" binding="tns:BasicHttpBinding_ISoapService">
+      <soap:address location="http://localhost:2646/Service.svc/soap" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

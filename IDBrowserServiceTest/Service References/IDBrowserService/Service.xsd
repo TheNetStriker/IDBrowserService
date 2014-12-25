@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:tns="http://schemas.datacontract.org/2004/07/IDBrowserServiceCode" elementFormDefault="qualified" targetNamespace="http://schemas.datacontract.org/2004/07/IDBrowserServiceCode" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:complexType name="ArrayOfImageProperty">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="ImageProperty" nillable="true" type="tns:ImageProperty" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="ArrayOfImageProperty" nillable="true" type="tns:ArrayOfImageProperty" />
+  <xs:complexType name="ImageProperty">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="GUID" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="ImageCount" nillable="true" type="xs:int" />
+      <xs:element minOccurs="0" name="Name" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="SubPropertyCount" type="xs:int" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="ImageProperty" nillable="true" type="tns:ImageProperty" />
+  <xs:complexType name="ArrayOfCatalogItem">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="CatalogItem" nillable="true" type="tns:CatalogItem" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="ArrayOfCatalogItem" nillable="true" type="tns:ArrayOfCatalogItem" />
+  <xs:complexType name="CatalogItem">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="FileName" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="FilePath" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="FileType" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="GUID" nillable="true" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="CatalogItem" nillable="true" type="tns:CatalogItem" />
+  <xs:complexType name="ImageInfo">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="FileSize" nillable="true" type="xs:int" />
+      <xs:element minOccurs="0" name="FileType" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="ImageDescription" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="ImageName" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="ImageResolution" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="Rating" nillable="true" type="xs:int" />
+      <xs:element minOccurs="0" name="Timestamp" nillable="true" type="xs:dateTime" />
+      <xs:element minOccurs="0" name="XmpProperties" nillable="true" type="tns:ArrayOfXmpProperty" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="ImageInfo" nillable="true" type="tns:ImageInfo" />
+  <xs:complexType name="ArrayOfXmpProperty">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="XmpProperty" nillable="true" type="tns:XmpProperty" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="ArrayOfXmpProperty" nillable="true" type="tns:ArrayOfXmpProperty" />
+  <xs:complexType name="XmpProperty">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="Name" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="Value" nillable="true" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="XmpProperty" nillable="true" type="tns:XmpProperty" />
+</xs:schema>

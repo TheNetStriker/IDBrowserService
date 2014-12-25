@@ -1,0 +1,3 @@
+makecert -sv SignRoot.pvk -cy authority -r TestCA.cer -a sha1 -n "CN=TestCA" -ss my -sr localmachine
+makecert -iv SignRoot.pvk -ic TestCA.cer -cy end -pe -n CN="ServerCert" -eku 1.3.6.1.5.5.7.3.1 -ss my -sr localmachine -sky exchange -sp "Microsoft RSA SChannel Cryptographic Provider" -sy 12
+makecert -iv SignRoot.pvk -ic TestCA.cer -cy end -pe -n CN="ClientCert" -eku 1.3.6.1.5.5.7.3.2 -ss my -sr localmachine -sky exchange -sp "Microsoft RSA SChannel Cryptographic Provider" -sy 12
