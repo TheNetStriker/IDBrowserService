@@ -32,9 +32,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IDBrowserServiceCode", "IDB
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IDBrowserService", "IDBrowserService\IDBrowserService.csproj", "{06C93692-C6A8-4D51-B5E3-81053A1D390A}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "packages", "packages", "{ABA89D5A-40B8-4B65-8B1E-D0919D5F7D52}"
+	ProjectSection(SolutionItems) = preProject
+		packages\repositories.config = packages\repositories.config
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IDBrowserStreamingService", "IDBrowserStreamingService\IDBrowserStreamingService.csproj", "{F1F5E69C-28E5-41DA-8E9F-46CB7562C23A}"
+EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 7
+		SccNumberOfProjects = 8
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccTeamFoundationServer = http://massrv06:8080/tfs/masshardt
 		SccLocalPath0 = .
@@ -56,6 +63,9 @@ Global
 		SccProjectUniqueName6 = IDBrowserService\\IDBrowserService.csproj
 		SccProjectName6 = IDBrowserService
 		SccLocalPath6 = IDBrowserService
+		SccProjectUniqueName7 = IDBrowserStreamingService\\IDBrowserStreamingService.csproj
+		SccProjectName7 = IDBrowserStreamingService
+		SccLocalPath7 = IDBrowserStreamingService
 	EndGlobalSection
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = IDBrowser.vsmdi
@@ -89,6 +99,10 @@ Global
 		{06C93692-C6A8-4D51-B5E3-81053A1D390A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{06C93692-C6A8-4D51-B5E3-81053A1D390A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{06C93692-C6A8-4D51-B5E3-81053A1D390A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F1F5E69C-28E5-41DA-8E9F-46CB7562C23A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F1F5E69C-28E5-41DA-8E9F-46CB7562C23A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F1F5E69C-28E5-41DA-8E9F-46CB7562C23A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F1F5E69C-28E5-41DA-8E9F-46CB7562C23A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

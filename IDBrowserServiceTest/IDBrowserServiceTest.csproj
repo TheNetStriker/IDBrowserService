@@ -139,7 +139,12 @@
       <LastGenOutput>Reference.cs</LastGenOutput>
     </None>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\IDBrowserServiceCode\IDBrowserServiceCode.csproj">
+      <Project>{5c3885b1-1edd-4d49-b042-190102475b3e}</Project>
+      <Name>IDBrowserServiceCode</Name>
+    </ProjectReference>
+  </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\Example.png" />
     <EmbeddedResource Include="Resources\XMPTest.xml" />

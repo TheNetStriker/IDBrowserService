@@ -64,6 +64,12 @@
     </None>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\IDBrowserServiceCode\IDBrowserServiceCode.csproj">
+      <Project>{5c3885b1-1edd-4d49-b042-190102475b3e}</Project>
+      <Name>IDBrowserServiceCode</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\nuget.targets" />
   <ProjectExtensions>
