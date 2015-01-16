@@ -166,12 +166,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\IDImagerServiceCode\IDBrowserServiceCode.csproj">
-      <Project>{5c3885b1-1edd-4d49-b042-190102475b3e}</Project>
-      <Name>IDBrowserServiceCode</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="Images\Antenna.ico" />
   </ItemGroup>
   <ItemGroup>
