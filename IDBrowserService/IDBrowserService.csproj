@@ -116,6 +116,12 @@
     <Content Include="packages.config" />
     <None Include="Properties\PublishProfiles\Web.pubxml" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\IDBrowserServiceCode\IDBrowserServiceCode.csproj">
+      <Project>{5c3885b1-1edd-4d49-b042-190102475b3e}</Project>
+      <Name>IDBrowserServiceCode</Name>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>

@@ -18,6 +18,7 @@ using ComponentAce.Compression.Libs.zlib;
 using System.Net.Mime;
 using IDBrowserServiceCode.Data;
 using System.Transactions;
+using System.Data.Entity.Core.EntityClient;
 
 namespace IDBrowserServiceCode
 {
@@ -54,7 +55,8 @@ namespace IDBrowserServiceCode
                 if (dbThumbs == null)
                 {
                     dbThumbs = new IDImagerEntities();
-                    dbThumbs.Database.Connection.ConnectionString = ConfigurationManager.ConnectionStrings["IDImagerThumbsEntities"].ConnectionString;
+                    EntityConnectionStringBuilder ecb = new EntityConnectionStringBuilder(ConfigurationManager.ConnectionStrings["IDImagerThumbsEntities"].ConnectionString);
+                    dbThumbs.Database.Connection.ConnectionString = ecb.ProviderConnectionString;
                 }
 
                 if (dbThumbs.Database.Connection.State == System.Data.ConnectionState.Closed)
