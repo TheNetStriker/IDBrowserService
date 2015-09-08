@@ -13,6 +13,7 @@ using System.Reflection;
 using System.ServiceModel.Configuration;
 using ComponentAce.Compression.Libs.zlib;
 using System.Xml.Linq;
+using IDBrowserServiceCode.Data;
 
 namespace IDBrowserServiceCode
 {
@@ -51,7 +52,7 @@ namespace IDBrowserServiceCode
             return fileStream;
         }
 
-        public static String GetImageFilePath(idCatalogItem catalogItem)
+        public static String GetImageFilePath(Data.idCatalogItem catalogItem)
         {
             return System.IO.Path.Combine(catalogItem.idFilePath.FilePath, catalogItem.FileName);
         }
@@ -218,7 +219,7 @@ namespace IDBrowserServiceCode
                         newThumb.idThumb = StreamToByteArray(resizedImageStream);
                         newThumb.idType = type;
 
-                        dbThumbs.AddObject("idThumbs", newThumb);
+                        dbThumbs.idThumbs.Add(newThumb);
                     }
 
                     result.ImageStreams.Add(resizedImageStream);

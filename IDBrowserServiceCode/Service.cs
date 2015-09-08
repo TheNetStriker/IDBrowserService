@@ -16,14 +16,15 @@ using Common.Logging;
 using System.ServiceModel.Channels;
 using ComponentAce.Compression.Libs.zlib;
 using System.Net.Mime;
+using IDBrowserServiceCode.Data;
 
 namespace IDBrowserServiceCode
 {
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.PerSession, ConcurrencyMode = ConcurrencyMode.Single)]
     public class Service: IRestService, ISoapService, IDisposable
     {
-        private IDImagerEntities db;
-        private IDImagerEntities dbThumbs;
+        private Data.IDImagerEntities db;
+        private Data.IDImagerEntities dbThumbs;
         private RemoteEndpointMessageProperty clientEndpoint;
         private ILog log;
 
@@ -40,14 +41,17 @@ namespace IDBrowserServiceCode
                 if (db == null)
                     db = new IDImagerEntities();
 
-                if (db.Connection.State == System.Data.ConnectionState.Closed)
-                    db.Connection.Open();
+                if (db.Database.Connection.State == System.Data.ConnectionState.Closed)
+                    db.Database.Connection.Open();
 
                 if (dbThumbs == null)
-                    dbThumbs = new IDImagerEntities(ConfigurationManager.ConnectionStrings["IDImagerThumbsEntities"].ConnectionString);
+                {
+                    dbThumbs = new IDImagerEntities();
+                    dbThumbs.Database.Connection.ConnectionString = ConfigurationManager.ConnectionStrings["IDImagerThumbsEntities"].ConnectionString;
+                }
 
-                if (dbThumbs.Connection.State == System.Data.ConnectionState.Closed)
-                    dbThumbs.Connection.Open();
+                if (dbThumbs.Database.Connection.State == System.Data.ConnectionState.Closed)
+                    dbThumbs.Database.Connection.Open();
             }
             catch (Exception ex)
             {
@@ -61,13 +65,13 @@ namespace IDBrowserServiceCode
             {
                 if (db != null)
                 {
-                    db.Connection.Close();
+                    db.Database.Connection.Close();
                     db.Dispose();
                 }
 
                 if (dbThumbs != null)
                 {
-                    dbThumbs.Connection.Close();
+                    dbThumbs.Database.Connection.Close();
                     dbThumbs.Dispose();
                 }
             }
@@ -680,7 +684,7 @@ namespace IDBrowserServiceCode
                 newIdCatalogItemDefinition.GUID = propertyGuid;
                 newIdCatalogItemDefinition.CatalogItemGUID = catalogItemGUID;
                 newIdCatalogItemDefinition.idAssigned = DateTime.Now;
-                db.AddToidCatalogItemDefinition(newIdCatalogItemDefinition);
+                db.idCatalogItemDefinition.Add(newIdCatalogItemDefinition);
 
                 currentIdCatalogItem.idInSync = currentIdCatalogItem.idInSync >> 2;
                 if (currentIdImageVersion != null)
@@ -707,7 +711,7 @@ namespace IDBrowserServiceCode
                 idCatalogItem currentIdCatalogItem = db.idCatalogItem.Single(x => x.GUID == catalogItemGUID);
                 idImageVersion currentIdImageVersion = db.idImageVersion.SingleOrDefault(x => x.MainImageGUID == catalogItemGUID);
 
-                db.DeleteObject(currentIdCatalogItemDefinition);
+                db.idCatalogItemDefinition.Remove(currentIdCatalogItemDefinition);
 
                 currentIdCatalogItem.idInSync = currentIdCatalogItem.idInSync >> 2;
                 if (currentIdImageVersion != null)
@@ -793,7 +797,7 @@ namespace IDBrowserServiceCode
                 newIdProp.idProps = null;
                 newIdProp.ApplyProps = 0;
 
-                db.AddToidProp(newIdProp);
+                db.idProp.Add(newIdProp);
                 db.SaveChanges();
 
                 log.Info(String.Format("Client {0}:{1} called AddImageProperty with propertyName: {2}, parentGUID {3}, lft {4}, rgt {5}",

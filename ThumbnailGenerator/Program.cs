@@ -1,5 +1,6 @@
 ﻿using CommandLine;
 using IDBrowserServiceCode;
+using IDBrowserServiceCode.Data;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -84,8 +85,9 @@ namespace ThumbnailGenerator
             ICommandLineParser parser = new CommandLineParser();
             parser.ParseArguments(Environment.GetCommandLineArgs(), commandLineArguments);
 
-            IDImagerEntities db = new IDBrowserServiceCode.IDImagerEntities();
-            IDImagerEntities dbThumbs = new IDBrowserServiceCode.IDImagerEntities(ConfigurationManager.ConnectionStrings["IDImagerThumbsEntities"].ConnectionString);
+            IDImagerEntities db = new IDImagerEntities();
+            IDImagerEntities dbThumbs = new IDImagerEntities();
+            dbThumbs.Database.Connection.ConnectionString = ConfigurationManager.ConnectionStrings["IDImagerThumbsEntities"].ConnectionString;
 
             List<String> imageFileExtensions = ConfigurationManager.AppSettings["ImageFileExtensions"].Split(new char[] { char.Parse(",") }).ToList();
             List<String> videoFileExtensions = ConfigurationManager.AppSettings["VideoFileExtensions"].Split(new char[] { char.Parse(",") }).ToList();
@@ -129,13 +131,13 @@ namespace ThumbnailGenerator
                 if (commandLineArguments.Overwrite)
                 {
                     foreach (idThumbs thumb in idThumbsT)
-                        dbThumbs.DeleteObject(thumb);
+                        dbThumbs.idThumbs.Remove(thumb);
 
                     foreach (idThumbs thumb in idThumbsM)
-                        dbThumbs.DeleteObject(thumb);
+                        dbThumbs.idThumbs.Remove(thumb);
 
                     foreach (idThumbs thumb in idThumbsR)
-                        dbThumbs.DeleteObject(thumb);
+                        dbThumbs.idThumbs.Remove(thumb);
 
                     typesToGenerate.Clear();
                     typesToGenerate.Add("T");

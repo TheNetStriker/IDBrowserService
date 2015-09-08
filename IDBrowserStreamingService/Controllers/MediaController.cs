@@ -1,5 +1,6 @@
 ﻿using Common.Logging;
 using IDBrowserServiceCode;
+using IDBrowserServiceCode.Data;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
