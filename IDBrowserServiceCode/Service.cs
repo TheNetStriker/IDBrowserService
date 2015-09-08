@@ -17,6 +17,7 @@ using System.ServiceModel.Channels;
 using ComponentAce.Compression.Libs.zlib;
 using System.Net.Mime;
 using IDBrowserServiceCode.Data;
+using System.Transactions;
 
 namespace IDBrowserServiceCode
 {
@@ -27,6 +28,7 @@ namespace IDBrowserServiceCode
         private Data.IDImagerEntities dbThumbs;
         private RemoteEndpointMessageProperty clientEndpoint;
         private ILog log;
+        private TransactionOptions readUncommittedTransactionOptions;
 
         public Service()
         {
@@ -35,6 +37,11 @@ namespace IDBrowserServiceCode
 
             try
             {
+                readUncommittedTransactionOptions = new TransactionOptions
+                {
+                    IsolationLevel = System.Transactions.IsolationLevel.ReadUncommitted
+                };
+
                 if (OperationContext.Current != null)
                     clientEndpoint = OperationContext.Current.IncomingMessageProperties["System.ServiceModel.Channels.RemoteEndpointMessageProperty"] as RemoteEndpointMessageProperty;
 
@@ -87,39 +94,44 @@ namespace IDBrowserServiceCode
             {
                 List<ImageProperty> listImageProperty;
 
-                if (guid == null)
+                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required, readUncommittedTransactionOptions))
                 {
-                    var query = from tbl in db.v_PropCategory
-                                where !tbl.CategoryName.Equals("Internal")
-                                orderby tbl.CategoryName
-                                select new ImageProperty
-                                {
-                                    GUID = tbl.GUID,
-                                    Name = tbl.CategoryName,
-                                    ImageCount = tbl.idPhotoCount,
-                                    SubPropertyCount = db.idProp.Where(x => x.ParentGUID == tbl.GUID).Count()
-                                };
+                    if (guid == null)
+                    {
+                        var query = from tbl in db.v_PropCategory
+                                    where !tbl.CategoryName.Equals("Internal")
+                                    orderby tbl.CategoryName
+                                    select new ImageProperty
+                                    {
+                                        GUID = tbl.GUID,
+                                        Name = tbl.CategoryName,
+                                        ImageCount = tbl.idPhotoCount,
+                                        SubPropertyCount = db.idProp.Where(x => x.ParentGUID == tbl.GUID).Count()
+                                    };
 
-                    listImageProperty = query.ToList();
+                        listImageProperty = query.ToList();
+                    }
+                    else
+                    {
+                        var query = from tbl in db.v_Prop
+                                    where tbl.ParentGUID == guid
+                                    orderby tbl.PropName
+                                    select new ImageProperty
+                                    {
+                                        GUID = tbl.GUID,
+                                        Name = tbl.PropName,
+                                        ImageCount = tbl.idPhotoCount,
+                                        SubPropertyCount = db.idProp.Where(x => x.ParentGUID == tbl.GUID).Count()
+                                    };
+
+                        listImageProperty = query.ToList();
+                    }
+
+                    log.Info(String.Format("Client {0}:{1} called GetImageProperties with guid: {2}",
+                        clientEndpoint.Address, clientEndpoint.Port, guid));
+                    scope.Complete();
                 }
-                else
-                {
-                    var query = from tbl in db.v_Prop
-                                where tbl.ParentGUID == guid
-                                orderby tbl.PropName
-                                select new ImageProperty
-                                {
-                                    GUID = tbl.GUID,
-                                    Name = tbl.PropName,
-                                    ImageCount = tbl.idPhotoCount,
-                                    SubPropertyCount = db.idProp.Where(x => x.ParentGUID == tbl.GUID).Count()
-                                };
-
-                    listImageProperty = query.ToList();
-                }
-
-                log.Info(String.Format("Client {0}:{1} called GetImageProperties with guid: {2}",
-                    clientEndpoint.Address, clientEndpoint.Port, guid));
+                
                 return listImageProperty;
             }
             catch (Exception ex)
@@ -151,15 +163,20 @@ namespace IDBrowserServiceCode
         {
             byte[] idImage;
 
-            if (Boolean.Parse(isCategory))
+            using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required, readUncommittedTransactionOptions))
             {
-                idImage = db.idPropCategory.Single(x => x.GUID == guid).idImage;
-            }
-            else
-            {
-                idImage = db.idProp.Single(x => x.GUID == guid).idImage;
-            }
+                if (Boolean.Parse(isCategory))
+                {
+                    idImage = db.idPropCategory.Single(x => x.GUID == guid).idImage;
+                }
+                else
+                {
+                    idImage = db.idProp.Single(x => x.GUID == guid).idImage;
+                }
 
+                scope.Complete();
+            }
+            
             Stream imageStream = null;
             if (idImage == null)
             {
@@ -189,23 +206,28 @@ namespace IDBrowserServiceCode
                             where tbl.GUID == propertyGuid
                             select tbl;
 
-                if (Boolean.Parse(orderDescending))
+                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required, readUncommittedTransactionOptions))
                 {
-                    query = query.OrderByDescending(x => x.idCatalogItem.DateTimeStamp);
-                }
-                else
-                {
-                    query = query.OrderBy(x => x.idCatalogItem.DateTimeStamp);
-                }
+                    if (Boolean.Parse(orderDescending))
+                    {
+                        query = query.OrderByDescending(x => x.idCatalogItem.DateTimeStamp);
+                    }
+                    else
+                    {
+                        query = query.OrderBy(x => x.idCatalogItem.DateTimeStamp);
+                    }
 
-                catalogItems = query.Select(x => new CatalogItem
-                {
-                    GUID = x.CatalogItemGUID,
-                    FileName = x.idCatalogItem.FileName,
-                    FileType = x.idCatalogItem.idFileType,
-                    FilePath = x.idCatalogItem.idFilePath.FilePath,
-                    HasRecipe = x.idCatalogItem.idHasRecipe
-                }).ToList();
+                    catalogItems = query.Select(x => new CatalogItem
+                    {
+                        GUID = x.CatalogItemGUID,
+                        FileName = x.idCatalogItem.FileName,
+                        FileType = x.idCatalogItem.idFileType,
+                        FilePath = x.idCatalogItem.idFilePath.FilePath,
+                        HasRecipe = x.idCatalogItem.idHasRecipe
+                    }).ToList();
+
+                    scope.Complete();
+                }
 
                 log.Info(String.Format("Client {0}:{1} called GetCatalogItems with orderDescending: {2} propertyGuid: {3}",
                     clientEndpoint.Address, clientEndpoint.Port, orderDescending, propertyGuid));
@@ -228,23 +250,28 @@ namespace IDBrowserServiceCode
                             where tbl.PathGUID == filePathGuid
                             select tbl;
 
-                if (Boolean.Parse(orderDescending))
+                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required, readUncommittedTransactionOptions))
                 {
-                    query = query.OrderByDescending(x => x.DateTimeStamp);
-                }
-                else
-                {
-                    query = query.OrderBy(x => x.DateTimeStamp);
-                }
+                    if (Boolean.Parse(orderDescending))
+                    {
+                        query = query.OrderByDescending(x => x.DateTimeStamp);
+                    }
+                    else
+                    {
+                        query = query.OrderBy(x => x.DateTimeStamp);
+                    }
 
-                catalogItems = query.Select(x => new CatalogItem
-                {
-                    GUID = x.GUID,
-                    FileName = x.FileName,
-                    FileType = x.idFileType,
-                    FilePath = x.idFilePath.FilePath,
-                    HasRecipe = x.idHasRecipe
-                }).ToList();
+                    catalogItems = query.Select(x => new CatalogItem
+                    {
+                        GUID = x.GUID,
+                        FileName = x.FileName,
+                        FileType = x.idFileType,
+                        FilePath = x.idFilePath.FilePath,
+                        HasRecipe = x.idHasRecipe
+                    }).ToList();
+
+                    scope.Complete();
+                }
 
                 log.Info(String.Format("Client {0}:{1} called GetCatalogItemsByFilePath with orderDescending: {2} filePathGuid: {3}",
                     clientEndpoint.Address, clientEndpoint.Port, orderDescending, filePathGuid));
@@ -276,68 +303,74 @@ namespace IDBrowserServiceCode
                 throw new Exception("Unsupported image type");
 
             idCatalogItem catalogItem = null;
-            catalogItem = db.idCatalogItem.Include("idFilePath").Single(x => x.GUID == imageGuid);
-
-            if (catalogItem == null)
-                throw new Exception("CatalogItem not found");
-
-            if (type == "R" && catalogItem.idHasRecipe == 0)
-                throw new Exception("Image has no recipe");
-
-            //Check if CatalogItem has a recipe, if yes try to get the recipe image
-            if (type == "M" && catalogItem.idHasRecipe > 0)
-                type = "R";
-
-            Boolean keepAspectRatio = Boolean.Parse(ConfigurationManager.AppSettings["KeepAspectRatio"]);
-            Boolean setGenericVideoThumbnailOnError = Boolean.Parse(ConfigurationManager.AppSettings["SetGenericVideoThumbnailOnError"]);
-
-            idThumbs thumb = null;
-            lock (dbThumbs)
-            {
-                thumb = dbThumbs.idThumbs.SingleOrDefault(x => x.ImageGUID == imageGuid && x.idType == type);
-
-                //If recipe image is not found, return the M image,
-                //because the programm cannot yet generate the recipe image
-                if (thumb == null && type == "R")
-                {
-                    type = "M";
-                    thumb = dbThumbs.idThumbs.SingleOrDefault(x => x.ImageGUID == imageGuid && x.idType == type);
-                }
-            }
-
             Stream imageStream = null;
-            if (thumb == null && Boolean.Parse(ConfigurationManager.AppSettings["CreateThumbnails"]))
+
+            using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required, readUncommittedTransactionOptions))
             {
-                SaveImageThumbnailResult result = StaticFunctions.SaveImageThumbnail(catalogItem, ref db, ref dbThumbs, new List<String>() { type }, keepAspectRatio, setGenericVideoThumbnailOnError);
+                catalogItem = db.idCatalogItem.Include("idFilePath").Single(x => x.GUID == imageGuid);
 
-                foreach (Exception ex in result.Exceptions)
-                    log.Error(ex.ToString());
+                if (catalogItem == null)
+                    throw new Exception("CatalogItem not found");
 
-                if (result.ImageStreams.Count > 0)
+                if (type == "R" && catalogItem.idHasRecipe == 0)
+                    throw new Exception("Image has no recipe");
+
+                //Check if CatalogItem has a recipe, if yes try to get the recipe image
+                if (type == "M" && catalogItem.idHasRecipe > 0)
+                    type = "R";
+
+                Boolean keepAspectRatio = Boolean.Parse(ConfigurationManager.AppSettings["KeepAspectRatio"]);
+                Boolean setGenericVideoThumbnailOnError = Boolean.Parse(ConfigurationManager.AppSettings["SetGenericVideoThumbnailOnError"]);
+
+                idThumbs thumb = null;
+                lock (dbThumbs)
                 {
-                    imageStream = result.ImageStreams.First();
+                    thumb = dbThumbs.idThumbs.SingleOrDefault(x => x.ImageGUID == imageGuid && x.idType == type);
+
+                    //If recipe image is not found, return the M image,
+                    //because the programm cannot yet generate the recipe image
+                    if (thumb == null && type == "R")
+                    {
+                        type = "M";
+                        thumb = dbThumbs.idThumbs.SingleOrDefault(x => x.ImageGUID == imageGuid && x.idType == type);
+                    }
+                }
+
+                if (thumb == null && Boolean.Parse(ConfigurationManager.AppSettings["CreateThumbnails"]))
+                {
+                    SaveImageThumbnailResult result = StaticFunctions.SaveImageThumbnail(catalogItem, ref db, ref dbThumbs, new List<String>() { type }, keepAspectRatio, setGenericVideoThumbnailOnError);
+
+                    foreach (Exception ex in result.Exceptions)
+                        log.Error(ex.ToString());
+
+                    if (result.ImageStreams.Count > 0)
+                    {
+                        imageStream = result.ImageStreams.First();
+
+                        if (IsRequestRest())
+                            WebOperationContext.Current.OutgoingResponse.ContentType = "image/jpeg";
+
+                        log.Info(String.Format("Client {0}:{1} called GetImageThumbnail with type: {2} imageGuid: {3} (returned resizedImageStream)",
+                            clientEndpoint.Address, clientEndpoint.Port, type, imageGuid));
+                    }
+                    else
+                    {
+                        log.Info(String.Format("Client {0}:{1} called GetImageThumbnail with type: {2} imageGuid: {3} (returned null)",
+                            clientEndpoint.Address, clientEndpoint.Port, type, imageGuid));
+                    }
+                }
+                else
+                {
+                    imageStream = new MemoryStream(thumb.idThumb);
 
                     if (IsRequestRest())
                         WebOperationContext.Current.OutgoingResponse.ContentType = "image/jpeg";
 
-                    log.Info(String.Format("Client {0}:{1} called GetImageThumbnail with type: {2} imageGuid: {3} (returned resizedImageStream)",
+                    log.Info(String.Format("Client {0}:{1} called GetImageThumbnail with type: {2} imageGuid: {3} (returned imageStream)",
                         clientEndpoint.Address, clientEndpoint.Port, type, imageGuid));
                 }
-                else
-                {
-                    log.Info(String.Format("Client {0}:{1} called GetImageThumbnail with type: {2} imageGuid: {3} (returned null)",
-                        clientEndpoint.Address, clientEndpoint.Port, type, imageGuid));
-                }
-            }
-            else
-            {
-                imageStream = new MemoryStream(thumb.idThumb);
 
-                if (IsRequestRest())
-                    WebOperationContext.Current.OutgoingResponse.ContentType = "image/jpeg";
-
-                log.Info(String.Format("Client {0}:{1} called GetImageThumbnail with type: {2} imageGuid: {3} (returned imageStream)",
-                    clientEndpoint.Address, clientEndpoint.Port, type, imageGuid));
+                scope.Complete();
             }
                         
             if (width != null && height != null)
@@ -474,22 +507,30 @@ namespace IDBrowserServiceCode
                                && tbl.ContentType.Equals("XMP")
                                select new XmpProperty { Name = tbl.ContentGroup, Value = tbl.ContentValue };
 
-                ImageInfo imageInfo = (from tbl in db.idCatalogItem
-                                        where tbl.GUID == imageGuid
-                                        select new ImageInfo
-                                        {
-                                            FileSize = tbl.FileSize,
-                                            FileType = tbl.idFileType,
-                                            ImageDescription = tbl.ImageDescription,
-                                            ImageName = tbl.ImageName,
-                                            ImageResolution = tbl.UDF2,
-                                            Rating = tbl.Rating,
-                                            Timestamp = tbl.DateTimeStamp,
-                                            GPSLat = tbl.idGPSLat,
-                                            GPSLon = tbl.idGPSLon
-                                        }).Single();
+                ImageInfo imageInfo = null;
 
-                imageInfo.XmpProperties = queryXMP.Distinct().ToList();
+                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required, readUncommittedTransactionOptions))
+                {
+                    imageInfo = (from tbl in db.idCatalogItem
+                                where tbl.GUID == imageGuid
+                                select new ImageInfo
+                                {
+                                    FileSize = tbl.FileSize,
+                                    FileType = tbl.idFileType,
+                                    ImageDescription = tbl.ImageDescription,
+                                    ImageName = tbl.ImageName,
+                                    ImageResolution = tbl.UDF2,
+                                    Rating = tbl.Rating,
+                                    Timestamp = tbl.DateTimeStamp,
+                                    GPSLat = tbl.idGPSLat,
+                                    GPSLon = tbl.idGPSLon
+                                }).Single();
+
+                    imageInfo.XmpProperties = queryXMP.Distinct().ToList();
+
+                    scope.Complete();
+                }
+                
                 log.Info(String.Format("Client {0}:{1} called GetImageInfo with imageGuid: {2}", 
                     clientEndpoint.Address, clientEndpoint.Port, imageGuid));
                 return imageInfo;
@@ -505,14 +546,21 @@ namespace IDBrowserServiceCode
         {
             try
             {
-                var queryRandom = from x in db.idCatalogItem
-                                  where StaticFunctions.ImageFileExtensions.Contains(x.idFileType)
-                                  orderby Guid.NewGuid()
-                                  select x.GUID;
+                List<String> randomImageGuids;
 
+                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required, readUncommittedTransactionOptions))
+                {
+                    var queryRandom = from x in db.idCatalogItem
+                                      where StaticFunctions.ImageFileExtensions.Contains(x.idFileType)
+                                      orderby Guid.NewGuid()
+                                      select x.GUID;
+                    randomImageGuids = queryRandom.Take(100).ToList();
+                    scope.Complete();
+                }
+                
                 log.Info(String.Format("Client {0}:{1} called GetRandomImageGuids",
                     clientEndpoint.Address, clientEndpoint.Port));
-                return queryRandom.Take(100).ToList();
+                return randomImageGuids;
             }
             catch (Exception ex)
             {
@@ -529,7 +577,14 @@ namespace IDBrowserServiceCode
                 log.Info(String.Format("Client {0}:{1} called GetFile with imageGuid: {2}",
                     clientEndpoint.Address, clientEndpoint.Port, imageGuid));
 
-                idCatalogItem catalogItem = db.idCatalogItem.Include("idFilePath").Single(x => x.GUID == imageGuid);
+                idCatalogItem catalogItem;
+
+                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required, readUncommittedTransactionOptions))
+                {
+                    catalogItem = db.idCatalogItem.Include("idFilePath").Single(x => x.GUID == imageGuid);
+                    scope.Complete();
+                }
+                
                 if (catalogItem == null)
                     throw new Exception("CatalogItem not found");
 
@@ -589,7 +644,13 @@ namespace IDBrowserServiceCode
                                       orderby tbl.PropName
                                       select tbl;
 
-                List<ImagePropertyRecursive> listImagePropertyRecursive = GetImagePropertyRecursive(queryProperties);
+                List<ImagePropertyRecursive> listImagePropertyRecursive;
+
+                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required, readUncommittedTransactionOptions))
+                {
+                    listImagePropertyRecursive = GetImagePropertyRecursive(queryProperties);
+                    scope.Complete();
+                }        
 
                 log.Info(String.Format("Client {0}:{1} called SearchImagePropertiesSoap with searchString: {2}",
                     clientEndpoint.Address, clientEndpoint.Port, searchString));
@@ -610,14 +671,21 @@ namespace IDBrowserServiceCode
                                                  where tbl.CatalogItemGUID == catalogItemGUID
                                                  select tbl.GUID;
 
-                List<String> propertyGuids = queryCatalogItemDefinition.ToList();
+                List<String> propertyGuids;
+                List<ImagePropertyRecursive> listImagePropertyRecursive;
 
-                var queryProperties = from tbl in db.idProp
-                                      where propertyGuids.Contains(tbl.GUID)
-                                      orderby tbl.PropName
-                                      select tbl;
+                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required, readUncommittedTransactionOptions))
+                {
+                    propertyGuids = queryCatalogItemDefinition.ToList();
 
-                List<ImagePropertyRecursive> listImagePropertyRecursive = GetImagePropertyRecursive(queryProperties);
+                    var queryProperties = from tbl in db.idProp
+                                          where propertyGuids.Contains(tbl.GUID)
+                                          orderby tbl.PropName
+                                          select tbl;
+
+                    listImagePropertyRecursive = GetImagePropertyRecursive(queryProperties);
+                    scope.Complete();
+                }
 
                 log.Info(String.Format("Client {0}:{1} called GetCatalogItemImageProperties with catalogItemGUID: {2}",
                     clientEndpoint.Address, clientEndpoint.Port, catalogItemGUID));
@@ -638,22 +706,27 @@ namespace IDBrowserServiceCode
                 String parentGuid = row.ParentGUID;
                 List<String> parentProperties = new List<string>();
 
-                while (parentGuid != null)
+                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required, readUncommittedTransactionOptions))
                 {
-                    idProp parentProperty = db.idProp.SingleOrDefault(x => x.GUID == parentGuid);
+                    while (parentGuid != null)
+                    {
+                        idProp parentProperty = db.idProp.SingleOrDefault(x => x.GUID == parentGuid);
 
-                    if (parentProperty == null)
-                    {
-                        idPropCategory parentPropCategory = db.idPropCategory.SingleOrDefault(x => x.GUID == parentGuid);
-                        if (parentPropCategory != null)
-                            parentProperties.Insert(0, parentPropCategory.CategoryName);
-                        parentGuid = null;
+                        if (parentProperty == null)
+                        {
+                            idPropCategory parentPropCategory = db.idPropCategory.SingleOrDefault(x => x.GUID == parentGuid);
+                            if (parentPropCategory != null)
+                                parentProperties.Insert(0, parentPropCategory.CategoryName);
+                            parentGuid = null;
+                        }
+                        else
+                        {
+                            parentProperties.Insert(0, parentProperty.PropName);
+                            parentGuid = parentProperty.ParentGUID;
+                        }
                     }
-                    else
-                    {
-                        parentProperties.Insert(0, parentProperty.PropName);
-                        parentGuid = parentProperty.ParentGUID;
-                    }
+
+                    scope.Complete();
                 }
 
                 ImagePropertyRecursive imagePropertyRecursive = new ImagePropertyRecursive();
@@ -817,19 +890,22 @@ namespace IDBrowserServiceCode
             {
                 List<FilePath> listFilePaths;
 
-                var query = from tbl in db.idFilePath
-                            orderby tbl.FilePath
-                            select new FilePath
-                            {
-                                GUID = tbl.guid,
-                                MediumName = tbl.MediumName,
-                                Path = tbl.FilePath,
-                                RootName = tbl.RootName,
-                                ImageCount = tbl.idCatalogItem.Count()
-                            };
+                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required, readUncommittedTransactionOptions))
+                {
+                    var query = from tbl in db.idFilePath
+                                orderby tbl.FilePath
+                                select new FilePath
+                                {
+                                    GUID = tbl.guid,
+                                    MediumName = tbl.MediumName,
+                                    Path = tbl.FilePath,
+                                    RootName = tbl.RootName,
+                                    ImageCount = tbl.idCatalogItem.Count()
+                                };
 
-                listFilePaths = query.ToList();
-
+                    listFilePaths = query.ToList();
+                }
+                
                 log.Info(String.Format("Client {0}:{1} called GetFilePaths",
                     clientEndpoint.Address, clientEndpoint.Port));
                 return listFilePaths;
