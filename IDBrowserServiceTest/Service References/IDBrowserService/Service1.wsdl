@@ -2,11 +2,11 @@
 <wsdl:definitions xmlns:wsap="http://schemas.xmlsoap.org/ws/2004/08/addressing/policy" xmlns:wsa10="http://www.w3.org/2005/08/addressing" xmlns:tns="http://tempuri.org/" xmlns:msc="http://schemas.microsoft.com/ws/2005/12/wsdl/contract" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:wsx="http://schemas.xmlsoap.org/ws/2004/09/mex" xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata" xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema" name="Service" targetNamespace="http://tempuri.org/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
   <wsdl:types>
     <xsd:schema targetNamespace="http://tempuri.org/Imports">
-      <xsd:import schemaLocation="http://localhost:2646/Service.svc?xsd=xsd0" namespace="http://tempuri.org/" />
-      <xsd:import schemaLocation="http://localhost:2646/Service.svc?xsd=xsd1" namespace="http://schemas.microsoft.com/2003/10/Serialization/" />
-      <xsd:import schemaLocation="http://localhost:2646/Service.svc?xsd=xsd2" namespace="http://schemas.datacontract.org/2004/07/IDBrowserServiceCode" />
-      <xsd:import schemaLocation="http://localhost:2646/Service.svc?xsd=xsd3" namespace="http://schemas.microsoft.com/Message" />
-      <xsd:import schemaLocation="http://localhost:2646/Service.svc?xsd=xsd4" namespace="http://schemas.microsoft.com/2003/10/Serialization/Arrays" />
+      <xsd:import schemaLocation="http://localhost:9448/Service.svc?xsd=xsd0" namespace="http://tempuri.org/" />
+      <xsd:import schemaLocation="http://localhost:9448/Service.svc?xsd=xsd1" namespace="http://schemas.microsoft.com/2003/10/Serialization/" />
+      <xsd:import schemaLocation="http://localhost:9448/Service.svc?xsd=xsd2" namespace="http://schemas.datacontract.org/2004/07/IDBrowserServiceCode" />
+      <xsd:import schemaLocation="http://localhost:9448/Service.svc?xsd=xsd3" namespace="http://schemas.microsoft.com/Message" />
+      <xsd:import schemaLocation="http://localhost:9448/Service.svc?xsd=xsd4" namespace="http://schemas.microsoft.com/2003/10/Serialization/Arrays" />
     </xsd:schema>
   </wsdl:types>
   <wsdl:message name="IRestService_GetImageProperties_InputMessage">
@@ -26,6 +26,12 @@
   </wsdl:message>
   <wsdl:message name="IRestService_GetCatalogItems_OutputMessage">
     <wsdl:part name="parameters" element="tns:GetCatalogItemsResponse" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_GetCatalogItemsByFilePath_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetCatalogItemsByFilePath" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_GetCatalogItemsByFilePath_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetCatalogItemsByFilePathResponse" />
   </wsdl:message>
   <wsdl:message name="IRestService_GetImageThumbnail_InputMessage">
     <wsdl:part name="parameters" element="tns:GetImageThumbnail" />
@@ -57,6 +63,48 @@
   <wsdl:message name="IRestService_GetRandomImageGuids_OutputMessage">
     <wsdl:part name="parameters" element="tns:GetRandomImageGuidsResponse" />
   </wsdl:message>
+  <wsdl:message name="IRestService_SearchImageProperties_InputMessage">
+    <wsdl:part name="parameters" element="tns:SearchImageProperties" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_SearchImageProperties_OutputMessage">
+    <wsdl:part name="parameters" element="tns:SearchImagePropertiesResponse" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_GetCatalogItemImageProperties_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetCatalogItemImageProperties" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_GetCatalogItemImageProperties_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetCatalogItemImagePropertiesResponse" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_AddCatalogItemDefinition_InputMessage">
+    <wsdl:part name="parameters" element="tns:AddCatalogItemDefinition" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_AddCatalogItemDefinition_OutputMessage">
+    <wsdl:part name="parameters" element="tns:AddCatalogItemDefinitionResponse" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_DeleteCatalogItemDefinition_InputMessage">
+    <wsdl:part name="parameters" element="tns:DeleteCatalogItemDefinition" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_DeleteCatalogItemDefinition_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DeleteCatalogItemDefinitionResponse" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_AddImageProperty_InputMessage">
+    <wsdl:part name="parameters" element="tns:AddImageProperty" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_AddImageProperty_OutputMessage">
+    <wsdl:part name="parameters" element="tns:AddImagePropertyResponse" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_GetFile_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetFile" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_GetFile_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetFileResponse" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_GetFilePaths_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetFilePaths" />
+  </wsdl:message>
+  <wsdl:message name="IRestService_GetFilePaths_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetFilePathsResponse" />
+  </wsdl:message>
   <wsdl:message name="ISoapService_GetImagePropertiesSoap_InputMessage">
     <wsdl:part name="parameters" element="tns:GetImagePropertiesSoap" />
   </wsdl:message>
@@ -74,6 +122,12 @@
   </wsdl:message>
   <wsdl:message name="ISoapService_GetCatalogItemsSoap_OutputMessage">
     <wsdl:part name="parameters" element="tns:GetCatalogItemsSoapResponse" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_GetCatalogItemsByFilePathSoap_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetCatalogItemsByFilePathSoap" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_GetCatalogItemsByFilePathSoap_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetCatalogItemsByFilePathSoapResponse" />
   </wsdl:message>
   <wsdl:message name="ISoapService_GetImageThumbnailSoap_InputMessage">
     <wsdl:part name="parameters" element="tns:GetImageThumbnailSoap" />
@@ -105,6 +159,48 @@
   <wsdl:message name="ISoapService_GetRandomImageGuidsSoap_OutputMessage">
     <wsdl:part name="parameters" element="tns:GetRandomImageGuidsSoapResponse" />
   </wsdl:message>
+  <wsdl:message name="ISoapService_SearchImagePropertiesSoap_InputMessage">
+    <wsdl:part name="parameters" element="tns:SearchImagePropertiesSoap" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_SearchImagePropertiesSoap_OutputMessage">
+    <wsdl:part name="parameters" element="tns:SearchImagePropertiesSoapResponse" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_GetCatalogItemImagePropertiesSoap_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetCatalogItemImagePropertiesSoap" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_GetCatalogItemImagePropertiesSoap_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetCatalogItemImagePropertiesSoapResponse" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_AddCatalogItemDefinitionSoap_InputMessage">
+    <wsdl:part name="parameters" element="tns:AddCatalogItemDefinitionSoap" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_AddCatalogItemDefinitionSoap_OutputMessage">
+    <wsdl:part name="parameters" element="tns:AddCatalogItemDefinitionSoapResponse" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_DeleteCatalogItemDefinitionSoap_InputMessage">
+    <wsdl:part name="parameters" element="tns:DeleteCatalogItemDefinitionSoap" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_DeleteCatalogItemDefinitionSoap_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DeleteCatalogItemDefinitionSoapResponse" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_AddImagePropertySoap_InputMessage">
+    <wsdl:part name="parameters" element="tns:AddImagePropertySoap" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_AddImagePropertySoap_OutputMessage">
+    <wsdl:part name="parameters" element="tns:AddImagePropertySoapResponse" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_GetFileSoap_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetFileSoap" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_GetFileSoap_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetFileSoapResponse" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_GetFilePathsSoap_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetFilePathsSoap" />
+  </wsdl:message>
+  <wsdl:message name="ISoapService_GetFilePathsSoap_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetFilePathsSoapResponse" />
+  </wsdl:message>
   <wsdl:portType name="IRestService">
     <wsdl:operation name="GetImageProperties">
       <wsdl:input wsaw:Action="http://tempuri.org/IRestService/GetImageProperties" message="tns:IRestService_GetImageProperties_InputMessage" />
@@ -117,6 +213,10 @@
     <wsdl:operation name="GetCatalogItems">
       <wsdl:input wsaw:Action="http://tempuri.org/IRestService/GetCatalogItems" message="tns:IRestService_GetCatalogItems_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IRestService/GetCatalogItemsResponse" message="tns:IRestService_GetCatalogItems_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetCatalogItemsByFilePath">
+      <wsdl:input wsaw:Action="http://tempuri.org/IRestService/GetCatalogItemsByFilePath" message="tns:IRestService_GetCatalogItemsByFilePath_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IRestService/GetCatalogItemsByFilePathResponse" message="tns:IRestService_GetCatalogItemsByFilePath_OutputMessage" />
     </wsdl:operation>
     <wsdl:operation name="GetImageThumbnail">
       <wsdl:input wsaw:Action="http://tempuri.org/IRestService/GetImageThumbnail" message="tns:IRestService_GetImageThumbnail_InputMessage" />
@@ -138,6 +238,34 @@
       <wsdl:input wsaw:Action="http://tempuri.org/IRestService/GetRandomImageGuids" message="tns:IRestService_GetRandomImageGuids_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IRestService/GetRandomImageGuidsResponse" message="tns:IRestService_GetRandomImageGuids_OutputMessage" />
     </wsdl:operation>
+    <wsdl:operation name="SearchImageProperties">
+      <wsdl:input wsaw:Action="http://tempuri.org/IRestService/SearchImageProperties" message="tns:IRestService_SearchImageProperties_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IRestService/SearchImagePropertiesResponse" message="tns:IRestService_SearchImageProperties_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetCatalogItemImageProperties">
+      <wsdl:input wsaw:Action="http://tempuri.org/IRestService/GetCatalogItemImageProperties" message="tns:IRestService_GetCatalogItemImageProperties_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IRestService/GetCatalogItemImagePropertiesResponse" message="tns:IRestService_GetCatalogItemImageProperties_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="AddCatalogItemDefinition">
+      <wsdl:input wsaw:Action="http://tempuri.org/IRestService/AddCatalogItemDefinition" message="tns:IRestService_AddCatalogItemDefinition_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IRestService/AddCatalogItemDefinitionResponse" message="tns:IRestService_AddCatalogItemDefinition_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DeleteCatalogItemDefinition">
+      <wsdl:input wsaw:Action="http://tempuri.org/IRestService/DeleteCatalogItemDefinition" message="tns:IRestService_DeleteCatalogItemDefinition_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IRestService/DeleteCatalogItemDefinitionResponse" message="tns:IRestService_DeleteCatalogItemDefinition_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="AddImageProperty">
+      <wsdl:input wsaw:Action="http://tempuri.org/IRestService/AddImageProperty" message="tns:IRestService_AddImageProperty_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IRestService/AddImagePropertyResponse" message="tns:IRestService_AddImageProperty_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetFile">
+      <wsdl:input wsaw:Action="http://tempuri.org/IRestService/GetFile" message="tns:IRestService_GetFile_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IRestService/GetFileResponse" message="tns:IRestService_GetFile_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetFilePaths">
+      <wsdl:input wsaw:Action="http://tempuri.org/IRestService/GetFilePaths" message="tns:IRestService_GetFilePaths_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IRestService/GetFilePathsResponse" message="tns:IRestService_GetFilePaths_OutputMessage" />
+    </wsdl:operation>
   </wsdl:portType>
   <wsdl:portType name="ISoapService">
     <wsdl:operation name="GetImagePropertiesSoap">
@@ -151,6 +279,10 @@
     <wsdl:operation name="GetCatalogItemsSoap">
       <wsdl:input wsaw:Action="http://tempuri.org/ISoapService/GetCatalogItemsSoap" message="tns:ISoapService_GetCatalogItemsSoap_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/ISoapService/GetCatalogItemsSoapResponse" message="tns:ISoapService_GetCatalogItemsSoap_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetCatalogItemsByFilePathSoap">
+      <wsdl:input wsaw:Action="http://tempuri.org/ISoapService/GetCatalogItemsByFilePathSoap" message="tns:ISoapService_GetCatalogItemsByFilePathSoap_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/ISoapService/GetCatalogItemsByFilePathSoapResponse" message="tns:ISoapService_GetCatalogItemsByFilePathSoap_OutputMessage" />
     </wsdl:operation>
     <wsdl:operation name="GetImageThumbnailSoap">
       <wsdl:input wsaw:Action="http://tempuri.org/ISoapService/GetImageThumbnailSoap" message="tns:ISoapService_GetImageThumbnailSoap_InputMessage" />
@@ -171,6 +303,34 @@
     <wsdl:operation name="GetRandomImageGuidsSoap">
       <wsdl:input wsaw:Action="http://tempuri.org/ISoapService/GetRandomImageGuidsSoap" message="tns:ISoapService_GetRandomImageGuidsSoap_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/ISoapService/GetRandomImageGuidsSoapResponse" message="tns:ISoapService_GetRandomImageGuidsSoap_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="SearchImagePropertiesSoap">
+      <wsdl:input wsaw:Action="http://tempuri.org/ISoapService/SearchImagePropertiesSoap" message="tns:ISoapService_SearchImagePropertiesSoap_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/ISoapService/SearchImagePropertiesSoapResponse" message="tns:ISoapService_SearchImagePropertiesSoap_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetCatalogItemImagePropertiesSoap">
+      <wsdl:input wsaw:Action="http://tempuri.org/ISoapService/GetCatalogItemImagePropertiesSoap" message="tns:ISoapService_GetCatalogItemImagePropertiesSoap_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/ISoapService/GetCatalogItemImagePropertiesSoapResponse" message="tns:ISoapService_GetCatalogItemImagePropertiesSoap_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="AddCatalogItemDefinitionSoap">
+      <wsdl:input wsaw:Action="http://tempuri.org/ISoapService/AddCatalogItemDefinitionSoap" message="tns:ISoapService_AddCatalogItemDefinitionSoap_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/ISoapService/AddCatalogItemDefinitionSoapResponse" message="tns:ISoapService_AddCatalogItemDefinitionSoap_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DeleteCatalogItemDefinitionSoap">
+      <wsdl:input wsaw:Action="http://tempuri.org/ISoapService/DeleteCatalogItemDefinitionSoap" message="tns:ISoapService_DeleteCatalogItemDefinitionSoap_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/ISoapService/DeleteCatalogItemDefinitionSoapResponse" message="tns:ISoapService_DeleteCatalogItemDefinitionSoap_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="AddImagePropertySoap">
+      <wsdl:input wsaw:Action="http://tempuri.org/ISoapService/AddImagePropertySoap" message="tns:ISoapService_AddImagePropertySoap_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/ISoapService/AddImagePropertySoapResponse" message="tns:ISoapService_AddImagePropertySoap_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetFileSoap">
+      <wsdl:input wsaw:Action="http://tempuri.org/ISoapService/GetFileSoap" message="tns:ISoapService_GetFileSoap_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/ISoapService/GetFileSoapResponse" message="tns:ISoapService_GetFileSoap_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetFilePathsSoap">
+      <wsdl:input wsaw:Action="http://tempuri.org/ISoapService/GetFilePathsSoap" message="tns:ISoapService_GetFilePathsSoap_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/ISoapService/GetFilePathsSoapResponse" message="tns:ISoapService_GetFilePathsSoap_OutputMessage" />
     </wsdl:operation>
   </wsdl:portType>
   <wsdl:binding name="BasicHttpBinding_ISoapService" type="tns:ISoapService">
@@ -195,6 +355,15 @@
     </wsdl:operation>
     <wsdl:operation name="GetCatalogItemsSoap">
       <soap:operation soapAction="http://tempuri.org/ISoapService/GetCatalogItemsSoap" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetCatalogItemsByFilePathSoap">
+      <soap:operation soapAction="http://tempuri.org/ISoapService/GetCatalogItemsByFilePathSoap" style="document" />
       <wsdl:input>
         <soap:body use="literal" />
       </wsdl:input>
@@ -247,10 +416,73 @@
         <soap:body use="literal" />
       </wsdl:output>
     </wsdl:operation>
+    <wsdl:operation name="SearchImagePropertiesSoap">
+      <soap:operation soapAction="http://tempuri.org/ISoapService/SearchImagePropertiesSoap" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetCatalogItemImagePropertiesSoap">
+      <soap:operation soapAction="http://tempuri.org/ISoapService/GetCatalogItemImagePropertiesSoap" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="AddCatalogItemDefinitionSoap">
+      <soap:operation soapAction="http://tempuri.org/ISoapService/AddCatalogItemDefinitionSoap" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DeleteCatalogItemDefinitionSoap">
+      <soap:operation soapAction="http://tempuri.org/ISoapService/DeleteCatalogItemDefinitionSoap" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="AddImagePropertySoap">
+      <soap:operation soapAction="http://tempuri.org/ISoapService/AddImagePropertySoap" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetFileSoap">
+      <soap:operation soapAction="http://tempuri.org/ISoapService/GetFileSoap" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetFilePathsSoap">
+      <soap:operation soapAction="http://tempuri.org/ISoapService/GetFilePathsSoap" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
   </wsdl:binding>
   <wsdl:service name="Service">
     <wsdl:port name="BasicHttpBinding_ISoapService" binding="tns:BasicHttpBinding_ISoapService">
-      <soap:address location="http://localhost:2646/Service.svc/soap" />
+      <soap:address location="http://localhost:9448/Service.svc/soap" />
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>

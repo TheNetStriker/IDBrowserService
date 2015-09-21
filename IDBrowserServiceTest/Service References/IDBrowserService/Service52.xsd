@@ -27,6 +27,7 @@
       <xs:element minOccurs="0" name="FilePath" nillable="true" type="xs:string" />
       <xs:element minOccurs="0" name="FileType" nillable="true" type="xs:string" />
       <xs:element minOccurs="0" name="GUID" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="HasRecipe" nillable="true" type="xs:int" />
     </xs:sequence>
   </xs:complexType>
   <xs:element name="CatalogItem" nillable="true" type="tns:CatalogItem" />
@@ -34,6 +35,8 @@
     <xs:sequence>
       <xs:element minOccurs="0" name="FileSize" nillable="true" type="xs:int" />
       <xs:element minOccurs="0" name="FileType" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="GPSLat" nillable="true" type="xs:double" />
+      <xs:element minOccurs="0" name="GPSLon" nillable="true" type="xs:double" />
       <xs:element minOccurs="0" name="ImageDescription" nillable="true" type="xs:string" />
       <xs:element minOccurs="0" name="ImageName" nillable="true" type="xs:string" />
       <xs:element minOccurs="0" name="ImageResolution" nillable="true" type="xs:string" />
@@ -56,4 +59,34 @@
     </xs:sequence>
   </xs:complexType>
   <xs:element name="XmpProperty" nillable="true" type="tns:XmpProperty" />
+  <xs:complexType name="ArrayOfImagePropertyRecursive">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="ImagePropertyRecursive" nillable="true" type="tns:ImagePropertyRecursive" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="ArrayOfImagePropertyRecursive" nillable="true" type="tns:ArrayOfImagePropertyRecursive" />
+  <xs:complexType name="ImagePropertyRecursive">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="FullRecursivePath" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="GUID" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="Name" nillable="true" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="ImagePropertyRecursive" nillable="true" type="tns:ImagePropertyRecursive" />
+  <xs:complexType name="ArrayOfFilePath">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="FilePath" nillable="true" type="tns:FilePath" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="ArrayOfFilePath" nillable="true" type="tns:ArrayOfFilePath" />
+  <xs:complexType name="FilePath">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="GUID" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="ImageCount" type="xs:int" />
+      <xs:element minOccurs="0" name="MediumName" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="Path" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="RootName" nillable="true" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="FilePath" nillable="true" type="tns:FilePath" />
 </xs:schema>

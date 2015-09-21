@@ -85,33 +85,29 @@
     <None Include="LoadTest1.loadtest">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="Properties\DataSources\IDBrowserServiceCode.CatalogItem.datasource" />
+    <None Include="Properties\DataSources\IDBrowserServiceCode.FilePath.datasource" />
+    <None Include="Properties\DataSources\IDBrowserServiceCode.ImageInfo.datasource" />
+    <None Include="Properties\DataSources\IDBrowserServiceCode.ImageProperty.datasource" />
+    <None Include="Properties\DataSources\IDBrowserServiceCode.ImagePropertyRecursive.datasource" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-    <None Include="Service References\IDBrowserService\IDBrowserServiceTest.IDBrowserService.CatalogItem.datasource">
-      <DependentUpon>Reference.svcmap</DependentUpon>
-    </None>
-    <None Include="Service References\IDBrowserService\IDBrowserServiceTest.IDBrowserService.ImageInfo.datasource">
-      <DependentUpon>Reference.svcmap</DependentUpon>
-    </None>
-    <None Include="Service References\IDBrowserService\IDBrowserServiceTest.IDBrowserService.ImageProperty.datasource">
-      <DependentUpon>Reference.svcmap</DependentUpon>
-    </None>
-    <None Include="Service References\IDBrowserService\Service.wsdl" />
-    <None Include="Service References\IDBrowserService\Service.xsd">
+    <None Include="Service References\IDBrowserService\Service1.wsdl" />
+    <None Include="Service References\IDBrowserService\Service5.xsd">
       <SubType>Designer</SubType>
     </None>
-    <None Include="Service References\IDBrowserService\Service1.xsd">
+    <None Include="Service References\IDBrowserService\Service51.xsd">
       <SubType>Designer</SubType>
     </None>
-    <None Include="Service References\IDBrowserService\Service2.xsd">
+    <None Include="Service References\IDBrowserService\Service52.xsd">
       <SubType>Designer</SubType>
     </None>
-    <None Include="Service References\IDBrowserService\Service3.xsd">
+    <None Include="Service References\IDBrowserService\Service53.xsd">
       <SubType>Designer</SubType>
     </None>
-    <None Include="Service References\IDBrowserService\Service4.xsd">
+    <None Include="Service References\IDBrowserService\Service54.xsd">
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
@@ -123,9 +119,6 @@
   </ItemGroup>
   <ItemGroup>
     <WCFMetadataStorage Include="Service References\IDBrowserService\" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Service References\IDBrowserService\Service.disco" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Service References\IDBrowserService\configuration91.svcinfo" />
@@ -148,6 +141,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Resources\Example.png" />
     <EmbeddedResource Include="Resources\XMPTest.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Service References\IDBrowserService\Service1.disco" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

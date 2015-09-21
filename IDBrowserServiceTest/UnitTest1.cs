@@ -27,8 +27,8 @@ namespace IDBrowserServiceTest
             SoapServiceClient service = new SoapServiceClient();
             ImageGuids = service.GetRandomImageGuidsSoap();
 
-            List<ImageProperty> ImageProperties = service.GetImagePropertiesSoap(null);
-            foreach (ImageProperty imageProperty in ImageProperties)
+            List<IDBrowserServiceCode.ImageProperty> ImageProperties = service.GetImagePropertiesSoap(null);
+            foreach (IDBrowserServiceCode.ImageProperty imageProperty in ImageProperties)
             {
                 ImagePropertyGuids.Add(imageProperty.GUID);
             }
@@ -130,17 +130,68 @@ namespace IDBrowserServiceTest
             Microsoft.VisualStudio.TestTools.UnitTesting.StringAssert.Contains(result, "<ArrayOfImageProperty");
         }
 
+        [TestMethod]
+        public async Task SearchImagePropertiesTest()
+        {
+            SoapServiceClient service = new SoapServiceClient();
+            List<IDBrowserServiceCode.ImagePropertyRecursive> result = service.SearchImagePropertiesSoap("David Masshardt");
+            if (result.Count == 0)
+                throw new Exception("No items found with SearchImagePropertiesSoap");
+        }
+
+        [TestMethod]
+        public async Task GetCatalogItemImagePropertiesTest()
+        {
+            SoapServiceClient service = new SoapServiceClient();
+            List<IDBrowserServiceCode.ImagePropertyRecursive>  result = service.GetCatalogItemImagePropertiesSoap(GetNextImageGuid());
+            if (result.Count == 0)
+                throw new Exception("No image properties found with GetCatalogItemImagePropertiesSoap");
+        }
+
+        //[TestMethod]
+        //public async Task AddCatalogItemDefinitionTest()
+        //{
+            
+        //}
+
+        //[TestMethod]
+        //public async Task DeleteCatalogItemDefinitionTest()
+        //{
+            
+        //}
+
+        //[TestMethod]
+        //public async Task AddImagePropertyTest()
+        //{
+            
+        //}
+
+        //[TestMethod]
+        //public async Task GetFileTest()
+        //{
+            
+        //}
+
+        [TestMethod]
+        public async Task GetFilePathsTest()
+        {
+            SoapServiceClient service = new SoapServiceClient();
+            List<IDBrowserServiceCode.FilePath> result = service.GetFilePathsSoap();
+            if (result.Count == 0)
+                throw new Exception("No file paths found with GetFilePathsSoap");
+        }
+
         private async Task<string> GetAsync(string uri)
         {
             try
             {
-                X509Certificate2 certificate = CertificateUtil.GetCertificate(StoreName.My, StoreLocation.LocalMachine, "CN=IDBrowserClient");
+                //X509Certificate2 certificate = CertificateUtil.GetCertificate(StoreName.My, StoreLocation.LocalMachine, "CN=IDBrowserClient");
                 //var certificate = new X509Certificate2();
                 WebRequestHandler handler = new WebRequestHandler();
 
                 ServicePointManager.ServerCertificateValidationCallback +=
                     new RemoteCertificateValidationCallback((sender, certificate2, chain, policyErrors) => { return true; });
-                handler.ClientCertificates.Add(certificate);
+                //handler.ClientCertificates.Add(certificate);
 
                 HttpClient client = new HttpClient(handler);
 
