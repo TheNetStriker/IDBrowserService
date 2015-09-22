@@ -138,7 +138,7 @@ namespace IDBrowserStreamingService.Controllers
             catch (Exception e)
             {
                 log.Error(e);
-                return null;
+                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, e.ToString());
             }
         }
 
