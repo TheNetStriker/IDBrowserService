@@ -40,33 +40,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IDBrowserStreamingService", "IDBrowserStreamingService\IDBrowserStreamingService.csproj", "{F1F5E69C-28E5-41DA-8E9F-46CB7562C23A}"
 EndProject
 Global
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 8
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = http://massrv06:8080/tfs/masshardt
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = IDBrowserServiceTest\\IDBrowserServiceTest.csproj
-		SccProjectName1 = IDBrowserServiceTest
-		SccLocalPath1 = IDBrowserServiceTest
-		SccProjectUniqueName2 = ThumbnailGenerator\\ThumbnailGenerator.csproj
-		SccProjectName2 = ThumbnailGenerator
-		SccLocalPath2 = ThumbnailGenerator
-		SccProjectUniqueName3 = zlib.NET\\zlib.net.csproj
-		SccProjectName3 = zlib.NET
-		SccLocalPath3 = zlib.NET
-		SccProjectUniqueName4 = IDBrowserServiceStandalone\\IDBrowserServiceStandalone.csproj
-		SccProjectName4 = IDBrowserServiceStandalone
-		SccLocalPath4 = IDBrowserServiceStandalone
-		SccProjectUniqueName5 = IDBrowserServiceCode\\IDBrowserServiceCode.csproj
-		SccProjectName5 = IDBrowserServiceCode
-		SccLocalPath5 = IDBrowserServiceCode
-		SccProjectUniqueName6 = IDBrowserService\\IDBrowserService.csproj
-		SccProjectName6 = IDBrowserService
-		SccLocalPath6 = IDBrowserService
-		SccProjectUniqueName7 = IDBrowserStreamingService\\IDBrowserStreamingService.csproj
-		SccProjectName7 = IDBrowserStreamingService
-		SccLocalPath7 = IDBrowserStreamingService
-	EndGlobalSection
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = IDBrowser.vsmdi
 	EndGlobalSection
