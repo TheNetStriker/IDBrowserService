@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2018
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{08E70DD9-2A31-4329-AEC4-8D16ABD15500}"
 	ProjectSection(SolutionItems) = preProject
 		.nuget\NuGet.Config = .nuget\NuGet.Config
@@ -39,10 +41,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "packages", "packages", "{AB
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IDBrowserStreamingService", "IDBrowserStreamingService\IDBrowserStreamingService.csproj", "{F1F5E69C-28E5-41DA-8E9F-46CB7562C23A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IDBrowserServiceCore", "IDBrowserServiceCore\IDBrowserServiceCore.csproj", "{38D4600E-5E26-43ED-BF1D-0D441AA3C8D7}"
+EndProject
 Global
-	GlobalSection(TestCaseManagementSettings) = postSolution
-		CategoryFile = IDBrowser.vsmdi
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -76,8 +77,18 @@ Global
 		{F1F5E69C-28E5-41DA-8E9F-46CB7562C23A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F1F5E69C-28E5-41DA-8E9F-46CB7562C23A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F1F5E69C-28E5-41DA-8E9F-46CB7562C23A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38D4600E-5E26-43ED-BF1D-0D441AA3C8D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38D4600E-5E26-43ED-BF1D-0D441AA3C8D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38D4600E-5E26-43ED-BF1D-0D441AA3C8D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38D4600E-5E26-43ED-BF1D-0D441AA3C8D7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {574A0D3A-FCE4-41CB-BB75-78676574712E}
+	EndGlobalSection
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = IDBrowser.vsmdi
 	EndGlobalSection
 EndGlobal
