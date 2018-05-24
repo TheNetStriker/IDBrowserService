@@ -148,7 +148,7 @@ namespace IDBrowserStreamingService.Controllers
 
         private static String GetCatalogItemFilePath(String guid)
         {
-            IDImagerEntities db = new IDImagerEntities();
+            IDImagerDB db = new IDImagerDB();
             idCatalogItem catalogItem = db.idCatalogItem.Include("idFilePath").Single(x => x.GUID.Equals(guid));
             db.Dispose();
             return StaticFunctions.GetImageFilePath(catalogItem);

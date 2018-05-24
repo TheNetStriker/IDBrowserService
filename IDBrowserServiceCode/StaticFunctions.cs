@@ -83,7 +83,7 @@ namespace IDBrowserServiceCode
             return bitmapFrame;
         }
 
-        public static SaveImageThumbnailResult SaveImageThumbnail(idCatalogItem catalogItem, ref IDImagerEntities db, ref IDImagerEntities dbThumbs,
+        public static SaveImageThumbnailResult SaveImageThumbnail(idCatalogItem catalogItem, ref IDImagerDB db, ref IDImagerDB dbThumbs,
             List<String> types, Boolean keepAspectRatio, Boolean setGenericVideoThumbnailOnError)
         {
             SaveImageThumbnailResult result = new SaveImageThumbnailResult();
@@ -237,7 +237,7 @@ namespace IDBrowserServiceCode
             return result;
         }
 
-        public static System.Xml.Linq.XDocument GetRecipeXDocument(IDImagerEntities db, idCatalogItem catalogItem)
+        public static System.Xml.Linq.XDocument GetRecipeXDocument(IDImagerDB db, idCatalogItem catalogItem)
         {
             if (catalogItem.idHasRecipe > 0)
             {

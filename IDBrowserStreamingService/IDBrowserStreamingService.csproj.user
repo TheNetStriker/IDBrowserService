@@ -3,6 +3,7 @@
   <PropertyGroup>
     <NameOfLastUsedPublishProfile>IDBrowserStreamingService</NameOfLastUsedPublishProfile>
     <LastActiveSolutionConfig>Release|Any CPU</LastActiveSolutionConfig>
+    <UseIISExpress>false</UseIISExpress>
   </PropertyGroup>
   <ProjectExtensions>
     <VisualStudio>

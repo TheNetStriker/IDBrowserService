@@ -25,8 +25,8 @@ namespace IDBrowserServiceCode
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.PerSession, ConcurrencyMode = ConcurrencyMode.Single)]
     public class Service: IRestService, ISoapService, IDisposable
     {
-        private Data.IDImagerEntities db;
-        private Data.IDImagerEntities dbThumbs;
+        private Data.IDImagerDB db;
+        private Data.IDImagerDB dbThumbs;
         private RemoteEndpointMessageProperty clientEndpoint;
         private ILog log;
         private TransactionOptions readUncommittedTransactionOptions;
@@ -47,16 +47,16 @@ namespace IDBrowserServiceCode
                     clientEndpoint = OperationContext.Current.IncomingMessageProperties["System.ServiceModel.Channels.RemoteEndpointMessageProperty"] as RemoteEndpointMessageProperty;
 
                 if (db == null)
-                    db = new IDImagerEntities();
+                    db = new IDImagerDB();
 
                 if (db.Database.Connection.State == System.Data.ConnectionState.Closed)
                     db.Database.Connection.Open();
 
                 if (dbThumbs == null)
                 {
-                    dbThumbs = new IDImagerEntities();
-                    EntityConnectionStringBuilder ecb = new EntityConnectionStringBuilder(ConfigurationManager.ConnectionStrings["IDImagerThumbsEntities"].ConnectionString);
-                    dbThumbs.Database.Connection.ConnectionString = ecb.ProviderConnectionString;
+                    dbThumbs = new IDImagerDB();
+                    //EntityConnectionStringBuilder ecb = new EntityConnectionStringBuilder(ConfigurationManager.ConnectionStrings["IDImagerThumbsEntities"].ConnectionString);
+                    dbThumbs.Database.Connection.ConnectionString = ConfigurationManager.ConnectionStrings["IDImagerThumbsEntities"].ConnectionString;
                 }
 
                 if (dbThumbs.Database.Connection.State == System.Data.ConnectionState.Closed)
@@ -115,7 +115,7 @@ namespace IDBrowserServiceCode
                     }
                     else
                     {
-                        var query = from tbl in db.v_Prop
+                        var query = from tbl in db.v_prop
                                     where tbl.ParentGUID == guid
                                     orderby tbl.PropName
                                     select new ImageProperty
@@ -129,8 +129,10 @@ namespace IDBrowserServiceCode
                         listImageProperty = query.ToList();
                     }
 
-                    log.Info(String.Format("Client {0}:{1} called GetImageProperties with guid: {2}",
-                        clientEndpoint.Address, clientEndpoint.Port, guid));
+                    if (clientEndpoint != null)
+                        log.Info(String.Format("Client {0}:{1} called GetImageProperties with guid: {2}",
+                            clientEndpoint.Address, clientEndpoint.Port, guid));
+
                     scope.Complete();
                 }
                 
@@ -231,8 +233,10 @@ namespace IDBrowserServiceCode
                     scope.Complete();
                 }
 
-                log.Info(String.Format("Client {0}:{1} called GetCatalogItems with orderDescending: {2} propertyGuid: {3}",
-                    clientEndpoint.Address, clientEndpoint.Port, orderDescending, propertyGuid));
+                if (clientEndpoint != null)
+                    log.Info(String.Format("Client {0}:{1} called GetCatalogItems with orderDescending: {2} propertyGuid: {3}",
+                        clientEndpoint.Address, clientEndpoint.Port, orderDescending, propertyGuid));
+
                 return catalogItems;
             }
             catch (Exception ex)

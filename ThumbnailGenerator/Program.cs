@@ -85,8 +85,8 @@ namespace ThumbnailGenerator
             ICommandLineParser parser = new CommandLineParser();
             parser.ParseArguments(Environment.GetCommandLineArgs(), commandLineArguments);
 
-            IDImagerEntities db = new IDImagerEntities();
-            IDImagerEntities dbThumbs = new IDImagerEntities();
+            IDImagerDB db = new IDImagerDB();
+            IDImagerDB dbThumbs = new IDImagerDB();
             dbThumbs.Database.Connection.ConnectionString = ConfigurationManager.ConnectionStrings["IDImagerThumbsEntities"].ConnectionString;
 
             List<String> imageFileExtensions = ConfigurationManager.AppSettings["ImageFileExtensions"].Split(new char[] { char.Parse(",") }).ToList();
