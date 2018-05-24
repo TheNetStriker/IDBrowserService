@@ -1966,9 +1966,6 @@
           <Property Type="String" Name="UDF5" MaxLength="255" FixedLength="false" Unicode="true" />
           <Property Type="String" Name="UserGUID" MaxLength="50" FixedLength="false" Unicode="true" />
           <Property Type="Int32" Name="AutoCataloged" />
-          <Property Type="String" Name="ThumbFile" MaxLength="255" FixedLength="false" Unicode="true" />
-          <Property Type="String" Name="SmallFile" MaxLength="255" FixedLength="false" Unicode="true" />
-          <Property Type="String" Name="MediumFile" MaxLength="255" FixedLength="false" Unicode="true" />
           <Property Type="DateTime" Name="LastUpdate" Precision="3" />
           <Property Type="DateTime" Name="idCreated" Precision="3" />
           <Property Type="Int32" Name="idCounter" />
@@ -3001,9 +2998,6 @@
           <Property Type="String" Name="UDF5" MaxLength="255" FixedLength="false" Unicode="true" />
           <Property Type="String" Name="UserGUID" MaxLength="50" FixedLength="false" Unicode="true" />
           <Property Type="Int32" Name="AutoCataloged" />
-          <Property Type="String" Name="ThumbFile" MaxLength="255" FixedLength="false" Unicode="true" />
-          <Property Type="String" Name="SmallFile" MaxLength="255" FixedLength="false" Unicode="true" />
-          <Property Type="String" Name="MediumFile" MaxLength="255" FixedLength="false" Unicode="true" />
           <Property Type="DateTime" Name="LastUpdate" Precision="3" />
           <Property Type="DateTime" Name="idCreated" Precision="3" />
           <Property Type="Int32" Name="idCounter" />
@@ -3256,9 +3250,6 @@
                 <ScalarProperty Name="idCounter" ColumnName="idCounter" />
                 <ScalarProperty Name="idCreated" ColumnName="idCreated" />
                 <ScalarProperty Name="LastUpdate" ColumnName="LastUpdate" />
-                <ScalarProperty Name="MediumFile" ColumnName="MediumFile" />
-                <ScalarProperty Name="SmallFile" ColumnName="SmallFile" />
-                <ScalarProperty Name="ThumbFile" ColumnName="ThumbFile" />
                 <ScalarProperty Name="AutoCataloged" ColumnName="AutoCataloged" />
                 <ScalarProperty Name="UserGUID" ColumnName="UserGUID" />
                 <ScalarProperty Name="UDF5" ColumnName="UDF5" />
@@ -3866,9 +3857,6 @@
                 <ScalarProperty Name="idCounter" ColumnName="idCounter" />
                 <ScalarProperty Name="idCreated" ColumnName="idCreated" />
                 <ScalarProperty Name="LastUpdate" ColumnName="LastUpdate" />
-                <ScalarProperty Name="MediumFile" ColumnName="MediumFile" />
-                <ScalarProperty Name="SmallFile" ColumnName="SmallFile" />
-                <ScalarProperty Name="ThumbFile" ColumnName="ThumbFile" />
                 <ScalarProperty Name="AutoCataloged" ColumnName="AutoCataloged" />
                 <ScalarProperty Name="UserGUID" ColumnName="UserGUID" />
                 <ScalarProperty Name="UDF5" ColumnName="UDF5" />
@@ -4109,7 +4097,7 @@
     </Options>
     <!-- Diagram content (shape and connector positions) -->
     <Diagrams>
-      <Diagram Name="IDImagerDB" ZoomLevel="88">
+      <Diagram Name="IDImagerDB" ZoomLevel="86">
         <EntityTypeShape EntityType="IDImagerModel.idCatalogItem" Width="1.5" PointX="8.25" PointY="27.625" />
         <EntityTypeShape EntityType="IDImagerModel.idCatalogItemDefinition" Width="1.5" PointX="12.5" PointY="42.625" />
         <EntityTypeShape EntityType="IDImagerModel.idCollectionInfo" Width="1.5" PointX="0.75" PointY="0.75" />
