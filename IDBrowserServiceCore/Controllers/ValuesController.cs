@@ -25,15 +25,15 @@ namespace IDBrowserServiceCore.Controllers
                 db = new IDImagerDB();
         }
 
-        [HttpGet("{guid}")]
+        [HttpGet("{guid?}")]
         [ActionName("GetImageProperties")]
         public List<ImageProperty> GetImageProperties(string guid)
         {
             try
             {
                 List<ImageProperty> listImageProperty;
- 
-                if (guid == "null")
+
+                if (guid == null)
                 {
                     var query = from tbl in db.v_PropCategory
                                 where !tbl.CategoryName.Equals("Internal")
