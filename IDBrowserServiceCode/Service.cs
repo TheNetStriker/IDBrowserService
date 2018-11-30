@@ -331,14 +331,16 @@ namespace IDBrowserServiceCode
                 idThumbs thumb = null;
                 lock (dbThumbs)
                 {
-                    thumb = dbThumbs.idThumbs.SingleOrDefault(x => x.ImageGUID == imageGuid && x.idType == type);
+                    //Searching with FirstOrDefault because PhotoSupreme sometimes stores the Thumbnail twice
+                    thumb = dbThumbs.idThumbs.FirstOrDefault(x => x.ImageGUID == imageGuid && x.idType == type);
 
                     //If recipe image is not found, return the M image,
                     //because the programm cannot yet generate the recipe image
                     if (thumb == null && type == "R")
                     {
                         type = "M";
-                        thumb = dbThumbs.idThumbs.SingleOrDefault(x => x.ImageGUID == imageGuid && x.idType == type);
+                        //Searching with FirstOrDefault because PhotoSupreme sometimes stores the Thumbnail twice
+                        thumb = dbThumbs.idThumbs.FirstOrDefault(x => x.ImageGUID == imageGuid && x.idType == type);
                     }
                 }
 
