@@ -7,9 +7,16 @@ namespace IDBrowserServiceCore.Data
 
     public partial class IDImagerDB : DbContext
     {
+        private string connectionString;
+
+        public IDImagerDB(string connectionString)
+        {
+            this.connectionString = connectionString;
+        }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer(@"Server=172.17.2.23;Database=photosupreme;user id=idimager_main;password=idi_main_2606;");
+            optionsBuilder.UseSqlServer(connectionString);
         }
 
         public virtual DbSet<idCatalogItem> idCatalogItem { get; set; }
