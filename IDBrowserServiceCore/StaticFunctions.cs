@@ -1,10 +1,8 @@
-﻿using IDBrowserServiceCore.Data;
+﻿using ComponentAce.Compression.Libs.zlib;
+using IDBrowserServiceCore.Data;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
-using zlib;
 
 namespace IDBrowserServiceCore
 {
