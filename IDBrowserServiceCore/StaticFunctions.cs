@@ -8,15 +8,23 @@ namespace IDBrowserServiceCore
 {
     public class StaticFunctions
     {
-        public static System.IO.FileStream GetImageFileStream(String filePath)
+        public static FileStream GetImageFileStream(string filePath)
         {
-            System.IO.FileStream fileStream = new System.IO.FileStream(filePath, FileMode.Open, FileAccess.Read);
+            FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
             return fileStream;
         }
 
-        public static String GetImageFilePath(Data.idCatalogItem catalogItem)
+        public static String GetImageFilePath(idCatalogItem catalogItem, string pathMatch, string pathReplace)
         {
-            return System.IO.Path.Combine(catalogItem.idFilePath.FilePath, catalogItem.FileName);
+            string strFilePath = catalogItem.idFilePath.FilePath;
+
+            if (!string.IsNullOrEmpty(pathMatch) && !string.IsNullOrEmpty(pathReplace))
+                strFilePath = strFilePath.Replace(pathMatch, pathReplace, StringComparison.CurrentCultureIgnoreCase);
+
+            if (Path.DirectorySeparatorChar != '\\')
+                strFilePath = strFilePath.Replace('\\', Path.DirectorySeparatorChar);
+
+            return Path.Combine(strFilePath, catalogItem.FileName);
         }
 
         //public static BitmapFrame GetBitmapFrameFromImageStream(Stream imageStream, String fileType)

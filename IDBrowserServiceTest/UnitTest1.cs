@@ -41,7 +41,6 @@ namespace IDBrowserServiceTest
             {
                 return ImagePropertyGuids[rand.Next(ImagePropertyGuids.Count)];
             }
-
         }
 
         private String GetNextImageGuid()

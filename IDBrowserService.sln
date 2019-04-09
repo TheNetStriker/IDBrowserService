@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27703.2018
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28729.10
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{08E70DD9-2A31-4329-AEC4-8D16ABD15500}"
 	ProjectSection(SolutionItems) = preProject
@@ -41,7 +41,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "packages", "packages", "{AB
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IDBrowserStreamingService", "IDBrowserStreamingService\IDBrowserStreamingService.csproj", "{F1F5E69C-28E5-41DA-8E9F-46CB7562C23A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IDBrowserServiceCore", "IDBrowserServiceCore\IDBrowserServiceCore.csproj", "{38D4600E-5E26-43ED-BF1D-0D441AA3C8D7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IDBrowserServiceCore", "IDBrowserServiceCore\IDBrowserServiceCore.csproj", "{38D4600E-5E26-43ED-BF1D-0D441AA3C8D7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IDBrowserServiceCoreTest", "IDBrowserServiceCoreTest\IDBrowserServiceCoreTest.csproj", "{FC5F649C-7E8E-4B0F-80CA-8FF0374208F6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -81,6 +83,10 @@ Global
 		{38D4600E-5E26-43ED-BF1D-0D441AA3C8D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{38D4600E-5E26-43ED-BF1D-0D441AA3C8D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{38D4600E-5E26-43ED-BF1D-0D441AA3C8D7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC5F649C-7E8E-4B0F-80CA-8FF0374208F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC5F649C-7E8E-4B0F-80CA-8FF0374208F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC5F649C-7E8E-4B0F-80CA-8FF0374208F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC5F649C-7E8E-4B0F-80CA-8FF0374208F6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

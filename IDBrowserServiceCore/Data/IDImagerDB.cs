@@ -36,16 +36,16 @@ namespace IDBrowserServiceCore.Data
         {
             modelBuilder.Entity<idCatalogItemDefinition>()
                 .HasKey(c => new { c.GUID });
-            //modelBuilder.Entity<idCatalogItem>()
-            //    .HasMany(e => e.idCatalogItemDefinition)
-            //    //.WithRequired(e => e.idCatalogItem)
-            //    .HasForeignKey(e => e.CatalogItemGUID);
 
-            //modelBuilder.Entity<idFilePath>()
-            //    .HasMany(e => e.idCatalogItem)
-            //    //.WithOptional(e => e.idFilePath)
-            //    .HasForeignKey(e => e.PathGUID)
-            //    .WillCascadeOnDelete();
+            modelBuilder.Entity<idCatalogItem>()
+                .HasMany(e => e.idCatalogItemDefinition)
+                .WithOne(e => e.idCatalogItem)
+                .HasForeignKey(e => e.CatalogItemGUID);
+
+            modelBuilder.Entity<idFilePath>()
+                .HasMany(e => e.idCatalogItem)
+                .WithOne(e => e.idFilePath)
+                .HasForeignKey(e => e.PathGUID);
         }
     }
 }

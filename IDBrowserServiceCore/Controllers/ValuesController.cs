@@ -96,6 +96,11 @@ namespace IDBrowserServiceCore.Controllers
         {
             try
             {
+                if (string.IsNullOrEmpty(guid))
+                    LogHttpConnection("Client {0}:{1} called GetImageProperties");
+                else
+                    LogHttpConnection("Client {0}:{1} called GetImageProperties with guid: {2}", guid);
+
                 List<ImageProperty> listImageProperty;
 
                 if (guid == null)
@@ -133,6 +138,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
+                log.LogError(ex.ToString());
                 throw ex;
             }
         }
@@ -180,17 +186,17 @@ namespace IDBrowserServiceCore.Controllers
             Stream imageStream = null;
             if (idImage == null)
             {
-                log.LogInformation(String.Format("Client {0}:{1} called GetImagePropertyThumbnail with guid: {2} isCategory: {3} (returned null)",
-                    HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort, guid, isCategory));
+                LogHttpConnection("Client {0}:{1} called GetImagePropertyThumbnail with guid: {2} isCategory: {3} (returned null)",
+                    guid, isCategory);
             }
             else
             {
-                //if (IsRequestRest()) ??
-                HttpContext.Response.ContentType = "image/jpeg";
+                if (HttpContext != null)
+                    HttpContext.Response.ContentType = "image/jpeg";
                 
                 imageStream = new MemoryStream(idImage);
-                log.LogInformation(String.Format("Client {0}:{1} called GetImagePropertyThumbnail with guid: {2} isCategory: {3}",
-                    HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort, guid.ToString(), isCategory));
+                LogHttpConnection("Client {0}:{1} called GetImagePropertyThumbnail with guid: {2} isCategory: {3}",
+                    guid.ToString(), isCategory);
             }
 
             return imageStream;
@@ -231,9 +237,8 @@ namespace IDBrowserServiceCore.Controllers
                     scope.Complete();
                 }
 
-                if (HttpContext.Connection != null)
-                    log.LogInformation(String.Format("Client {0}:{1} called GetCatalogItems with orderDescending: {2} propertyGuid: {3}",
-                        HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort, orderDescending, propertyGuid));
+                LogHttpConnection("Client {0}:{1} called GetCatalogItems with orderDescending: {2} propertyGuid: {3}",
+                     orderDescending, propertyGuid);
 
                 return catalogItems;
             }
@@ -279,8 +284,8 @@ namespace IDBrowserServiceCore.Controllers
                     scope.Complete();
                 }
 
-                log.LogInformation(String.Format("Client {0}:{1} called GetCatalogItemsByFilePath with orderDescending: {2} filePathGuid: {3}",
-                    HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort, orderDescending, filePathGuid));
+                LogHttpConnection("Client {0}:{1} called GetCatalogItemsByFilePath with orderDescending: {2} filePathGuid: {3}",
+                    orderDescending, filePathGuid);
                 return catalogItems;
             }
             catch (Exception ex)
@@ -331,18 +336,23 @@ namespace IDBrowserServiceCore.Controllers
                 Boolean setGenericVideoThumbnailOnError = Boolean.Parse(configuration["IDBrowserServiceSettings:SetGenericVideoThumbnailOnError"]);
 
                 idThumbs thumb = null;
-                lock (dbThumbs)
-                {
-                    //Searching with FirstOrDefault because PhotoSupreme sometimes stores the Thumbnail twice
-                    thumb = dbThumbs.idThumbs.FirstOrDefault(x => x.ImageGUID == imageGuid && x.idType == type);
 
-                    //If recipe image is not found, return the M image,
-                    //because the programm cannot yet generate the recipe image
-                    if (thumb == null && type == "R")
+                // Distributed transaction are not supported
+                using (var scope2 = new TransactionScope(TransactionScopeOption.Suppress))
+                {
+                    lock (dbThumbs)
                     {
-                        type = "M";
                         //Searching with FirstOrDefault because PhotoSupreme sometimes stores the Thumbnail twice
                         thumb = dbThumbs.idThumbs.FirstOrDefault(x => x.ImageGUID == imageGuid && x.idType == type);
+
+                        //If recipe image is not found, return the M image,
+                        //because the programm cannot yet generate the recipe image
+                        if (thumb == null && type == "R")
+                        {
+                            type = "M";
+                            //Searching with FirstOrDefault because PhotoSupreme sometimes stores the Thumbnail twice
+                            thumb = dbThumbs.idThumbs.FirstOrDefault(x => x.ImageGUID == imageGuid && x.idType == type);
+                        }
                     }
                 }
 
@@ -372,13 +382,13 @@ namespace IDBrowserServiceCore.Controllers
                 //}
                 //else
                 //{
-                //    imageStream = new MemoryStream(thumb.idThumb);
+                imageStream = new MemoryStream(thumb.idThumb);
 
-                //    //if (IsRequestRest()) ??
-                //    HttpContext.Response.ContentType = "image/jpeg";
+                if (HttpContext != null)
+                    HttpContext.Response.ContentType = "image/jpeg";
 
-                //    log.LogInformation(String.Format("Client {0}:{1} called GetImageThumbnail with type: {2} imageGuid: {3} (returned imageStream)",
-                //        HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort, type, imageGuid));
+                LogHttpConnection("Client {0}:{1} called GetImageThumbnail with type: {2} imageGuid: {3} (returned imageStream)",
+                    type, imageGuid);
                 //}
 
                 scope.Complete();
@@ -414,19 +424,22 @@ namespace IDBrowserServiceCore.Controllers
             return imageStream;
         }
 
+        [HttpGet("{imageGuid}")]
+        [ActionName("GetImage")]
         public Stream GetImage(string imageGuid)
         {
             Stream imageStream = null;
             try
             {
-                log.LogInformation(String.Format("Client {0}:{1} called GetImage with imageGuid: {2}",
-                    HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort, imageGuid));
+                LogHttpConnection("Client {0}:{1} called GetImage with imageGuid: {2}", imageGuid);
 
                 imageStream = GetImageStream(imageGuid);
 
-                //if (IsRequestRest())
-                HttpContext.Response.ContentType = "image/jpeg";
-                HttpContext.Response.Headers.Add("Content-Size", imageStream.Length.ToString());
+                if (HttpContext != null)
+                {
+                    HttpContext.Response.ContentType = "image/jpeg";
+                    HttpContext.Response.Headers.Add("Content-Size", imageStream.Length.ToString());
+                }
 
                 return imageStream;
             }
@@ -443,14 +456,16 @@ namespace IDBrowserServiceCore.Controllers
             Stream imageStream = null;
             try
             {
-                log.LogInformation(String.Format("Client {0}:{1} called GetResizedImage with width: {2} height {3} imageGuid: {4}",
-                    HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort, width, height, imageGuid));
+                LogHttpConnection("Client {0}:{1} called GetResizedImage with width: {2} height {3} imageGuid: {4}",
+                    width, height, imageGuid);
 
                 imageStream = GetImageStream(imageGuid, width, height);
 
-                //if (IsRequestRest())
-                HttpContext.Response.ContentType = "image/jpeg";
-                HttpContext.Response.Headers.Add("Content-Size", imageStream.Length.ToString());
+                if (HttpContext != null)
+                {
+                    HttpContext.Response.ContentType = "image/jpeg";
+                    HttpContext.Response.Headers.Add("Content-Size", imageStream.Length.ToString());
+                }
 
                 return imageStream;
             }
@@ -466,12 +481,15 @@ namespace IDBrowserServiceCore.Controllers
         {
             idCatalogItem catalogItem = null;
             Boolean keepAspectRatio = Boolean.Parse(configuration["IDBrowserServiceSettings:KeepAspectRatio"]);
+            string strPathMatch = configuration["IDBrowserServiceSettings:FilePathReplace:PathMatch"];
+            string strPathReplace = configuration["IDBrowserServiceSettings:FilePathReplace:PathReplace"];
 
             catalogItem = db.idCatalogItem.Include("idFilePath").Single(x => x.GUID == imageGuid);
             if (catalogItem == null)
                 throw new Exception("CatalogItem not found");
 
-            Stream imageStream = StaticFunctions.GetImageFileStream(StaticFunctions.GetImageFilePath(catalogItem));
+            string strImageFilePath = StaticFunctions.GetImageFilePath(catalogItem, strPathMatch, strPathReplace);
+            Stream imageStream = StaticFunctions.GetImageFileStream(strImageFilePath);
             //BitmapSource bitmapSource = StaticFunctions.GetBitmapFrameFromImageStream(imageStream, catalogItem.idFileType);
 
             //System.Xml.Linq.XDocument recipeXDocument = null;
@@ -506,6 +524,8 @@ namespace IDBrowserServiceCore.Controllers
             return imageStream;
         }
 
+        [HttpGet("{imageGuid}")]
+        [ActionName("GetImageInfo")]
         public ImageInfo GetImageInfo(string imageGuid)
         {
             try
@@ -539,8 +559,7 @@ namespace IDBrowserServiceCore.Controllers
                     scope.Complete();
                 }
 
-                log.LogInformation(String.Format("Client {0}:{1} called GetImageInfo with imageGuid: {2}",
-                    HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort, imageGuid));
+                LogHttpConnection("Client {0}:{1} called GetImageInfo with imageGuid: {2}", imageGuid);
                 return imageInfo;
             }
             catch (Exception ex)
@@ -550,6 +569,7 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
+        [ActionName("GetRandomImageGuids")]
         public List<String> GetRandomImageGuids()
         {
             try
@@ -566,8 +586,7 @@ namespace IDBrowserServiceCore.Controllers
                     scope.Complete();
                 }
 
-                log.LogInformation(String.Format("Client {0}:{1} called GetRandomImageGuids",
-                    HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort));
+                LogHttpConnection("Client {0}:{1} called GetRandomImageGuids");
                 return randomImageGuids;
             }
             catch (Exception ex)
@@ -577,13 +596,15 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
+        [HttpGet("{imageGuid}")]
+        [ActionName("GetFile")]
         public Stream GetFile(string imageGuid)
         {
             Stream fileStream = null;
             try
             {
-                log.LogInformation(String.Format("Client {0}:{1} called GetFile with imageGuid: {2}",
-                    HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort, imageGuid));
+                LogHttpConnection("Client {0}:{1} called GetFile with imageGuid: {2}",
+                    imageGuid);
 
                 idCatalogItem catalogItem;
 
@@ -596,11 +617,17 @@ namespace IDBrowserServiceCore.Controllers
                 if (catalogItem == null)
                     throw new Exception("CatalogItem not found");
 
-                fileStream = StaticFunctions.GetImageFileStream(StaticFunctions.GetImageFilePath(catalogItem)); ;
+                string strPathMatch = configuration["IDBrowserServiceSettings:FilePathReplace:PathMatch"];
+                string strPathReplace = configuration["IDBrowserServiceSettings:FilePathReplace:PathReplace"];
 
-                //if (IsRequestRest())
-                HttpContext.Response.ContentType = "application/octet-stream";
-                HttpContext.Response.Headers.Add("Content-Size", fileStream.Length.ToString());
+                string strImageFilePath = StaticFunctions.GetImageFilePath(catalogItem, strPathMatch, strPathReplace);
+                fileStream = StaticFunctions.GetImageFileStream(strImageFilePath);
+
+                if (HttpContext != null)
+                {
+                    HttpContext.Response.ContentType = "application/octet-stream";
+                    HttpContext.Response.Headers.Add("Content-Size", fileStream.Length.ToString());
+                }
 
                 return fileStream;
             }
@@ -617,6 +644,8 @@ namespace IDBrowserServiceCore.Controllers
         //    return OperationContext.Current.EndpointDispatcher.ChannelDispatcher.BindingName.Equals("http://tempuri.org/:WebHttpBinding");
         //}
 
+        [HttpGet("{searchString}")]
+        [ActionName("SearchImageProperties")]
         public List<ImagePropertyRecursive> SearchImageProperties(string searchString)
         {
             try
@@ -634,8 +663,7 @@ namespace IDBrowserServiceCore.Controllers
                     scope.Complete();
                 }
 
-                log.LogInformation(String.Format("Client {0}:{1} called SearchImagePropertiesSoap with searchString: {2}",
-                    HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort, searchString));
+                LogHttpConnection("Client {0}:{1} called SearchImagePropertiesSoap with searchString: {2}", searchString);
                 return listImagePropertyRecursive;
             }
             catch (Exception ex)
@@ -645,6 +673,8 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
+        [HttpGet("{catalogItemGUID}")]
+        [ActionName("GetCatalogItemImageProperties")]
         public List<ImagePropertyRecursive> GetCatalogItemImageProperties(string catalogItemGUID)
         {
             try
@@ -669,8 +699,8 @@ namespace IDBrowserServiceCore.Controllers
                     scope.Complete();
                 }
 
-                log.LogInformation(String.Format("Client {0}:{1} called GetCatalogItemImageProperties with catalogItemGUID: {2}",
-                    HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort, catalogItemGUID));
+                LogHttpConnection("Client {0}:{1} called GetCatalogItemImageProperties with catalogItemGUID: {2}",
+                    catalogItemGUID);
                 return listImagePropertyRecursive;
             }
             catch (Exception ex)
@@ -721,6 +751,8 @@ namespace IDBrowserServiceCore.Controllers
             return listImagePropertyRecursive;
         }
 
+        [HttpGet("{propertyGuid}/{catalogItemGUID}")]
+        [ActionName("AddCatalogItemDefinition")]
         public string AddCatalogItemDefinition(string propertyGuid, string catalogItemGUID)
         {
             try
@@ -747,8 +779,8 @@ namespace IDBrowserServiceCore.Controllers
 
                 db.SaveChanges();
 
-                log.LogInformation(String.Format("Client {0}:{1} called AddCatalogItemDefinition with propertyGuid: {2} and catalogItemGUID {3}",
-                    HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort, propertyGuid, catalogItemGUID));
+                LogHttpConnection("Client {0}:{1} called AddCatalogItemDefinition with propertyGuid: {2} and catalogItemGUID {3}",
+                    propertyGuid, catalogItemGUID);
                 return "OK";
             }
             catch (Exception ex)
@@ -758,6 +790,8 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
+        [HttpGet("{propertyGuid}/{catalogItemGUID}")]
+        [ActionName("DeleteCatalogItemDefinition")]
         public string DeleteCatalogItemDefinition(string propertyGuid, string catalogItemGUID)
         {
             try
@@ -774,8 +808,8 @@ namespace IDBrowserServiceCore.Controllers
 
                 db.SaveChanges();
 
-                log.LogInformation(String.Format("Client {0}:{1} called DeleteCatalogItemDefinition with propertyGuid: {2} and catalogItemGUID {3}",
-                    HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort, propertyGuid, catalogItemGUID));
+                LogHttpConnection("Client {0}:{1} called DeleteCatalogItemDefinition with propertyGuid: {2} and catalogItemGUID {3}",
+                    propertyGuid, catalogItemGUID);
                 return "OK";
             }
             catch (Exception ex)
@@ -785,6 +819,8 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
+        [HttpGet("{propertyName}/{parentGUID}")]
+        [ActionName("AddImageProperty")]
         public string AddImageProperty(string propertyName, string parentGUID)
         {
             try
@@ -858,8 +894,8 @@ namespace IDBrowserServiceCore.Controllers
                 db.idProp.Add(newIdProp);
                 db.SaveChanges();
 
-                log.LogInformation(String.Format("Client {0}:{1} called AddImageProperty with propertyName: {2}, parentGUID {3}, lft {4}, rgt {5}",
-                    HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort, propertyName, parentGUID, newIdProp.lft, newIdProp.rgt));
+                LogHttpConnection("Client {0}:{1} called AddImageProperty with propertyName: {2}, parentGUID {3}, lft {4}, rgt {5}",
+                    propertyName, parentGUID, newIdProp.lft, newIdProp.rgt);
                 return "OK";
             }
             catch (Exception ex)
@@ -869,6 +905,7 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
+        [ActionName("GetFilePaths")]
         public List<FilePath> GetFilePaths()
         {
             try
@@ -891,14 +928,23 @@ namespace IDBrowserServiceCore.Controllers
                     listFilePaths = query.ToList();
                 }
 
-                log.LogInformation(String.Format("Client {0}:{1} called GetFilePaths",
-                    HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort));
+                LogHttpConnection("Client {0}:{1} called GetFilePaths");
                 return listFilePaths;
             }
             catch (Exception ex)
             {
                 log.LogError(ex.ToString());
                 throw ex;
+            }
+        }
+
+        private void LogHttpConnection(string formatString, params object[] args)
+        {
+            if (HttpContext != null)
+            {
+                object[] argsArray = new object[] { HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort };
+                argsArray = argsArray.Concat(args).ToArray();
+                log.LogInformation(String.Format(formatString, argsArray));
             }
         }
     }
