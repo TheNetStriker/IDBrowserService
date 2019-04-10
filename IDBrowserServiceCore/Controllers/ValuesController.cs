@@ -90,6 +90,12 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
+        [ActionName("GetStatus")]
+        public string GetStatus()
+        {
+            return "online";
+        }
+
         [HttpGet("{guid?}")]
         [ActionName("GetImageProperties")]
         public List<ImageProperty> GetImageProperties(string guid)

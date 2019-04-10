@@ -14,12 +14,22 @@ namespace IDBrowserServiceCore
     {
         public static void Main(string[] args)
         {
-            BuildWebHost(args).Run();
+            CreateWebHostBuilder(args).Build().Run();
         }
 
-        public static IWebHost BuildWebHost(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                .UseStartup<Startup>()
+        public static IWebHostBuilder CreateWebHostBuilder(string[] args)
+        {
+            var config = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: false)
                 .Build();
+
+            var webHost = WebHost.CreateDefaultBuilder(args)
+                .UseUrls(config.GetValue<string>("urls"))
+                .UseKestrel()
+                .UseStartup<Startup>();
+
+            return webHost;
+        }
     }
 }
