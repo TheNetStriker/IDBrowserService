@@ -25,35 +25,6 @@ namespace IDBrowserServiceCore.Controllers
         private IDImagerDB db;
         private IDImagerDB dbThumbs;
 
-        private static List<String> imageFileExtensions;
-        private static List<String> videoFileExtensions;
-
-        public List<String> ImageFileExtensions
-        {
-            get
-            {
-                if (imageFileExtensions == null)
-                {
-                    imageFileExtensions = configuration["IDBrowserServiceSettings:ImageFileExtensions"]
-                        .Split(new char[] { char.Parse(",") }).ToList();
-                };
-                return imageFileExtensions;
-            }
-        }
-
-        public List<String> VideoFileExtensions
-        {
-            get
-            {
-                if (videoFileExtensions == null)
-                {
-                    videoFileExtensions = configuration["IDBrowserServiceSettings:VideoFileExtensions"]
-                        .Split(new char[] { char.Parse(",") }).ToList();
-                };
-                return videoFileExtensions;
-            }
-        }
-
         public ValuesController(IConfiguration configuration, ILoggerFactory DepLoggerFactory, IHostingEnvironment DepHostingEnvironment)
         {
             this.configuration = configuration;
@@ -487,14 +458,13 @@ namespace IDBrowserServiceCore.Controllers
         {
             idCatalogItem catalogItem = null;
             Boolean keepAspectRatio = Boolean.Parse(configuration["IDBrowserServiceSettings:KeepAspectRatio"]);
-            string strPathMatch = configuration["IDBrowserServiceSettings:FilePathReplace:PathMatch"];
-            string strPathReplace = configuration["IDBrowserServiceSettings:FilePathReplace:PathReplace"];
+            
 
             catalogItem = db.idCatalogItem.Include("idFilePath").Single(x => x.GUID == imageGuid);
             if (catalogItem == null)
                 throw new Exception("CatalogItem not found");
 
-            string strImageFilePath = StaticFunctions.GetImageFilePath(catalogItem, strPathMatch, strPathReplace);
+            string strImageFilePath = StaticFunctions.GetImageFilePath(catalogItem);
             Stream imageStream = StaticFunctions.GetImageFileStream(strImageFilePath);
             //BitmapSource bitmapSource = StaticFunctions.GetBitmapFrameFromImageStream(imageStream, catalogItem.idFileType);
 
@@ -585,7 +555,7 @@ namespace IDBrowserServiceCore.Controllers
                 using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required, readUncommittedTransactionOptions))
                 {
                     var queryRandom = from x in db.idCatalogItem
-                                      where ImageFileExtensions.Contains(x.idFileType)
+                                      where StaticFunctions.ImageFileExtensions.Contains(x.idFileType)
                                       orderby Guid.NewGuid()
                                       select x.GUID;
                     randomImageGuids = queryRandom.Take(100).ToList();
@@ -623,10 +593,7 @@ namespace IDBrowserServiceCore.Controllers
                 if (catalogItem == null)
                     throw new Exception("CatalogItem not found");
 
-                string strPathMatch = configuration["IDBrowserServiceSettings:FilePathReplace:PathMatch"];
-                string strPathReplace = configuration["IDBrowserServiceSettings:FilePathReplace:PathReplace"];
-
-                string strImageFilePath = StaticFunctions.GetImageFilePath(catalogItem, strPathMatch, strPathReplace);
+                string strImageFilePath = StaticFunctions.GetImageFilePath(catalogItem);
                 fileStream = StaticFunctions.GetImageFileStream(strImageFilePath);
 
                 if (HttpContext != null)

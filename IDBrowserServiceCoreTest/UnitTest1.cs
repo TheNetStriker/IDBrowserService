@@ -1,7 +1,9 @@
 using IDBrowserServiceCore;
 using IDBrowserServiceCore.Controllers;
+using IDBrowserServiceCore.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,8 +19,8 @@ namespace IDBrowserServiceCoreTest
 
         public UnitTest1()
         {
+            StaticFunctions.Configuration = Configuration;
             ImagePropertyGuids = new List<String>();
-
             ImageGuids = Controller.GetRandomImageGuids();
 
             List<ImageProperty> ImageProperties = Controller.GetImageProperties(null);
@@ -28,13 +30,13 @@ namespace IDBrowserServiceCoreTest
             }
         }
 
-        private readonly IConfiguration configuration;
+        private IConfiguration configuration;
         public IConfiguration Configuration
         {
             get
             {
                 if (configuration == null)
-                    return new ConfigurationBuilder()
+                    configuration = new ConfigurationBuilder()
                         .SetBasePath(Directory.GetCurrentDirectory())
                         .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                         .Build();
@@ -43,17 +45,41 @@ namespace IDBrowserServiceCoreTest
             }
         }
 
-        private readonly ILoggerFactory logger;
+        private ILoggerFactory logger;
         public ILoggerFactory Logger
         {
             get
             {
                 if (logger == null)
-                    return new LoggerFactory()
+                    logger = new LoggerFactory()
                         .AddConsole()
                         .AddDebug();
 
                 return logger;
+            }
+        }
+
+        private IDImagerDB db;
+        public IDImagerDB Db
+        {
+            get
+            {
+                if (db == null)
+                    db = new IDImagerDB(configuration["ConnectionStrings:IDImager"]);
+
+                return db;
+            }
+        }
+
+        private IDImagerDB dbThumbs;
+        public IDImagerDB DbThumbs
+        {
+            get
+            {
+                if (dbThumbs == null)
+                    dbThumbs = new IDImagerDB(configuration["ConnectionStrings:IDImagerThumbs"]);
+
+                return dbThumbs;
             }
         }
 
@@ -159,6 +185,36 @@ namespace IDBrowserServiceCoreTest
             List<FilePath> result = Controller.GetFilePaths();
             if (result.Count == 0)
                 throw new Exception("No file paths found with GetFilePathsSoap");
+        }
+
+        [Fact]
+        public void SaveImageThumbnailTest()
+        {
+            Boolean keepAspectRatio = Boolean.Parse(Configuration["IDBrowserServiceSettings:KeepAspectRatio"]);
+            Boolean setGenericVideoThumbnailOnError = Boolean.Parse(Configuration["IDBrowserServiceSettings:SetGenericVideoThumbnailOnError"]);
+            idCatalogItem idCatalogItem = Db.idCatalogItem.Include("idFilePath").First();
+            List<String> types = new List<String>() { "T", "R", "M" };
+
+            SaveImageThumbnailResult result = StaticFunctions
+                .SaveImageThumbnail(idCatalogItem, Db, DbThumbs, types, keepAspectRatio, setGenericVideoThumbnailOnError);
+
+            if (result.Exceptions.Count > 0)
+                throw result.Exceptions.First();
+        }
+
+        [Fact]
+        public void SaveVideoThumbnailTest()
+        {
+            Boolean keepAspectRatio = Boolean.Parse(Configuration["IDBrowserServiceSettings:KeepAspectRatio"]);
+            Boolean setGenericVideoThumbnailOnError = Boolean.Parse(Configuration["IDBrowserServiceSettings:SetGenericVideoThumbnailOnError"]);
+            idCatalogItem idCatalogItem = Db.idCatalogItem.Include("idFilePath").Where(x => x.FileName.EndsWith(".MP4")).First();
+            List<String> types = new List<String>() { "T", "R", "M" };
+
+            SaveImageThumbnailResult result = StaticFunctions
+                .SaveImageThumbnail(idCatalogItem, Db, DbThumbs, types, keepAspectRatio, setGenericVideoThumbnailOnError);
+
+            if (result.Exceptions.Count > 0)
+                throw result.Exceptions.First();
         }
     }
 }

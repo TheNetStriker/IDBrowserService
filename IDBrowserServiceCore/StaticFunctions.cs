@@ -1,25 +1,62 @@
 ﻿using ComponentAce.Compression.Libs.zlib;
 using IDBrowserServiceCore.Data;
+using ImageMagick;
+using Microsoft.Extensions.Configuration;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Xml.Linq;
 
 namespace IDBrowserServiceCore
 {
     public class StaticFunctions
     {
+        private static List<String> imageFileExtensions;
+        private static List<String> videoFileExtensions;
+
+        public static IConfiguration Configuration { get; set; }
+
+        public static List<String> ImageFileExtensions
+        {
+            get
+            {
+                if (imageFileExtensions == null)
+                {
+                    imageFileExtensions = Configuration["IDBrowserServiceSettings:ImageFileExtensions"]
+                        .Split(new char[] { char.Parse(",") }).ToList();
+                };
+                return imageFileExtensions;
+            }
+        }
+
+        public static List<String> VideoFileExtensions
+        {
+            get
+            {
+                if (videoFileExtensions == null)
+                {
+                    videoFileExtensions = Configuration["IDBrowserServiceSettings:VideoFileExtensions"]
+                        .Split(new char[] { char.Parse(",") }).ToList();
+                };
+                return videoFileExtensions;
+            }
+        }
+
         public static FileStream GetImageFileStream(string filePath)
         {
             FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
             return fileStream;
         }
 
-        public static String GetImageFilePath(idCatalogItem catalogItem, string pathMatch, string pathReplace)
+        public static String GetImageFilePath(idCatalogItem catalogItem)
         {
+            string strPathMatch = Configuration["IDBrowserServiceSettings:FilePathReplace:PathMatch"];
+            string strPathReplace = Configuration["IDBrowserServiceSettings:FilePathReplace:PathReplace"];
             string strFilePath = catalogItem.idFilePath.FilePath;
 
-            if (!string.IsNullOrEmpty(pathMatch) && !string.IsNullOrEmpty(pathReplace))
-                strFilePath = strFilePath.Replace(pathMatch, pathReplace, StringComparison.CurrentCultureIgnoreCase);
+            if (!string.IsNullOrEmpty(strPathMatch) && !string.IsNullOrEmpty(strPathReplace))
+                strFilePath = strFilePath.Replace(strPathMatch, strPathReplace, StringComparison.CurrentCultureIgnoreCase);
 
             if (Path.DirectorySeparatorChar != '\\')
                 strFilePath = strFilePath.Replace('\\', Path.DirectorySeparatorChar);
@@ -52,6 +89,127 @@ namespace IDBrowserServiceCore
         //    bitmapFrame = bitmapDecoder.Frames[0];
         //    return bitmapFrame;
         //}
+
+        public static SaveImageThumbnailResult SaveImageThumbnail(idCatalogItem catalogItem, IDImagerDB db, IDImagerDB dbThumbs,
+            List<String> types, Boolean keepAspectRatio, Boolean setGenericVideoThumbnailOnError)
+        {
+            SaveImageThumbnailResult result = new SaveImageThumbnailResult();
+            Stream imageStream = null;
+            String filePath = null;
+
+            try
+            {
+                filePath = GetImageFilePath(catalogItem);
+
+                //if (ImageFileExtensions.Contains(catalogItem.idFileType))
+                //{
+                imageStream = GetImageFileStream(filePath);
+                //}
+                //else if (VideoFileExtensions.Contains(catalogItem.idFileType))
+                //{
+                    //try
+                    //{
+                    //    bitmapFrame = BitmapFrame.Create((BitmapSource)GenerateVideoThumbnail(filePath, new TimeSpan(0, 0, 0)));
+                    //}
+                    //catch (Exception ex)
+                    //{
+                    //    if (setGenericVideoThumbnailOnError)
+                    //    {
+                    //        result.Exceptions.Add(new Exception(String.Format("Video thumbnail generation for imageGUID {0} file {1} failed. Generic thumbnails has been set.", catalogItem.GUID, filePath), ex));
+
+                    //        Assembly assembly = Assembly.GetExecutingAssembly();
+                    //        Stream genericVideoThumbnailStream = assembly.GetManifestResourceStream(@"IDBrowserServiceCode.Images.image_ph2.png");
+                    //        bitmapFrame = BitmapFrame.Create(genericVideoThumbnailStream);
+                    //    }
+                    //    else
+                    //    {
+                    //        result.Exceptions.Add(new Exception(String.Format("Video thumbnail generation for imageGUID {0} file {1} failed.", catalogItem.GUID, filePath), ex));
+                    //        return result;
+                    //    }
+                    //}
+                //}
+                //else
+                //{
+                //    throw new Exception(String.Format("File type {0} not supported", catalogItem.idFileType));
+                //}
+
+                foreach (String type in types)
+                {
+                    int imageWidth;
+                    int imageHeight;
+
+                    if (type.Equals("T"))
+                    {
+                        imageWidth = 160;
+                        imageHeight = 120;
+                    }
+                    else
+                    {
+                        imageWidth = Int32.Parse(Configuration["IDBrowserServiceSettings:MThumbmailWidth"]);
+                        imageHeight = Int32.Parse(Configuration["IDBrowserServiceSettings:MThumbnailHeight"]);
+                    }
+
+                    XDocument recipeXDocument = null;
+                    if (type.Equals("T") || type.Equals("R"))
+                    {
+                        if (catalogItem.idHasRecipe > 0)
+                            recipeXDocument = GetRecipeXDocument(db, catalogItem);
+                    }
+
+                    MemoryStream resizedImageStream = new MemoryStream();
+
+                    imageStream.Position = 0;
+                    MagickImage image = new MagickImage(imageStream, new MagickReadSettings { Format = MagickFormat.Mp4 });
+
+                    image.Format = MagickFormat.Jpeg;
+                    image.Resize(imageWidth, imageHeight);
+                    image.Write(resizedImageStream);
+                    resizedImageStream.Position = 0;
+
+                    //if (Recipe.ApplyXmpRecipe(recipeXDocument, ref bitmapSource, transformGroup))
+                    //{
+                    //    BitmapFrame transformedBitmapFrame = BitmapFrame.Create(bitmapSource);
+
+                    //    JpegBitmapEncoder encoder = new JpegBitmapEncoder();
+                    //    encoder.Frames.Add(transformedBitmapFrame);
+                    //    resizedImageStream = new System.IO.MemoryStream();
+                    //    encoder.Save(resizedImageStream);
+                    //    resizedImageStream.Position = 0;
+                    //}
+                    
+                    lock (dbThumbs)
+                    {
+                        bool boolThumbExists = dbThumbs.idThumbs
+                            .Any(x => x.ImageGUID == catalogItem.GUID  && x.idType == type);
+
+                        if (!boolThumbExists)
+                        {
+                            idThumbs newThumb = new idThumbs
+                            {
+                                GUID = Guid.NewGuid().ToString().ToUpper(),
+                                ImageGUID = catalogItem.GUID,
+                                idThumb = StreamToByteArray(resizedImageStream),
+                                idType = type
+                            };
+
+                            dbThumbs.idThumbs.Add(newThumb);
+                        }
+                    }
+
+                    result.ImageStreams.Add(resizedImageStream);
+                }
+
+                if (imageStream != null) { imageStream.Close(); }
+                dbThumbs.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                if (imageStream != null) { imageStream.Close(); }
+                result.Exceptions.Add(new Exception(String.Format("Error generating thumbnail for imageGUID {0} file {1}", catalogItem.GUID, filePath), ex));
+            }
+
+            return result;
+        }
 
         //public static SaveImageThumbnailResult SaveImageThumbnail(idCatalogItem catalogItem, ref IDImagerDB db, ref IDImagerDB dbThumbs,
         //    List<String> types, Boolean keepAspectRatio, Boolean setGenericVideoThumbnailOnError)

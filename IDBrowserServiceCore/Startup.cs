@@ -11,6 +11,7 @@ namespace IDBrowserServiceCore
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            StaticFunctions.Configuration = configuration;
         }
 
         public IConfiguration Configuration { get; }
