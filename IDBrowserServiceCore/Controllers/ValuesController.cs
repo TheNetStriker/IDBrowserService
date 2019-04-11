@@ -74,9 +74,9 @@ namespace IDBrowserServiceCore.Controllers
             try
             {
                 if (string.IsNullOrEmpty(guid))
-                    LogHttpConnection("Client {0}:{1} called GetImageProperties");
+                    LogHttpConnection("GetImageProperties");
                 else
-                    LogHttpConnection("Client {0}:{1} called GetImageProperties with guid: {2}", guid);
+                    LogHttpConnection(string.Format("GetImageProperties with guid: {0}", guid));
 
                 List<ImageProperty> listImageProperty;
 
@@ -164,8 +164,8 @@ namespace IDBrowserServiceCore.Controllers
             Stream imageStream = null;
             if (idImage == null)
             {
-                LogHttpConnection("Client {0}:{1} called GetImagePropertyThumbnail with guid: {2} isCategory: {3} (returned null)",
-                    guid, isCategory);
+                LogHttpConnection(string.Format("GetImagePropertyThumbnail with guid: {0} isCategory: {1} (returned null)",
+                    guid, isCategory));
             }
             else
             {
@@ -173,8 +173,8 @@ namespace IDBrowserServiceCore.Controllers
                     HttpContext.Response.ContentType = "image/jpeg";
                 
                 imageStream = new MemoryStream(idImage);
-                LogHttpConnection("Client {0}:{1} called GetImagePropertyThumbnail with guid: {2} isCategory: {3}",
-                    guid.ToString(), isCategory);
+                LogHttpConnection(string.Format("GetImagePropertyThumbnail with guid: {0} isCategory: {1}",
+                    guid.ToString(), isCategory));
             }
 
             return imageStream;
@@ -216,8 +216,8 @@ namespace IDBrowserServiceCore.Controllers
                     scope.Complete();
                 }
 
-                LogHttpConnection("Client {0}:{1} called GetCatalogItems with orderDescending: {2} propertyGuid: {3}",
-                     orderDescending, propertyGuid);
+                LogHttpConnection(string.Format("GetCatalogItems with orderDescending: {0} propertyGuid: {1}",
+                     orderDescending, propertyGuid));
 
                 return catalogItems;
             }
@@ -264,8 +264,8 @@ namespace IDBrowserServiceCore.Controllers
                     scope.Complete();
                 }
 
-                LogHttpConnection("Client {0}:{1} called GetCatalogItemsByFilePath with orderDescending: {2} filePathGuid: {3}",
-                    orderDescending, filePathGuid);
+                LogHttpConnection(string.Format("GetCatalogItemsByFilePath with orderDescending: {0} filePathGuid: {1}",
+                    orderDescending, filePathGuid));
                 return catalogItems;
             }
             catch (Exception ex)
@@ -349,12 +349,12 @@ namespace IDBrowserServiceCore.Controllers
                 //        //if (IsRequestRest()) ??
                 //        HttpContext.Response.ContentType = "image/jpeg";
 
-                //        log.LogInformation(String.Format("Client {0}:{1} called GetImageThumbnail with type: {2} imageGuid: {3} (returned resizedImageStream)",
+                //        log.LogInformation(String.Format("GetImageThumbnail with type: {2} imageGuid: {3} (returned resizedImageStream)",
                 //            HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort, type, imageGuid));
                 //    }
                 //    else
                 //    {
-                //        log.LogInformation(String.Format("Client {0}:{1} called GetImageThumbnail with type: {2} imageGuid: {3} (returned null)",
+                //        log.LogInformation(String.Format("GetImageThumbnail with type: {2} imageGuid: {3} (returned null)",
                 //            HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort, type, imageGuid));
                 //    }
                 //}
@@ -365,8 +365,8 @@ namespace IDBrowserServiceCore.Controllers
                 if (HttpContext != null)
                     HttpContext.Response.ContentType = "image/jpeg";
 
-                LogHttpConnection("Client {0}:{1} called GetImageThumbnail with type: {2} imageGuid: {3} (returned imageStream)",
-                    type, imageGuid);
+                LogHttpConnection(string.Format("GetImageThumbnail with type: {0} imageGuid: {1} (returned imageStream)",
+                    type, imageGuid));
                 //}
 
                 scope.Complete();
@@ -409,7 +409,7 @@ namespace IDBrowserServiceCore.Controllers
             Stream imageStream = null;
             try
             {
-                LogHttpConnection("Client {0}:{1} called GetImage with imageGuid: {2}", imageGuid);
+                LogHttpConnection(string.Format("GetImage with imageGuid: {0}", imageGuid));
 
                 imageStream = await GetImageStream(imageGuid);
 
@@ -436,8 +436,8 @@ namespace IDBrowserServiceCore.Controllers
             Stream imageStream = null;
             try
             {
-                LogHttpConnection("Client {0}:{1} called GetResizedImage with width: {2} height {3} imageGuid: {4}",
-                    width, height, imageGuid);
+                LogHttpConnection(string.Format("GetResizedImage with width: {0} height {1} imageGuid: {2}",
+                    width, height, imageGuid));
 
                 imageStream = await GetImageStream(imageGuid, width, height);
 
@@ -541,7 +541,7 @@ namespace IDBrowserServiceCore.Controllers
                     scope.Complete();
                 }
 
-                LogHttpConnection("Client {0}:{1} called GetImageInfo with imageGuid: {2}", imageGuid);
+                LogHttpConnection(string.Format("GetImageInfo with imageGuid: {0}", imageGuid));
                 return imageInfo;
             }
             catch (Exception ex)
@@ -569,7 +569,7 @@ namespace IDBrowserServiceCore.Controllers
                     scope.Complete();
                 }
 
-                LogHttpConnection("Client {0}:{1} called GetRandomImageGuids");
+                LogHttpConnection("GetRandomImageGuids");
                 return randomImageGuids;
             }
             catch (Exception ex)
@@ -586,8 +586,7 @@ namespace IDBrowserServiceCore.Controllers
             Stream fileStream = null;
             try
             {
-                LogHttpConnection("Client {0}:{1} called GetFile with imageGuid: {2}",
-                    imageGuid);
+                LogHttpConnection(string.Format("GetFile with imageGuid: {0}", imageGuid));
 
                 idCatalogItem catalogItem;
 
@@ -645,7 +644,7 @@ namespace IDBrowserServiceCore.Controllers
                     scope.Complete();
                 }
 
-                LogHttpConnection("Client {0}:{1} called SearchImagePropertiesSoap with searchString: {2}", searchString);
+                LogHttpConnection(string.Format("SearchImagePropertiesSoap with searchString: {0}", searchString));
                 return listImagePropertyRecursive;
             }
             catch (Exception ex)
@@ -682,8 +681,8 @@ namespace IDBrowserServiceCore.Controllers
                     scope.Complete();
                 }
 
-                LogHttpConnection("Client {0}:{1} called GetCatalogItemImageProperties with catalogItemGUID: {2}",
-                    catalogItemGUID);
+                LogHttpConnection(string.Format("GetCatalogItemImageProperties with catalogItemGUID: {0}",
+                    catalogItemGUID));
                 return listImagePropertyRecursive;
             }
             catch (Exception ex)
@@ -769,8 +768,8 @@ namespace IDBrowserServiceCore.Controllers
 
                 await db.SaveChangesAsync();
 
-                LogHttpConnection("Client {0}:{1} called AddCatalogItemDefinition with propertyGuid: {2} and catalogItemGUID {3}",
-                    propertyGuid, catalogItemGUID);
+                LogHttpConnection(string.Format("AddCatalogItemDefinition with propertyGuid: {0} and catalogItemGUID {1}",
+                    propertyGuid, catalogItemGUID));
                 return "OK";
             }
             catch (Exception ex)
@@ -801,8 +800,8 @@ namespace IDBrowserServiceCore.Controllers
 
                 await db.SaveChangesAsync();
 
-                LogHttpConnection("Client {0}:{1} called DeleteCatalogItemDefinition with propertyGuid: {2} and catalogItemGUID {3}",
-                    propertyGuid, catalogItemGUID);
+                LogHttpConnection(string.Format("DeleteCatalogItemDefinition with propertyGuid: {0} and catalogItemGUID {1}",
+                    propertyGuid, catalogItemGUID));
                 return "OK";
             }
             catch (Exception ex)
@@ -889,8 +888,8 @@ namespace IDBrowserServiceCore.Controllers
                 db.idProp.Add(newIdProp);
                 await db.SaveChangesAsync();
 
-                LogHttpConnection("Client {0}:{1} called AddImageProperty with propertyName: {2}, parentGUID {3}, lft {4}, rgt {5}",
-                    propertyName, parentGUID, newIdProp.lft, newIdProp.rgt);
+                LogHttpConnection(string.Format("AddImageProperty with propertyName: {0}, parentGUID {1}, lft {2}, rgt {3}",
+                    propertyName, parentGUID, newIdProp.lft, newIdProp.rgt));
                 return "OK";
             }
             catch (Exception ex)
@@ -924,7 +923,7 @@ namespace IDBrowserServiceCore.Controllers
                     listFilePaths = await query.ToListAsync();
                 }
 
-                LogHttpConnection("Client {0}:{1} called GetFilePaths");
+                LogHttpConnection("GetFilePaths");
                 return listFilePaths;
             }
             catch (Exception ex)
@@ -934,13 +933,16 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
-        private void LogHttpConnection(string formatString, params object[] args)
+        private void LogHttpConnection(string callingMethod)
         {
             if (HttpContext != null)
             {
-                object[] argsArray = new object[] { HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort };
-                argsArray = argsArray.Concat(args).ToArray();
-                log.LogInformation(String.Format(formatString, argsArray));
+                log.LogInformation(String.Format("Client {0}:{1} called " + callingMethod, 
+                    HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort));
+            }
+            else
+            {
+                log.LogInformation(String.Format("Called ", callingMethod));
             }
         }
     }
