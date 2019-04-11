@@ -1,6 +1,5 @@
 using IDBrowserServiceCore;
 using IDBrowserServiceCore.Controllers;
-using IDBrowserServiceCore.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +10,6 @@ using System.Linq;
 using Xunit;
 using IDBrowserServiceCore.Data.IDImager;
 using IDBrowserServiceCore.Data.IDImagerThumbs;
-using Microsoft.EntityFrameworkCore;
 
 namespace IDBrowserServiceCoreTest
 {
