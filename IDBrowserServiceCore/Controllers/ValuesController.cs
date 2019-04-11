@@ -174,7 +174,7 @@ namespace IDBrowserServiceCore.Controllers
                 
                 imageStream = new MemoryStream(idImage);
                 LogHttpConnection(string.Format("GetImagePropertyThumbnail with guid: {0} isCategory: {1}",
-                    guid.ToString(), isCategory));
+                    guid, isCategory));
             }
 
             return imageStream;
@@ -935,14 +935,14 @@ namespace IDBrowserServiceCore.Controllers
 
         private void LogHttpConnection(string callingMethod)
         {
-            if (HttpContext != null)
+            if (HttpContext != null && HttpContext.Connection != null)
             {
-                log.LogInformation(String.Format("Client {0}:{1} called " + callingMethod, 
-                    HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort));
+                log.LogInformation(String.Format("Client {0}:{1} called {2}", 
+                    HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort, callingMethod));
             }
             else
             {
-                log.LogInformation(String.Format("Called ", callingMethod));
+                log.LogInformation(String.Format("Called {0}", callingMethod));
             }
         }
     }
