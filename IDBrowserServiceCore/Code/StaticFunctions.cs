@@ -125,11 +125,14 @@ namespace IDBrowserServiceCore.Code
                         imageHeight = Int32.Parse(Configuration["IDBrowserServiceSettings:MThumbnailHeight"]);
                     }
 
-                    XDocument recipeXDocument = null;
+                    XmpReceipe xmpReceipe = null;
                     if (type.Equals("T") || type.Equals("R"))
                     {
                         if (catalogItem.idHasRecipe > 0)
-                            recipeXDocument = GetRecipeXDocument(db, catalogItem);
+                        {
+                            XDocument recipeXDocument = GetRecipeXDocument(db, catalogItem);
+                            xmpReceipe = XmpRecipeHelper.ParseXmlRecepie(recipeXDocument);
+                        }
                     }
 
                     MemoryStream resizedImageStream = new MemoryStream();
@@ -140,7 +143,7 @@ namespace IDBrowserServiceCore.Code
                     image.Format = MagickFormat.Jpeg;
                     image.Resize(imageWidth, imageHeight);
 
-                    XmpRecipeHelper.ApplyXmpRecipe(recipeXDocument, image);
+                    XmpRecipeHelper.ApplyXmpRecipe(xmpReceipe, image);
 
                     image.Write(resizedImageStream);
                     resizedImageStream.Position = 0;
