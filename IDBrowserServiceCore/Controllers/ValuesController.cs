@@ -14,6 +14,7 @@ using IDBrowserServiceCore.Data.IDImagerThumbs;
 using IDBrowserServiceCore.Data;
 using IDBrowserServiceCore.Code;
 using ImageMagick;
+using System.Threading.Tasks;
 
 namespace IDBrowserServiceCore.Controllers
 {
@@ -68,7 +69,7 @@ namespace IDBrowserServiceCore.Controllers
 
         [HttpGet("{guid?}")]
         [ActionName("GetImageProperties")]
-        public List<ImageProperty> GetImageProperties(string guid)
+        public async Task<ActionResult<List<ImageProperty>>> GetImageProperties(string guid)
         {
             try
             {
@@ -92,7 +93,7 @@ namespace IDBrowserServiceCore.Controllers
                                     SubPropertyCount = db.idProp.Where(x => x.ParentGUID == tbl.GUID).Count()
                                 };
 
-                    listImageProperty = query.ToList();
+                    listImageProperty = await query.ToListAsync();
                 }
                 else
                 {
@@ -107,7 +108,7 @@ namespace IDBrowserServiceCore.Controllers
                                     SubPropertyCount = db.idProp.Where(x => x.ParentGUID == tbl.GUID).Count()
                                 };
 
-                    listImageProperty = query.ToList();
+                    listImageProperty = await query.ToListAsync();
                 }
 
                 return listImageProperty;
@@ -121,11 +122,11 @@ namespace IDBrowserServiceCore.Controllers
 
         [HttpGet("{guid}/{isCategory}")]
         [ActionName("GetImagePropertyThumbnail")]
-        public Stream GetImagePropertyThumbnail(string guid, string isCategory)
+        public async Task<ActionResult<Stream>> GetImagePropertyThumbnail(string guid, string isCategory)
         {
             try
             {
-                return GetImagePropertyThumbnailStream(guid, isCategory);
+                return await GetImagePropertyThumbnailStream(guid, isCategory);
             }
             catch (Exception ex)
             {
@@ -136,24 +137,25 @@ namespace IDBrowserServiceCore.Controllers
 
         [HttpGet("{guid}/{isCategory}/{width}/{height}")]
         [ActionName("GetResizedImagePropertyThumbnail")]
-        public Stream GetResizedImagePropertyThumbnail(string guid, string isCategory, string width, string height)
+        public async Task<ActionResult<Stream>> GetResizedImagePropertyThumbnail(string guid, string isCategory, string width, string height)
         {
-            return GetImagePropertyThumbnailStream(guid, isCategory, width, height);
+            return await GetImagePropertyThumbnailStream(guid, isCategory, width, height);
         }
 
-        private Stream GetImagePropertyThumbnailStream(string guid, string isCategory, string width = null, string height = null)
+        private async Task<ActionResult<Stream>> GetImagePropertyThumbnailStream(string guid, string isCategory, string width = null, string height = null)
         {
             byte[] idImage;
 
-            using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required, readUncommittedTransactionOptions))
+            using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
+                readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
             {
                 if (Boolean.Parse(isCategory))
                 {
-                    idImage = db.idPropCategory.Single(x => x.GUID == guid).idImage;
+                    idImage = await db.idPropCategory.Where(x => x.GUID == guid).Select(x => x.idImage).SingleAsync();
                 }
                 else
                 {
-                    idImage = db.idProp.Single(x => x.GUID == guid).idImage;
+                    idImage = await db.idProp.Where(x => x.GUID == guid).Select(x => x.idImage).SingleAsync();
                 }
 
                 scope.Complete();
@@ -180,7 +182,7 @@ namespace IDBrowserServiceCore.Controllers
 
         [HttpGet("{orderDescending}/{propertyGuid}")]
         [ActionName("GetCatalogItems")]
-        public List<CatalogItem> GetCatalogItems(string orderDescending, string propertyGuid)
+        public async Task<ActionResult<List<CatalogItem>>> GetCatalogItems(string orderDescending, string propertyGuid)
         {
             try
             {
@@ -190,7 +192,8 @@ namespace IDBrowserServiceCore.Controllers
                             where tbl.GUID == propertyGuid
                             select tbl;
 
-                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required, readUncommittedTransactionOptions))
+                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
+                    readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
                 {
                     if (Boolean.Parse(orderDescending))
                     {
@@ -201,14 +204,14 @@ namespace IDBrowserServiceCore.Controllers
                         query = query.OrderBy(x => x.idCatalogItem.DateTimeStamp);
                     }
 
-                    catalogItems = query.Select(x => new CatalogItem
+                    catalogItems = await query.Select(x => new CatalogItem
                     {
                         GUID = x.CatalogItemGUID,
                         FileName = x.idCatalogItem.FileName,
                         FileType = x.idCatalogItem.idFileType,
                         FilePath = x.idCatalogItem.idFilePath.FilePath,
                         HasRecipe = x.idCatalogItem.idHasRecipe
-                    }).ToList();
+                    }).ToListAsync();
 
                     scope.Complete();
                 }
@@ -227,7 +230,7 @@ namespace IDBrowserServiceCore.Controllers
 
         [HttpGet("{orderDescending}/{filePathGuid}")]
         [ActionName("GetCatalogItemsByFilePath")]
-        public List<CatalogItem> GetCatalogItemsByFilePath(string orderDescending, string filePathGuid)
+        public async Task<ActionResult<List<CatalogItem>>> GetCatalogItemsByFilePath(string orderDescending, string filePathGuid)
         {
             try
             {
@@ -237,7 +240,8 @@ namespace IDBrowserServiceCore.Controllers
                             where tbl.PathGUID == filePathGuid
                             select tbl;
 
-                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required, readUncommittedTransactionOptions))
+                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
+                    readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
                 {
                     if (Boolean.Parse(orderDescending))
                     {
@@ -248,14 +252,14 @@ namespace IDBrowserServiceCore.Controllers
                         query = query.OrderBy(x => x.DateTimeStamp);
                     }
 
-                    catalogItems = query.Select(x => new CatalogItem
+                    catalogItems = await query.Select(x => new CatalogItem
                     {
                         GUID = x.GUID,
                         FileName = x.FileName,
                         FileType = x.idFileType,
                         FilePath = x.idFilePath.FilePath,
                         HasRecipe = x.idHasRecipe
-                    }).ToList();
+                    }).ToListAsync();
 
                     scope.Complete();
                 }
@@ -273,11 +277,11 @@ namespace IDBrowserServiceCore.Controllers
 
         [HttpGet("{type}/{imageGuid}")]
         [ActionName("GetImageThumbnail")]
-        public Stream GetImageThumbnail(string type, string imageGuid)
+        public async Task<ActionResult<Stream>> GetImageThumbnail(string type, string imageGuid)
         {
             try
             {
-                return GetImageThumbnailStream(type, imageGuid);
+                return await GetImageThumbnailStream(type, imageGuid);
             }
             catch (Exception ex)
             {
@@ -286,7 +290,7 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
-        private Stream GetImageThumbnailStream(string type, string imageGuid, string width = null, string height = null)
+        private async Task<ActionResult<Stream>> GetImageThumbnailStream(string type, string imageGuid, string width = null, string height = null)
         {
             if (type != "T" && type != "R" && type != "M")
                 throw new Exception("Unsupported image type");
@@ -294,9 +298,10 @@ namespace IDBrowserServiceCore.Controllers
             idCatalogItem catalogItem = null;
             Stream imageStream = null;
 
-            using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required, readUncommittedTransactionOptions))
+            using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
+                readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
             {
-                catalogItem = db.idCatalogItem.Include("idFilePath").Single(x => x.GUID == imageGuid);
+                catalogItem = await db.idCatalogItem.Include("idFilePath").SingleAsync(x => x.GUID == imageGuid);
 
                 if (catalogItem == null)
                     throw new Exception("CatalogItem not found");
@@ -314,10 +319,10 @@ namespace IDBrowserServiceCore.Controllers
                 idThumbs thumb = null;
 
                 // Distributed transaction are not supported
-                using (var scope2 = new TransactionScope(TransactionScopeOption.Suppress))
+                using (var scope2 = new TransactionScope(TransactionScopeOption.Suppress, TransactionScopeAsyncFlowOption.Enabled))
                 {
                     //Searching with FirstOrDefault because PhotoSupreme sometimes stores the Thumbnail twice
-                    thumb = dbThumbs.idThumbs.FirstOrDefault(x => x.ImageGUID == imageGuid && x.idType == type);
+                    thumb = await dbThumbs.idThumbs.FirstOrDefaultAsync(x => x.ImageGUID == imageGuid && x.idType == type);
 
                     //If recipe image is not found, return the M image,
                     //because the programm cannot yet generate the recipe image
@@ -325,7 +330,7 @@ namespace IDBrowserServiceCore.Controllers
                     {
                         type = "M";
                         //Searching with FirstOrDefault because PhotoSupreme sometimes stores the Thumbnail twice
-                        thumb = dbThumbs.idThumbs.FirstOrDefault(x => x.ImageGUID == imageGuid && x.idType == type);
+                        thumb = await dbThumbs.idThumbs.FirstOrDefaultAsync(x => x.ImageGUID == imageGuid && x.idType == type);
                     }
                 }
 
@@ -399,14 +404,14 @@ namespace IDBrowserServiceCore.Controllers
 
         [HttpGet("{imageGuid}")]
         [ActionName("GetImage")]
-        public Stream GetImage(string imageGuid)
+        public async Task<ActionResult<Stream>> GetImage(string imageGuid)
         {
             Stream imageStream = null;
             try
             {
                 LogHttpConnection("Client {0}:{1} called GetImage with imageGuid: {2}", imageGuid);
 
-                imageStream = GetImageStream(imageGuid);
+                imageStream = await GetImageStream(imageGuid);
 
                 if (HttpContext != null)
                 {
@@ -426,7 +431,7 @@ namespace IDBrowserServiceCore.Controllers
 
         [HttpGet("{width}/{height}/{imageGuid}")]
         [ActionName("GetResizedImage")]
-        public Stream GetResizedImage(string width, string height, string imageGuid)
+        public async Task<ActionResult<Stream>> GetResizedImage(string width, string height, string imageGuid)
         {
             Stream imageStream = null;
             try
@@ -434,7 +439,7 @@ namespace IDBrowserServiceCore.Controllers
                 LogHttpConnection("Client {0}:{1} called GetResizedImage with width: {2} height {3} imageGuid: {4}",
                     width, height, imageGuid);
 
-                imageStream = GetImageStream(imageGuid, width, height);
+                imageStream = await GetImageStream(imageGuid, width, height);
 
                 if (HttpContext != null)
                 {
@@ -452,12 +457,12 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
-        private Stream GetImageStream(string imageGuid, string width = null, string height = null)
+        private async Task<Stream> GetImageStream(string imageGuid, string width = null, string height = null)
         {
             idCatalogItem catalogItem = null;
             Boolean keepAspectRatio = Boolean.Parse(configuration["IDBrowserServiceSettings:KeepAspectRatio"]);
 
-            catalogItem = db.idCatalogItem.Include("idFilePath").Single(x => x.GUID == imageGuid);
+            catalogItem = await db.idCatalogItem.Include("idFilePath").SingleAsync(x => x.GUID == imageGuid);
             if (catalogItem == null)
                 throw new Exception("CatalogItem not found");
 
@@ -467,7 +472,7 @@ namespace IDBrowserServiceCore.Controllers
             XmpReceipe xmpReceipe = null;
             try
             {
-                System.Xml.Linq.XDocument recipeXDocument = StaticFunctions.GetRecipeXDocument(db, catalogItem);
+                System.Xml.Linq.XDocument recipeXDocument = await StaticFunctions.GetRecipeXDocument(db, catalogItem);
                 xmpReceipe = XmpRecipeHelper.ParseXmlRecepie(recipeXDocument);
             }
             catch (Exception ex)
@@ -502,7 +507,7 @@ namespace IDBrowserServiceCore.Controllers
 
         [HttpGet("{imageGuid}")]
         [ActionName("GetImageInfo")]
-        public ImageInfo GetImageInfo(string imageGuid)
+        public async Task<ActionResult<ImageInfo>> GetImageInfo(string imageGuid)
         {
             try
             {
@@ -513,9 +518,10 @@ namespace IDBrowserServiceCore.Controllers
 
                 ImageInfo imageInfo = null;
 
-                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required, readUncommittedTransactionOptions))
+                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
+                    readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
                 {
-                    imageInfo = (from tbl in db.idCatalogItem
+                    imageInfo = await (from tbl in db.idCatalogItem
                                  where tbl.GUID == imageGuid
                                  select new ImageInfo
                                  {
@@ -528,9 +534,9 @@ namespace IDBrowserServiceCore.Controllers
                                      Timestamp = tbl.DateTimeStamp,
                                      GPSLat = tbl.idGPSLat,
                                      GPSLon = tbl.idGPSLon
-                                 }).Single();
+                                 }).SingleAsync();
 
-                    imageInfo.XmpProperties = queryXMP.Distinct().ToList();
+                    imageInfo.XmpProperties = await queryXMP.Distinct().ToListAsync();
 
                     scope.Complete();
                 }
@@ -546,19 +552,20 @@ namespace IDBrowserServiceCore.Controllers
         }
 
         [ActionName("GetRandomImageGuids")]
-        public List<String> GetRandomImageGuids()
+        public async Task<ActionResult<List<String>>> GetRandomImageGuids()
         {
             try
             {
                 List<String> randomImageGuids;
 
-                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required, readUncommittedTransactionOptions))
+                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
+                    readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
                 {
                     var queryRandom = from x in db.idCatalogItem
                                       where StaticFunctions.ImageFileExtensions.Contains(x.idFileType)
                                       orderby Guid.NewGuid()
                                       select x.GUID;
-                    randomImageGuids = queryRandom.Take(100).ToList();
+                    randomImageGuids = await queryRandom.Take(100).ToListAsync();
                     scope.Complete();
                 }
 
@@ -574,7 +581,7 @@ namespace IDBrowserServiceCore.Controllers
 
         [HttpGet("{imageGuid}")]
         [ActionName("GetFile")]
-        public Stream GetFile(string imageGuid)
+        public async Task<ActionResult<Stream>> GetFile(string imageGuid)
         {
             Stream fileStream = null;
             try
@@ -584,9 +591,10 @@ namespace IDBrowserServiceCore.Controllers
 
                 idCatalogItem catalogItem;
 
-                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required, readUncommittedTransactionOptions))
+                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
+                    readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
                 {
-                    catalogItem = db.idCatalogItem.Include("idFilePath").Single(x => x.GUID == imageGuid);
+                    catalogItem = await db.idCatalogItem.Include("idFilePath").SingleAsync(x => x.GUID == imageGuid);
                     scope.Complete();
                 }
 
@@ -619,7 +627,7 @@ namespace IDBrowserServiceCore.Controllers
 
         [HttpGet("{searchString}")]
         [ActionName("SearchImageProperties")]
-        public List<ImagePropertyRecursive> SearchImageProperties(string searchString)
+        public async Task<ActionResult<List<ImagePropertyRecursive>>> SearchImageProperties(string searchString)
         {
             try
             {
@@ -630,9 +638,10 @@ namespace IDBrowserServiceCore.Controllers
 
                 List<ImagePropertyRecursive> listImagePropertyRecursive;
 
-                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required, readUncommittedTransactionOptions))
+                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
+                    readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
                 {
-                    listImagePropertyRecursive = GetImagePropertyRecursive(queryProperties);
+                    listImagePropertyRecursive = await GetImagePropertyRecursive(queryProperties);
                     scope.Complete();
                 }
 
@@ -648,7 +657,7 @@ namespace IDBrowserServiceCore.Controllers
 
         [HttpGet("{catalogItemGUID}")]
         [ActionName("GetCatalogItemImageProperties")]
-        public List<ImagePropertyRecursive> GetCatalogItemImageProperties(string catalogItemGUID)
+        public async Task<ActionResult<List<ImagePropertyRecursive>>> GetCatalogItemImageProperties(string catalogItemGUID)
         {
             try
             {
@@ -659,16 +668,17 @@ namespace IDBrowserServiceCore.Controllers
                 List<String> propertyGuids;
                 List<ImagePropertyRecursive> listImagePropertyRecursive;
 
-                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required, readUncommittedTransactionOptions))
+                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
+                    readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
                 {
-                    propertyGuids = queryCatalogItemDefinition.ToList();
+                    propertyGuids = await queryCatalogItemDefinition.ToListAsync();
 
                     var queryProperties = from tbl in db.idProp
                                           where propertyGuids.Contains(tbl.GUID)
                                           orderby tbl.PropName
                                           select tbl;
 
-                    listImagePropertyRecursive = GetImagePropertyRecursive(queryProperties);
+                    listImagePropertyRecursive = await GetImagePropertyRecursive(queryProperties);
                     scope.Complete();
                 }
 
@@ -683,7 +693,7 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
-        private List<ImagePropertyRecursive> GetImagePropertyRecursive(IQueryable<idProp> query)
+        private async Task<List<ImagePropertyRecursive>> GetImagePropertyRecursive(IQueryable<idProp> query)
         {
             List<ImagePropertyRecursive> listImagePropertyRecursive = new List<ImagePropertyRecursive>();
             foreach (idProp row in query)
@@ -691,15 +701,16 @@ namespace IDBrowserServiceCore.Controllers
                 String parentGuid = row.ParentGUID;
                 List<String> parentProperties = new List<string>();
 
-                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required, readUncommittedTransactionOptions))
+                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
+                    readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
                 {
                     while (parentGuid != null)
                     {
-                        idProp parentProperty = db.idProp.SingleOrDefault(x => x.GUID == parentGuid);
+                        idProp parentProperty = await db.idProp.SingleOrDefaultAsync(x => x.GUID == parentGuid);
 
                         if (parentProperty == null)
                         {
-                            idPropCategory parentPropCategory = db.idPropCategory.SingleOrDefault(x => x.GUID == parentGuid);
+                            idPropCategory parentPropCategory = await db.idPropCategory.SingleOrDefaultAsync(x => x.GUID == parentGuid);
                             if (parentPropCategory != null)
                                 parentProperties.Insert(0, parentPropCategory.CategoryName);
                             parentGuid = null;
@@ -714,10 +725,13 @@ namespace IDBrowserServiceCore.Controllers
                     scope.Complete();
                 }
 
-                ImagePropertyRecursive imagePropertyRecursive = new ImagePropertyRecursive();
-                imagePropertyRecursive.GUID = row.GUID;
-                imagePropertyRecursive.Name = row.PropName;
-                imagePropertyRecursive.FullRecursivePath = String.Join("::", parentProperties);
+                ImagePropertyRecursive imagePropertyRecursive = new ImagePropertyRecursive
+                {
+                    GUID = row.GUID,
+                    Name = row.PropName,
+                    FullRecursivePath = String.Join("::", parentProperties)
+                };
+
                 listImagePropertyRecursive.Add(imagePropertyRecursive);
             }
 
@@ -726,7 +740,7 @@ namespace IDBrowserServiceCore.Controllers
 
         [HttpGet("{propertyGuid}/{catalogItemGUID}")]
         [ActionName("AddCatalogItemDefinition")]
-        public string AddCatalogItemDefinition(string propertyGuid, string catalogItemGUID)
+        public async Task<ActionResult<string>> AddCatalogItemDefinition(string propertyGuid, string catalogItemGUID)
         {
             try
             {
@@ -734,23 +748,26 @@ namespace IDBrowserServiceCore.Controllers
                             where tbl.GUID == propertyGuid & tbl.CatalogItemGUID == catalogItemGUID
                             select tbl;
 
-                if (query.Count() > 0)
+                if (await query.CountAsync() > 0)
                     throw new Exception("CatalogItemDefinition already exists");
 
-                idCatalogItem currentIdCatalogItem = db.idCatalogItem.Single(x => x.GUID == catalogItemGUID);
-                idImageVersion currentIdImageVersion = db.idImageVersion.SingleOrDefault(x => x.MainImageGUID == catalogItemGUID);
+                idCatalogItem currentIdCatalogItem = await db.idCatalogItem.SingleAsync(x => x.GUID == catalogItemGUID);
+                idImageVersion currentIdImageVersion = await db.idImageVersion.SingleOrDefaultAsync(x => x.MainImageGUID == catalogItemGUID);
 
-                idCatalogItemDefinition newIdCatalogItemDefinition = new idCatalogItemDefinition();
-                newIdCatalogItemDefinition.GUID = propertyGuid;
-                newIdCatalogItemDefinition.CatalogItemGUID = catalogItemGUID;
-                newIdCatalogItemDefinition.idAssigned = DateTime.Now;
+                idCatalogItemDefinition newIdCatalogItemDefinition = new idCatalogItemDefinition
+                {
+                    GUID = propertyGuid,
+                    CatalogItemGUID = catalogItemGUID,
+                    idAssigned = DateTime.Now
+                };
+
                 db.idCatalogItemDefinition.Add(newIdCatalogItemDefinition);
 
                 currentIdCatalogItem.idInSync = currentIdCatalogItem.idInSync >> 2;
                 if (currentIdImageVersion != null)
                     currentIdImageVersion.idInSync = currentIdImageVersion.idInSync >> 2;
 
-                db.SaveChanges();
+                await db.SaveChangesAsync();
 
                 LogHttpConnection("Client {0}:{1} called AddCatalogItemDefinition with propertyGuid: {2} and catalogItemGUID {3}",
                     propertyGuid, catalogItemGUID);
@@ -765,13 +782,16 @@ namespace IDBrowserServiceCore.Controllers
 
         [HttpGet("{propertyGuid}/{catalogItemGUID}")]
         [ActionName("DeleteCatalogItemDefinition")]
-        public string DeleteCatalogItemDefinition(string propertyGuid, string catalogItemGUID)
+        public async Task<ActionResult<string>> DeleteCatalogItemDefinition(string propertyGuid, string catalogItemGUID)
         {
             try
             {
-                idCatalogItemDefinition currentIdCatalogItemDefinition = db.idCatalogItemDefinition.Single(x => x.GUID == propertyGuid && x.CatalogItemGUID == catalogItemGUID);
-                idCatalogItem currentIdCatalogItem = db.idCatalogItem.Single(x => x.GUID == catalogItemGUID);
-                idImageVersion currentIdImageVersion = db.idImageVersion.SingleOrDefault(x => x.MainImageGUID == catalogItemGUID);
+                idCatalogItemDefinition currentIdCatalogItemDefinition = await db.idCatalogItemDefinition
+                    .SingleAsync(x => x.GUID == propertyGuid && x.CatalogItemGUID == catalogItemGUID);
+                idCatalogItem currentIdCatalogItem = await db.idCatalogItem
+                    .SingleAsync(x => x.GUID == catalogItemGUID);
+                idImageVersion currentIdImageVersion = await db.idImageVersion
+                    .SingleOrDefaultAsync(x => x.MainImageGUID == catalogItemGUID);
 
                 db.idCatalogItemDefinition.Remove(currentIdCatalogItemDefinition);
 
@@ -779,7 +799,7 @@ namespace IDBrowserServiceCore.Controllers
                 if (currentIdImageVersion != null)
                     currentIdImageVersion.idInSync = currentIdImageVersion.idInSync >> 2;
 
-                db.SaveChanges();
+                await db.SaveChangesAsync();
 
                 LogHttpConnection("Client {0}:{1} called DeleteCatalogItemDefinition with propertyGuid: {2} and catalogItemGUID {3}",
                     propertyGuid, catalogItemGUID);
@@ -794,23 +814,23 @@ namespace IDBrowserServiceCore.Controllers
 
         [HttpGet("{propertyName}/{parentGUID}")]
         [ActionName("AddImageProperty")]
-        public string AddImageProperty(string propertyName, string parentGUID)
+        public async Task<ActionResult<string>> AddImageProperty(string propertyName, string parentGUID)
         {
             try
             {
-                idProp parentIdProp = db.idProp.SingleOrDefault(x => x.GUID.Equals(parentGUID));
+                idProp parentIdProp = await db.idProp.SingleOrDefaultAsync(x => x.GUID.Equals(parentGUID));
                 int? parentRgt;
 
                 if (parentIdProp == null)
-                    parentRgt = db.idProp.Where(x => x.ParentGUID.Equals(parentGUID)).Max(x => x.rgt);
+                    parentRgt = await db.idProp.Where(x => x.ParentGUID.Equals(parentGUID)).MaxAsync(x => x.rgt);
                 else
                     parentRgt = parentIdProp.rgt;
 
-                idUser user = db.idUser.First();
+                idUser user = await db.idUser.FirstAsync();
                 DateTime dtNow = DateTime.Now;
                 String guid = Guid.NewGuid().ToString();
 
-                while (db.idProp.Where(x => x.GUID == guid).Count() > 0)
+                while (await db.idProp.Where(x => x.GUID == guid).CountAsync() > 0)
                 {
                     guid = Guid.NewGuid().ToString();
                 }
@@ -820,7 +840,7 @@ namespace IDBrowserServiceCore.Controllers
                                               where tbl.rgt >= parentRgt
                                               select tbl;
 
-                foreach (idProp row in queryUpdateNestedSetRgt)
+                foreach (idProp row in await queryUpdateNestedSetRgt.ToListAsync())
                 {
                     row.rgt = row.rgt + 2;
                 }
@@ -830,42 +850,44 @@ namespace IDBrowserServiceCore.Controllers
                                               where tbl.lft > parentRgt
                                               select tbl;
 
-                foreach (idProp row in queryUpdateNestedSetLft)
+                foreach (idProp row in await queryUpdateNestedSetLft.ToListAsync())
                 {
                     row.lft = row.lft + 2;
                 }
 
-                idProp newIdProp = new idProp();
-                newIdProp.GUID = guid;
-                newIdProp.ParentGUID = parentGUID;
-                newIdProp.PropName = propertyName;
-                newIdProp.PropValue = "";
-                newIdProp.Quick = 0;
-                newIdProp.UserGUID = user.GUID;
-                newIdProp.idCreated = dtNow;
-                newIdProp.idLastAccess = dtNow;
-                newIdProp.PropXMPLink = "";
-                newIdProp.lft = parentRgt;
-                newIdProp.rgt = parentRgt + 1;
-                newIdProp.idImage = null;
-                newIdProp.ParentAssign = 0;
-                newIdProp.ParentXMPLinkAssign = 0;
-                newIdProp.idSynonyms = "";
-                newIdProp.idGPSLon = 90;
-                newIdProp.idGPSLat = 90;
-                newIdProp.idGPSAlt = 0;
-                newIdProp.idGPSGeoTag = 0;
-                newIdProp.idGPSGeoTagIfExist = 0;
-                newIdProp.idGPSRadius = 0;
-                newIdProp.idShortCut = 0;
-                newIdProp.MutualExclusive = 0;
-                newIdProp.idDescription = "";
-                newIdProp.idDetails = null;
-                newIdProp.idProps = null;
-                newIdProp.ApplyProps = 0;
+                idProp newIdProp = new idProp
+                {
+                    GUID = guid,
+                    ParentGUID = parentGUID,
+                    PropName = propertyName,
+                    PropValue = "",
+                    Quick = 0,
+                    UserGUID = user.GUID,
+                    idCreated = dtNow,
+                    idLastAccess = dtNow,
+                    PropXMPLink = "",
+                    lft = parentRgt,
+                    rgt = parentRgt + 1,
+                    idImage = null,
+                    ParentAssign = 0,
+                    ParentXMPLinkAssign = 0,
+                    idSynonyms = "",
+                    idGPSLon = 90,
+                    idGPSLat = 90,
+                    idGPSAlt = 0,
+                    idGPSGeoTag = 0,
+                    idGPSGeoTagIfExist = 0,
+                    idGPSRadius = 0,
+                    idShortCut = 0,
+                    MutualExclusive = 0,
+                    idDescription = "",
+                    idDetails = null,
+                    idProps = null,
+                    ApplyProps = 0
+                };
 
                 db.idProp.Add(newIdProp);
-                db.SaveChanges();
+                await db.SaveChangesAsync();
 
                 LogHttpConnection("Client {0}:{1} called AddImageProperty with propertyName: {2}, parentGUID {3}, lft {4}, rgt {5}",
                     propertyName, parentGUID, newIdProp.lft, newIdProp.rgt);
@@ -879,13 +901,14 @@ namespace IDBrowserServiceCore.Controllers
         }
 
         [ActionName("GetFilePaths")]
-        public List<FilePath> GetFilePaths()
+        public async Task<ActionResult<List<FilePath>>> GetFilePaths()
         {
             try
             {
                 List<FilePath> listFilePaths;
 
-                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required, readUncommittedTransactionOptions))
+                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
+                    readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
                 {
                     var query = from tbl in db.idFilePath
                                 orderby tbl.FilePath
@@ -898,7 +921,7 @@ namespace IDBrowserServiceCore.Controllers
                                     ImageCount = tbl.idCatalogItem.Count()
                                 };
 
-                    listFilePaths = query.ToList();
+                    listFilePaths = await query.ToListAsync();
                 }
 
                 LogHttpConnection("Client {0}:{1} called GetFilePaths");

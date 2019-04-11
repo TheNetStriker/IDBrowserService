@@ -12,6 +12,8 @@ using IDBrowserServiceCore.Data.IDImager;
 using IDBrowserServiceCore.Data.IDImagerThumbs;
 using IDBrowserServiceCore.Code;
 using IDBrowserServiceCore.Data;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 
 namespace IDBrowserServiceCoreTest
 {
@@ -24,9 +26,9 @@ namespace IDBrowserServiceCoreTest
         {
             StaticFunctions.Configuration = Configuration;
             ImagePropertyGuids = new List<String>();
-            ImageGuids = Controller.GetRandomImageGuids();
+            ImageGuids = Task.Run(() => Controller.GetRandomImageGuids()).Result.Value;
 
-            List<ImageProperty> ImageProperties = Controller.GetImageProperties(null);
+            List<ImageProperty> ImageProperties = Task.Run(() => Controller.GetImageProperties(null)).Result.Value;
             foreach (ImageProperty imageProperty in ImageProperties)
             {
                 ImagePropertyGuids.Add(imageProperty.GUID);
@@ -127,87 +129,87 @@ namespace IDBrowserServiceCoreTest
         }
 
         [Fact]
-        public void GetImagePropertiesTest()
+        public async void GetImagePropertiesTest()
         {
-            List<ImageProperty> list = Controller.GetImageProperties(null);
-            list = Controller.GetImageProperties(list.First().GUID);
+            ActionResult<List<ImageProperty>> result = await Controller.GetImageProperties(null);
+            result = await Controller.GetImageProperties(result.Value.First().GUID);
         }
 
         [Fact]
-        public void GetImagePropertyThumbnailTest()
+        public async void GetImagePropertyThumbnailTest()
         {
             String imagePropertyGuid = GetNextImagePropertyGuid();
-            Controller.GetImagePropertyThumbnail(imagePropertyGuid, "true");
+            await Controller.GetImagePropertyThumbnail(imagePropertyGuid, "true");
         }
 
         [Fact]
-        public void GetCatalogItemsTest()
+        public async void GetCatalogItemsTest()
         {
-            Controller.GetCatalogItems("true", GetNextImagePropertyGuid());
+            await Controller.GetCatalogItems("true", GetNextImagePropertyGuid());
         }
 
         [Fact]
-        public void GetImageThumbnailTest()
+        public async void GetImageThumbnailTest()
         {
-            Stream stream = Controller.GetImageThumbnail("T", GetNextImageGuid());
-            stream.Close();
-            stream = Controller.GetImageThumbnail("M", GetNextImageGuid());
-            stream.Close();
+            ActionResult<Stream> result = await Controller.GetImageThumbnail("T", GetNextImageGuid());
+            result.Value.Close();
+            result = await Controller.GetImageThumbnail("M", GetNextImageGuid());
+            result.Value.Close();
         }
 
         [Fact]
-        public void GetImageTest()
+        public async void GetImageTest()
         {
-            Stream stream = Controller.GetImage(GetNextImageGuid());
-            stream.Close();
+            ActionResult<Stream> result = await Controller.GetImage(GetNextImageGuid());
+            result.Value.Close();
         }
 
         [Fact]
-        public void GetResizedImageTest()
+        public async void GetResizedImageTest()
         {
-            Stream stream = Controller.GetResizedImage("640", "480", GetNextImageGuid());
-            stream.Close();
+            ActionResult<Stream> result = await Controller.GetResizedImage("640", "480", GetNextImageGuid());
+            result.Value.Close();
         }
 
         [Fact]
-        public void GetImageInfoTest()
+        public async void GetImageInfoTest()
         {
-            Controller.GetImageInfo(GetNextImageGuid());
+            await Controller.GetImageInfo(GetNextImageGuid());
         }
 
         [Fact]
-        public void SearchImagePropertiesTest()
+        public async void SearchImagePropertiesTest()
         {
-            List<ImagePropertyRecursive> result = Controller.SearchImageProperties("David Masshardt");
-            if (result.Count == 0)
+            ActionResult<List<ImagePropertyRecursive>> result = await Controller.SearchImageProperties("David Masshardt");
+            if (result.Value.Count == 0)
                 throw new Exception("No items found with SearchImagePropertiesSoap");
         }
 
         [Fact]
-        public void GetCatalogItemImagePropertiesTest()
+        public async void GetCatalogItemImagePropertiesTest()
         {
-            List<ImagePropertyRecursive> result = Controller.GetCatalogItemImageProperties(GetNextImageGuid());
-            if (result.Count == 0)
+            ActionResult<List<ImagePropertyRecursive>> result = await Controller.GetCatalogItemImageProperties(GetNextImageGuid());
+            if (result.Value.Count == 0)
                 throw new Exception("No image properties found with GetCatalogItemImagePropertiesSoap");
         }
 
         [Fact]
-        public void GetFilePathsTest()
+        public async void GetFilePathsTest()
         {
-            List<FilePath> result = Controller.GetFilePaths();
-            if (result.Count == 0)
+            ActionResult<List<FilePath>> result = await Controller.GetFilePaths();
+            if (result.Value.Count == 0)
                 throw new Exception("No file paths found with GetFilePathsSoap");
         }
 
         [Fact]
-        public void SaveImageThumbnailTest()
+        public async void SaveImageThumbnailTest()
         {
             Boolean keepAspectRatio = Boolean.Parse(Configuration["IDBrowserServiceSettings:KeepAspectRatio"]);
             Boolean setGenericVideoThumbnailOnError = Boolean.Parse(Configuration["IDBrowserServiceSettings:SetGenericVideoThumbnailOnError"]);
-            idCatalogItem idCatalogItem = Db.idCatalogItem.Include("idFilePath").First();
+            idCatalogItem idCatalogItem = Db.idCatalogItem.Include("idFilePath").Where(x => x.FileName.EndsWith(".JPG")).First();
             List<String> types = new List<String>() { "T", "R", "M" };
 
-            SaveImageThumbnailResult result = StaticFunctions
+            SaveImageThumbnailResult result = await StaticFunctions
                 .SaveImageThumbnail(idCatalogItem, Db, DbThumbs, types, keepAspectRatio, setGenericVideoThumbnailOnError);
 
             if (result.Exceptions.Count > 0)
@@ -215,14 +217,14 @@ namespace IDBrowserServiceCoreTest
         }
 
         [Fact]
-        public void SaveVideoThumbnailTest()
+        public async void SaveVideoThumbnailTest()
         {
             Boolean keepAspectRatio = Boolean.Parse(Configuration["IDBrowserServiceSettings:KeepAspectRatio"]);
             Boolean setGenericVideoThumbnailOnError = Boolean.Parse(Configuration["IDBrowserServiceSettings:SetGenericVideoThumbnailOnError"]);
             idCatalogItem idCatalogItem = Db.idCatalogItem.Include("idFilePath").Where(x => x.FileName.EndsWith(".MP4")).First();
             List<String> types = new List<String>() { "T", "R", "M" };
 
-            SaveImageThumbnailResult result = StaticFunctions
+            SaveImageThumbnailResult result = await StaticFunctions
                 .SaveImageThumbnail(idCatalogItem, Db, DbThumbs, types, keepAspectRatio, setGenericVideoThumbnailOnError);
 
             if (result.Exceptions.Count > 0)

@@ -9,6 +9,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace IDBrowserServiceCore.Code
 {
@@ -66,7 +68,7 @@ namespace IDBrowserServiceCore.Code
             return Path.Combine(strFilePath, catalogItem.FileName);
         }
 
-        public static SaveImageThumbnailResult SaveImageThumbnail(idCatalogItem catalogItem, IDImagerDB db, IDImagerThumbsDB dbThumbs,
+        public async static Task<SaveImageThumbnailResult> SaveImageThumbnail(idCatalogItem catalogItem, IDImagerDB db, IDImagerThumbsDB dbThumbs,
             List<String> types, Boolean keepAspectRatio, Boolean setGenericVideoThumbnailOnError)
         {
             SaveImageThumbnailResult result = new SaveImageThumbnailResult();
@@ -130,7 +132,7 @@ namespace IDBrowserServiceCore.Code
                     {
                         if (catalogItem.idHasRecipe > 0)
                         {
-                            XDocument recipeXDocument = GetRecipeXDocument(db, catalogItem);
+                            XDocument recipeXDocument = await GetRecipeXDocument(db, catalogItem);
                             xmpReceipe = XmpRecipeHelper.ParseXmlRecepie(recipeXDocument);
                         }
                     }
@@ -138,40 +140,40 @@ namespace IDBrowserServiceCore.Code
                     MemoryStream resizedImageStream = new MemoryStream();
 
                     imageStream.Position = 0;
-                    MagickImage image = new MagickImage(imageStream); // new MagickReadSettings { Format = MagickFormat.Mp4 }
+                    MagickImage image = new MagickImage(imageStream)
+                    {
+                        Format = MagickFormat.Jpeg
+                    }; // new MagickReadSettings { Format = MagickFormat.Mp4 }
 
-                    image.Format = MagickFormat.Jpeg;
                     image.Resize(imageWidth, imageHeight);
 
-                    XmpRecipeHelper.ApplyXmpRecipe(xmpReceipe, image);
+                    if (xmpReceipe != null)
+                        XmpRecipeHelper.ApplyXmpRecipe(xmpReceipe, image);
 
                     image.Write(resizedImageStream);
                     resizedImageStream.Position = 0;
 
-                    lock (dbThumbs)
+                    bool boolThumbExists = await dbThumbs.idThumbs
+                        .AnyAsync(x => x.ImageGUID == catalogItem.GUID  && x.idType == type);
+
+                    if (!boolThumbExists)
                     {
-                        bool boolThumbExists = dbThumbs.idThumbs
-                            .Any(x => x.ImageGUID == catalogItem.GUID  && x.idType == type);
-
-                        if (!boolThumbExists)
+                        idThumbs newThumb = new idThumbs
                         {
-                            idThumbs newThumb = new idThumbs
-                            {
-                                GUID = Guid.NewGuid().ToString().ToUpper(),
-                                ImageGUID = catalogItem.GUID,
-                                idThumb = StreamToByteArray(resizedImageStream),
-                                idType = type
-                            };
+                            GUID = Guid.NewGuid().ToString().ToUpper(),
+                            ImageGUID = catalogItem.GUID,
+                            idThumb = StreamToByteArray(resizedImageStream),
+                            idType = type
+                        };
 
-                            dbThumbs.idThumbs.Add(newThumb);
-                        }
+                        dbThumbs.idThumbs.Add(newThumb);
                     }
 
                     result.ImageStreams.Add(resizedImageStream);
                 }
 
                 if (imageStream != null) { imageStream.Close(); }
-                dbThumbs.SaveChanges();
+                await dbThumbs.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -182,11 +184,11 @@ namespace IDBrowserServiceCore.Code
             return result;
         }
 
-        public static XDocument GetRecipeXDocument(IDImagerDB db, idCatalogItem catalogItem)
+        public async static Task<XDocument> GetRecipeXDocument(IDImagerDB db, idCatalogItem catalogItem)
         {
             if (catalogItem.idHasRecipe > 0)
             {
-                idImageData imageData = db.idImageData.SingleOrDefault(x => x.ImageGUID.Equals(catalogItem.GUID) && x.DataName.Equals("XMP"));
+                idImageData imageData = await db.idImageData.SingleOrDefaultAsync(x => x.ImageGUID.Equals(catalogItem.GUID) && x.DataName.Equals("XMP"));
 
                 if (imageData != null)
                 {
