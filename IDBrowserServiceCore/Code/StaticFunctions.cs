@@ -140,7 +140,7 @@ namespace IDBrowserServiceCore.Code
                     image.Format = MagickFormat.Jpeg;
                     image.Resize(imageWidth, imageHeight);
 
-                    Recipe.ApplyXmpRecipe(recipeXDocument, image);
+                    XmpRecipeHelper.ApplyXmpRecipe(recipeXDocument, image);
 
                     image.Write(resizedImageStream);
                     resizedImageStream.Position = 0;

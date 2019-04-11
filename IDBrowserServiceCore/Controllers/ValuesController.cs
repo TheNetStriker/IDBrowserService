@@ -463,10 +463,11 @@ namespace IDBrowserServiceCore.Controllers
             string strImageFilePath = StaticFunctions.GetImageFilePath(catalogItem);
             Stream imageStream = StaticFunctions.GetImageFileStream(strImageFilePath);
 
-            System.Xml.Linq.XDocument recipeXDocument = null;
+            XmpReceipe xmpReceipe = null;
             try
             {
-                recipeXDocument = StaticFunctions.GetRecipeXDocument(db, catalogItem);
+                System.Xml.Linq.XDocument recipeXDocument = StaticFunctions.GetRecipeXDocument(db, catalogItem);
+                xmpReceipe = XmpRecipeHelper.ParseXmlRecepie(recipeXDocument);
             }
             catch (Exception ex)
             {
@@ -474,30 +475,23 @@ namespace IDBrowserServiceCore.Controllers
                     catalogItem.GUID, ex.ToString()));
             }
 
-            if ((width != null && height != null) || recipeXDocument != null)
+            if ((width != null && height != null) || (xmpReceipe != null && xmpReceipe.HasValues ))
             {
                 MagickImage image = new MagickImage(imageStream);
                 int intWidth = int.Parse(width);
                 int intHeight = int.Parse(height);
-                bool changed = false;
 
-                if (recipeXDocument == null)
-                    changed = Recipe.ApplyXmpRecipe(recipeXDocument, image);
+                if (xmpReceipe == null)
+                    XmpRecipeHelper.ApplyXmpRecipe(xmpReceipe, image);
 
                 if (image.Width > intWidth && image.Height > intHeight)
-                {
                     image.Resize(intWidth, intHeight);
-                    changed = true;
-                }
 
                 //ToDo: Herausfinden ob rotation noch nötig ist.
                 //Rotation rotation = StaticFunctions.Rotate(ref bitmapSource, ref transformGroup);
 
-                if (changed)
-                {
-                    imageStream = new MemoryStream();
-                    image.Write(imageStream);
-                }
+                imageStream = new MemoryStream();
+                image.Write(imageStream);
 
                 imageStream.Position = 0;
             }

@@ -7,7 +7,7 @@ using System.Xml.Linq;
 
 namespace IDBrowserServiceCore.Code
 {
-    public class Recipe
+    public class XmpRecipeHelper
     {
         private static XName xNameDescription = XName.Get("Description", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
 
@@ -113,10 +113,10 @@ namespace IDBrowserServiceCore.Code
         //    return imageStream;
         //}
 
-        public static bool ApplyXmpRecipe(XDocument xdocument, MagickImage image) 
+        public static XmpReceipe ParseXmlRecepie(XDocument xdocument)
         {
+            XmpReceipe xmpReceipe = new XmpReceipe();
             IEnumerable<XNode> recipeNodes = null;
-            bool changed = false;
 
             if (xdocument != null)
             {
@@ -149,7 +149,7 @@ namespace IDBrowserServiceCore.Code
                         //Only 90, 180 and 270 degrees are supported
                         if (angle == 90 | angle == 180 | angle == 270)
                         {
-                            image.Rotate(angle);
+                            xmpReceipe.Rotate = angle;
                         }
                     }
                 }
@@ -180,28 +180,8 @@ namespace IDBrowserServiceCore.Code
                     {
                         int intWidth = Int32.Parse(widthElement.Value);
                         int intHeight = Int32.Parse(heightElement.Value);
-                        //double scaleX;
-                        //double scaleY;
 
-                        // Only scale if picture is bigger
-                        if (image.Width > intWidth && image.Height > intHeight)
-                        {
-                            image.Resize(intWidth, intHeight);
-                        }
-                        
-                        //if (bitmapSource.PixelWidth > bitmapSource.PixelHeight)
-                        //{
-                        //    scaleX = (double)intWidth / (double)bitmapSource.PixelWidth;
-                        //    scaleY = (double)intHeight / (double)bitmapSource.PixelHeight;
-                        //}
-                        //else
-                        //{
-                        //    scaleX = (double)intHeight / (double)bitmapSource.PixelHeight;
-                        //    scaleY = (double)intWidth / (double)bitmapSource.PixelWidth;
-                        //}
-
-                        //ScaleTransform scaleTransform = new ScaleTransform(scaleX, scaleY, 0, 0);
-                        //transformGroup.Children.Add(scaleTransform);
+                        xmpReceipe.Resize = new MagickGeometry(intWidth, intHeight);
                     }
                 }
 
@@ -224,7 +204,7 @@ namespace IDBrowserServiceCore.Code
                         //Only 90, 180 and 270 degrees are supported
                         if (angle == 90 | angle == 180 | angle == 270)
                         {
-                            image.Rotate(angle);
+                            xmpReceipe.Rotate = angle;
                         }
                     }
                 }
@@ -251,6 +231,7 @@ namespace IDBrowserServiceCore.Code
 
                 if (flipScaleX != 1 | flipScaleY != 1)
                 {
+                    // ToDo: herausfinden was hier zu tun ist.
                     //ScaleTransform scaleTransform = new ScaleTransform(flipScaleX, flipScaleY, 0, 0);
                     //transformGroup.Children.Add(scaleTransform);
                 }
@@ -286,7 +267,7 @@ namespace IDBrowserServiceCore.Code
                     XElement watermarksStreamElement = getXElementByXName(currentRecipe, xNameIlesWatermarks_WatermarksStream);
                 }
             }
-                        
+
             if (recipeNodes != null && xdocument != null)
             {
                 //Process complex transformations
@@ -307,27 +288,44 @@ namespace IDBrowserServiceCore.Code
 
                         if (recipeEnabledElement.Value.Equals("1"))
                         {
-                            double left = double.Parse(leftElement.Value);
-                            double top = double.Parse(topElement.Value);
-                            double right = double.Parse(rightElement.Value);
-                            double bottom = double.Parse(bottomElement.Value);
 
-                            int intLeftPixel = Convert.ToInt32(image.Width * left);
-                            int intTopPixel = Convert.ToInt32(image.Height * top);
-                            int intRightPixel = Convert.ToInt32(image.Width * right);
-                            int intBottomPixel = Convert.ToInt32(image.Height * bottom);
-                            int intWidth = intRightPixel - intLeftPixel;
-                            int intHeight = intBottomPixel - intTopPixel;
-
-                            MagickGeometry magickGeometry = new MagickGeometry(intLeftPixel, intTopPixel, intWidth, intHeight);
-                            image.Crop(magickGeometry);
-                            changed = true;
+                            xmpReceipe.Crop = new XmpCrop()
+                            {
+                                Left = double.Parse(leftElement.Value),
+                                Top = double.Parse(topElement.Value),
+                                Right = double.Parse(rightElement.Value),
+                                Bottom = double.Parse(bottomElement.Value)
+                            };
                         }
                     }
-                } 
+                }
             }
 
-            return changed;
+            return xmpReceipe;
+        }
+
+        public static void ApplyXmpRecipe(XmpReceipe xmpReceipe, MagickImage image) 
+        {
+            if (xmpReceipe.Rotate != null)
+                image.Rotate(xmpReceipe.Rotate.Value);
+
+            if (xmpReceipe.Resize != null && image.Width > xmpReceipe.Resize.Width && image.Height > xmpReceipe.Resize.Height)
+            {
+                image.Resize(xmpReceipe.Resize);
+            }
+
+            if (xmpReceipe.Crop != null)
+            {
+                int intLeftPixel = Convert.ToInt32(image.Width * xmpReceipe.Crop.Left);
+                int intTopPixel = Convert.ToInt32(image.Height * xmpReceipe.Crop.Top);
+                int intRightPixel = Convert.ToInt32(image.Width * xmpReceipe.Crop.Right);
+                int intBottomPixel = Convert.ToInt32(image.Height * xmpReceipe.Crop.Bottom);
+                int intWidth = intRightPixel - intLeftPixel;
+                int intHeight = intBottomPixel - intTopPixel;
+
+                MagickGeometry magickGeometry = new MagickGeometry(intLeftPixel, intTopPixel, intWidth, intHeight);
+                image.Crop(magickGeometry);
+            }
         }
 
         private static XElement getXElementByXName(XElement xelement, XName xname)
