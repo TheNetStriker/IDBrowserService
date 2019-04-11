@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using IDBrowserServiceCore.Data.IDImager;
+using IDBrowserServiceCore.Code;
 
 namespace IDBrowserServiceCore.Controllers
 {

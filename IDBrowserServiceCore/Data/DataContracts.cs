@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 
-namespace IDBrowserServiceCore
+namespace IDBrowserServiceCore.Data
 {
     [DataContract]
     public class ImageProperty

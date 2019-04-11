@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using IDBrowserServiceCore.Data.IDImager;
 using IDBrowserServiceCore.Data.IDImagerThumbs;
+using IDBrowserServiceCore.Code;
 
 namespace IDBrowserServiceCore
 {

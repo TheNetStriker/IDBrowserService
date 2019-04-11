@@ -10,7 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 
-namespace IDBrowserServiceCore
+namespace IDBrowserServiceCore.Code
 {
     public class StaticFunctions
     {

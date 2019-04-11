@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace IDBrowserServiceCore
+namespace IDBrowserServiceCore.Code
 {
     public class SaveImageThumbnailResult
     {

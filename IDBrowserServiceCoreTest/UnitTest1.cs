@@ -10,6 +10,8 @@ using System.Linq;
 using Xunit;
 using IDBrowserServiceCore.Data.IDImager;
 using IDBrowserServiceCore.Data.IDImagerThumbs;
+using IDBrowserServiceCore.Code;
+using IDBrowserServiceCore.Data;
 
 namespace IDBrowserServiceCoreTest
 {

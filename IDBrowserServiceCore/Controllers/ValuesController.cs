@@ -11,6 +11,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using IDBrowserServiceCore.Data.IDImager;
 using IDBrowserServiceCore.Data.IDImagerThumbs;
+using IDBrowserServiceCore.Data;
+using IDBrowserServiceCore.Code;
 
 namespace IDBrowserServiceCore.Controllers
 {
