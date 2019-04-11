@@ -135,24 +135,16 @@ namespace IDBrowserServiceCore.Code
                     MemoryStream resizedImageStream = new MemoryStream();
 
                     imageStream.Position = 0;
-                    MagickImage image = new MagickImage(imageStream, new MagickReadSettings { Format = MagickFormat.Mp4 });
+                    MagickImage image = new MagickImage(imageStream); // new MagickReadSettings { Format = MagickFormat.Mp4 }
 
                     image.Format = MagickFormat.Jpeg;
                     image.Resize(imageWidth, imageHeight);
+
+                    Recipe.ApplyXmpRecipe(recipeXDocument, image);
+
                     image.Write(resizedImageStream);
                     resizedImageStream.Position = 0;
 
-                    //if (Recipe.ApplyXmpRecipe(recipeXDocument, ref bitmapSource, transformGroup))
-                    //{
-                    //    BitmapFrame transformedBitmapFrame = BitmapFrame.Create(bitmapSource);
-
-                    //    JpegBitmapEncoder encoder = new JpegBitmapEncoder();
-                    //    encoder.Frames.Add(transformedBitmapFrame);
-                    //    resizedImageStream = new System.IO.MemoryStream();
-                    //    encoder.Save(resizedImageStream);
-                    //    resizedImageStream.Position = 0;
-                    //}
-                    
                     lock (dbThumbs)
                     {
                         bool boolThumbExists = dbThumbs.idThumbs
@@ -229,6 +221,14 @@ namespace IDBrowserServiceCore.Code
             return output;
         }
 
+        public static void Resize(MagickImage image, int width, int height)
+        {
+            if (image.Width > width && image.Height > height)
+            {
+                image.Resize(width, height);
+            }
+        }
+
         //public static Rotation Rotate(ref BitmapSource bitmapSource, ref TransformGroup transformGroup)
         //{
         //    Rotation rotation = StaticFunctions.GetRotation(bitmapSource);
@@ -255,28 +255,6 @@ namespace IDBrowserServiceCore.Code
         //    return rotation;
         //}
 
-        //public static void Resize(ref BitmapSource bitmapSource, ref TransformGroup transformGroup, int width, int height)
-        //{
-        //    if (bitmapSource.PixelWidth > width && bitmapSource.PixelHeight > height)
-        //    {
-        //        double scale;
-
-        //        foreach (ScaleTransform existingScaleTransform in transformGroup.Children.OfType<ScaleTransform>().ToList())
-        //            transformGroup.Children.Remove(existingScaleTransform);
-
-        //        if (bitmapSource.PixelWidth > bitmapSource.PixelHeight)
-        //        {
-        //            scale = (double)width / (double)bitmapSource.PixelWidth;
-        //        }
-        //        else
-        //        {
-        //            scale = (double)height / (double)bitmapSource.PixelHeight;
-        //        }
-
-        //        ScaleTransform scaleTransform = new ScaleTransform(scale, scale, 0, 0);
-        //        transformGroup.Children.Add(scaleTransform);
-        //    }
-        //}
 
         public const string OrientationQuery = "System.Photo.Orientation";
 

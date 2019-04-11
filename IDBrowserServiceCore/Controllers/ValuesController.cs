@@ -13,6 +13,7 @@ using IDBrowserServiceCore.Data.IDImager;
 using IDBrowserServiceCore.Data.IDImagerThumbs;
 using IDBrowserServiceCore.Data;
 using IDBrowserServiceCore.Code;
+using ImageMagick;
 
 namespace IDBrowserServiceCore.Controllers
 {
@@ -422,6 +423,8 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
+        [HttpGet("{width}/{height}/{imageGuid}")]
+        [ActionName("GetResizedImage")]
         public Stream GetResizedImage(string width, string height, string imageGuid)
         {
             Stream imageStream = null;
@@ -452,7 +455,6 @@ namespace IDBrowserServiceCore.Controllers
         {
             idCatalogItem catalogItem = null;
             Boolean keepAspectRatio = Boolean.Parse(configuration["IDBrowserServiceSettings:KeepAspectRatio"]);
-            
 
             catalogItem = db.idCatalogItem.Include("idFilePath").Single(x => x.GUID == imageGuid);
             if (catalogItem == null)
@@ -460,37 +462,46 @@ namespace IDBrowserServiceCore.Controllers
 
             string strImageFilePath = StaticFunctions.GetImageFilePath(catalogItem);
             Stream imageStream = StaticFunctions.GetImageFileStream(strImageFilePath);
-            //BitmapSource bitmapSource = StaticFunctions.GetBitmapFrameFromImageStream(imageStream, catalogItem.idFileType);
 
-            //System.Xml.Linq.XDocument recipeXDocument = null;
-            //try
-            //{
-            //    recipeXDocument = StaticFunctions.GetRecipeXDocument(db, catalogItem);
-            //}
-            //catch (Exception ex)
-            //{
-            //    log.LogError(String.Format("Error in 'GetImageStream' when applying recipe on imageGuid {0}: {1}",
-            //        catalogItem.GUID, ex.ToString()));
-            //}
+            System.Xml.Linq.XDocument recipeXDocument = null;
+            try
+            {
+                recipeXDocument = StaticFunctions.GetRecipeXDocument(db, catalogItem);
+            }
+            catch (Exception ex)
+            {
+                log.LogError(String.Format("Error in 'GetImageStream' when applying recipe on imageGuid {0}: {1}",
+                    catalogItem.GUID, ex.ToString()));
+            }
 
-            //TransformGroup transformGroup = new TransformGroup();
+            if ((width != null && height != null) || recipeXDocument != null)
+            {
+                MagickImage image = new MagickImage(imageStream);
+                int intWidth = int.Parse(width);
+                int intHeight = int.Parse(height);
+                bool changed = false;
 
-            //if (width != null && height != null)
-            //    StaticFunctions.Resize(ref bitmapSource, ref transformGroup, int.Parse(width), int.Parse(height));
+                if (recipeXDocument == null)
+                    changed = Recipe.ApplyXmpRecipe(recipeXDocument, image);
 
-            //Rotation rotation = StaticFunctions.Rotate(ref bitmapSource, ref transformGroup);
+                if (image.Width > intWidth && image.Height > intHeight)
+                {
+                    image.Resize(intWidth, intHeight);
+                    changed = true;
+                }
 
-            //if (Recipe.ApplyXmpRecipe(recipeXDocument, ref bitmapSource, transformGroup))
-            //{
-            //    BitmapFrame transformedBitmapFrame = BitmapFrame.Create(bitmapSource);
+                //ToDo: Herausfinden ob rotation noch nötig ist.
+                //Rotation rotation = StaticFunctions.Rotate(ref bitmapSource, ref transformGroup);
 
-            //    JpegBitmapEncoder encoder = new JpegBitmapEncoder();
-            //    encoder.Frames.Add(transformedBitmapFrame);
-            //    imageStream = new System.IO.MemoryStream();
-            //    encoder.Save(imageStream);
-            //}
+                if (changed)
+                {
+                    imageStream = new MemoryStream();
+                    image.Write(imageStream);
+                }
 
-            //imageStream.Position = 0;
+                imageStream.Position = 0;
+            }
+
             return imageStream;
         }
 
