@@ -1,4 +1,4 @@
-namespace IDBrowserServiceCore.Data
+namespace IDBrowserServiceCore.Data.IDImager
 {
     using System;
     using System.ComponentModel.DataAnnotations.Schema;
@@ -7,17 +7,9 @@ namespace IDBrowserServiceCore.Data
 
     public partial class IDImagerDB : DbContext
     {
-        private string connectionString;
-
-        public IDImagerDB(string connectionString)
-        {
-            this.connectionString = connectionString;
-        }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseSqlServer(connectionString);
-        }
+        public IDImagerDB(DbContextOptions<IDImagerDB> options)
+            : base(options)
+        { }
 
         public virtual DbSet<idCatalogItem> idCatalogItem { get; set; }
         public virtual DbSet<idCatalogItemDefinition> idCatalogItemDefinition { get; set; }
@@ -30,7 +22,6 @@ namespace IDBrowserServiceCore.Data
         public virtual DbSet<idUser> idUser { get; set; }
         public virtual DbSet<v_prop> v_prop { get; set; }
         public virtual DbSet<v_PropCategory> v_PropCategory { get; set; }
-        public virtual DbSet<idThumbs> idThumbs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

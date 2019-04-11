@@ -1,12 +1,11 @@
-namespace IDBrowserServiceCore.Data
+namespace IDBrowserServiceCore.Data.IDImager
 {
     using System;
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
     using System.ComponentModel.DataAnnotations.Schema;
 
-    [Table("idPropCategory")]
-    public partial class idPropCategory
+    public partial class v_PropCategory
     {
         [Key]
         [StringLength(50)]
@@ -25,7 +24,9 @@ namespace IDBrowserServiceCore.Data
 
         //public int? idOrder { get; set; }
 
-        [Column(TypeName = "image")]
-        public byte[] idImage { get; set; }
+        //[Column(TypeName = "image")]
+        //public byte[] idImage { get; set; }
+
+        public int? idPhotoCount { get; set; }
     }
 }

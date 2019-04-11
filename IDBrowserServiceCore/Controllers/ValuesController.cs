@@ -13,6 +13,8 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using IDBrowserServiceCore.Data.IDImager;
+using IDBrowserServiceCore.Data.IDImagerThumbs;
 
 namespace IDBrowserServiceCore.Controllers
 {
@@ -23,10 +25,13 @@ namespace IDBrowserServiceCore.Controllers
         private IConfiguration configuration;
         private TransactionOptions readUncommittedTransactionOptions;
         private IDImagerDB db;
-        private IDImagerDB dbThumbs;
+        private IDImagerThumbsDB dbThumbs;
 
-        public ValuesController(IConfiguration configuration, ILoggerFactory DepLoggerFactory, IHostingEnvironment DepHostingEnvironment)
+        public ValuesController(IDImagerDB db, IDImagerThumbsDB dbThumbs, IConfiguration configuration, 
+            ILoggerFactory DepLoggerFactory, IHostingEnvironment DepHostingEnvironment)
         {
+            this.db = db;
+            this.dbThumbs = dbThumbs;
             this.configuration = configuration;
 
             if (log == null)
@@ -36,12 +41,6 @@ namespace IDBrowserServiceCore.Controllers
             {
                 IsolationLevel = IsolationLevel.ReadUncommitted
             };
-
-            if (db == null)
-                db = new IDImagerDB(configuration["ConnectionStrings:IDImager"]);
-
-            if (dbThumbs == null)
-                dbThumbs = new IDImagerDB(configuration["ConnectionStrings:IDImagerThumbs"]);
         }
         new public void Dispose()
         {
@@ -317,19 +316,16 @@ namespace IDBrowserServiceCore.Controllers
                 // Distributed transaction are not supported
                 using (var scope2 = new TransactionScope(TransactionScopeOption.Suppress))
                 {
-                    lock (dbThumbs)
+                    //Searching with FirstOrDefault because PhotoSupreme sometimes stores the Thumbnail twice
+                    thumb = dbThumbs.idThumbs.FirstOrDefault(x => x.ImageGUID == imageGuid && x.idType == type);
+
+                    //If recipe image is not found, return the M image,
+                    //because the programm cannot yet generate the recipe image
+                    if (thumb == null && type == "R")
                     {
+                        type = "M";
                         //Searching with FirstOrDefault because PhotoSupreme sometimes stores the Thumbnail twice
                         thumb = dbThumbs.idThumbs.FirstOrDefault(x => x.ImageGUID == imageGuid && x.idType == type);
-
-                        //If recipe image is not found, return the M image,
-                        //because the programm cannot yet generate the recipe image
-                        if (thumb == null && type == "R")
-                        {
-                            type = "M";
-                            //Searching with FirstOrDefault because PhotoSupreme sometimes stores the Thumbnail twice
-                            thumb = dbThumbs.idThumbs.FirstOrDefault(x => x.ImageGUID == imageGuid && x.idType == type);
-                        }
                     }
                 }
 

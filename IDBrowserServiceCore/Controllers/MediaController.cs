@@ -16,6 +16,7 @@ using System.Net.Mime;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
+using IDBrowserServiceCore.Data.IDImager;
 
 namespace IDBrowserServiceCore.Controllers
 {
@@ -30,13 +31,15 @@ namespace IDBrowserServiceCore.Controllers
         private IDImagerDB db;
         private ILogger log;
 
-        public MediaController(IConfiguration configuration, ILoggerFactory DepLoggerFactory, IHostingEnvironment DepHostingEnvironment)
+        public MediaController(IDImagerDB db, IConfiguration configuration, ILoggerFactory DepLoggerFactory, IHostingEnvironment DepHostingEnvironment)
         {
+            this.db = db;
+
             if (log == null)
                 log = DepLoggerFactory.CreateLogger("Controllers.MediaController");
 
-            if (db == null)
-                db = new IDImagerDB(configuration["ConnectionStrings:IDImager"]);
+            //if (db == null)
+            //    db = new IDImagerDB(configuration["ConnectionStrings:IDImager"]);
 
             var mimeNames = new Dictionary<string, string>();
 

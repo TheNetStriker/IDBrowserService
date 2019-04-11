@@ -9,6 +9,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Xunit;
+using IDBrowserServiceCore.Data.IDImager;
+using IDBrowserServiceCore.Data.IDImagerThumbs;
+using Microsoft.EntityFrameworkCore;
 
 namespace IDBrowserServiceCoreTest
 {
@@ -65,31 +68,40 @@ namespace IDBrowserServiceCoreTest
             get
             {
                 if (db == null)
-                    db = new IDImagerDB(configuration["ConnectionStrings:IDImager"]);
+                {
+                    var options = SqlServerDbContextOptionsExtensions
+                        .UseSqlServer(new DbContextOptionsBuilder<IDImagerDB>(), configuration["ConnectionStrings:IDImager"]).Options;
+                    db = new IDImagerDB(options);
+                }
+                    
 
                 return db;
             }
         }
 
-        private IDImagerDB dbThumbs;
-        public IDImagerDB DbThumbs
+        private IDImagerThumbsDB dbThumbs;
+        public IDImagerThumbsDB DbThumbs
         {
             get
             {
                 if (dbThumbs == null)
-                    dbThumbs = new IDImagerDB(configuration["ConnectionStrings:IDImagerThumbs"]);
+                {
+                    var options = SqlServerDbContextOptionsExtensions
+                        .UseSqlServer(new DbContextOptionsBuilder<IDImagerThumbsDB>(), configuration["ConnectionStrings:IDImagerThumbs"]).Options;
+                    dbThumbs = new IDImagerThumbsDB(options);
+                }
 
                 return dbThumbs;
             }
         }
 
-        private readonly ValuesController controller;
+        private ValuesController controller;
         public ValuesController Controller
         {
             get
             {
                 if (controller == null)
-                    return new ValuesController(Configuration, Logger, null);
+                    controller = new ValuesController(Db, DbThumbs, Configuration, Logger, null);
 
                 return controller;
             }

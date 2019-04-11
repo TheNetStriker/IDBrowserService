@@ -1,4 +1,4 @@
-namespace IDBrowserServiceCore.Data
+namespace IDBrowserServiceCore.Data.IDImager
 {
     using System;
     using System.Collections.Generic;

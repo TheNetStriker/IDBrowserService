@@ -1,8 +1,12 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using IDBrowserServiceCore.Data;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
+using IDBrowserServiceCore.Data.IDImager;
+using IDBrowserServiceCore.Data.IDImagerThumbs;
 
 namespace IDBrowserServiceCore
 {
@@ -24,6 +28,12 @@ namespace IDBrowserServiceCore
                 .AddXmlSerializerFormatters();
             services
                 .AddSingleton<IConfiguration>(Configuration);
+
+            var strConnection = Configuration["ConnectionStrings:IDImager"];
+            services.AddDbContextPool<IDImagerDB>(options => options.UseSqlServer(strConnection));
+
+            var strConnectionThumbs = Configuration["ConnectionStrings:IDImagerThumbs"];
+            services.AddDbContextPool<IDImagerThumbsDB>(options => options.UseSqlServer(strConnectionThumbs));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

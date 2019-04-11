@@ -1,5 +1,7 @@
 ﻿using ComponentAce.Compression.Libs.zlib;
 using IDBrowserServiceCore.Data;
+using IDBrowserServiceCore.Data.IDImager;
+using IDBrowserServiceCore.Data.IDImagerThumbs;
 using ImageMagick;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -90,7 +92,7 @@ namespace IDBrowserServiceCore
         //    return bitmapFrame;
         //}
 
-        public static SaveImageThumbnailResult SaveImageThumbnail(idCatalogItem catalogItem, IDImagerDB db, IDImagerDB dbThumbs,
+        public static SaveImageThumbnailResult SaveImageThumbnail(idCatalogItem catalogItem, IDImagerDB db, IDImagerThumbsDB dbThumbs,
             List<String> types, Boolean keepAspectRatio, Boolean setGenericVideoThumbnailOnError)
         {
             SaveImageThumbnailResult result = new SaveImageThumbnailResult();
