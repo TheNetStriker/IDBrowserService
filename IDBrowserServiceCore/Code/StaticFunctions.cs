@@ -11,6 +11,7 @@ using System.Linq;
 using System.Xml.Linq;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
+using IDBrowserServiceCore.Code.XmpRecipe;
 
 namespace IDBrowserServiceCore.Code
 {
@@ -127,13 +128,13 @@ namespace IDBrowserServiceCore.Code
                         imageHeight = Int32.Parse(Configuration["IDBrowserServiceSettings:MThumbnailHeight"]);
                     }
 
-                    XmpReceipe xmpReceipe = null;
+                    XmpRecipeContainer xmpRecipeContainer = null;
                     if (type.Equals("T") || type.Equals("R"))
                     {
                         if (catalogItem.idHasRecipe > 0)
                         {
                             XDocument recipeXDocument = await GetRecipeXDocument(db, catalogItem);
-                            xmpReceipe = XmpRecipeHelper.ParseXmlRecepie(recipeXDocument);
+                            xmpRecipeContainer = XmpRecipeHelper.ParseXmlRecepie(recipeXDocument);
                         }
                     }
 
@@ -147,8 +148,8 @@ namespace IDBrowserServiceCore.Code
 
                     image.Resize(imageWidth, imageHeight);
 
-                    if (xmpReceipe != null)
-                        XmpRecipeHelper.ApplyXmpRecipe(xmpReceipe, image);
+                    if (xmpRecipeContainer != null)
+                        XmpRecipeHelper.ApplyXmpRecipe(xmpRecipeContainer, image);
 
                     image.Write(resizedImageStream);
                     resizedImageStream.Position = 0;

@@ -1,7 +1,6 @@
-﻿
-namespace IDBrowserServiceCore.Code
+﻿namespace IDBrowserServiceCore.Code.XmpRecipe.Actions
 {
-    public class XmpCrop
+    public class XmpCrop : IXmpRecipeAction
     {
         public double Left { get; set; }
         public double Top { get; set; }

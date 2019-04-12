@@ -15,6 +15,7 @@ using IDBrowserServiceCore.Data;
 using IDBrowserServiceCore.Code;
 using ImageMagick;
 using System.Threading.Tasks;
+using IDBrowserServiceCore.Code.XmpRecipe;
 
 namespace IDBrowserServiceCore.Controllers
 {
@@ -469,11 +470,11 @@ namespace IDBrowserServiceCore.Controllers
             string strImageFilePath = StaticFunctions.GetImageFilePath(catalogItem);
             Stream imageStream = StaticFunctions.GetImageFileStream(strImageFilePath);
 
-            XmpReceipe xmpReceipe = null;
+            XmpRecipeContainer xmpRecipeContainer = null;
             try
             {
                 System.Xml.Linq.XDocument recipeXDocument = await StaticFunctions.GetRecipeXDocument(db, catalogItem);
-                xmpReceipe = XmpRecipeHelper.ParseXmlRecepie(recipeXDocument);
+                xmpRecipeContainer = XmpRecipeHelper.ParseXmlRecepie(recipeXDocument);
             }
             catch (Exception ex)
             {
@@ -481,17 +482,23 @@ namespace IDBrowserServiceCore.Controllers
                     catalogItem.GUID, ex.ToString()));
             }
 
-            if ((width != null && height != null) || (xmpReceipe != null && xmpReceipe.HasValues ))
+            if ((width != null && height != null) || (xmpRecipeContainer != null && xmpRecipeContainer.HasValues))
             {
                 MagickImage image = new MagickImage(imageStream);
-                int intWidth = int.Parse(width);
-                int intHeight = int.Parse(height);
 
-                if (xmpReceipe == null)
-                    XmpRecipeHelper.ApplyXmpRecipe(xmpReceipe, image);
+                if (xmpRecipeContainer != null && xmpRecipeContainer.HasValues)
+                    XmpRecipeHelper.ApplyXmpRecipe(xmpRecipeContainer, image);
 
-                if (image.Width > intWidth && image.Height > intHeight)
-                    image.Resize(intWidth, intHeight);
+                if (width != null && height != null)
+                {
+                    int intWidth = int.Parse(width);
+                    int intHeight = int.Parse(height);
+
+                    if (image.Width > intWidth && image.Height > intHeight)
+                    {
+                        image.Resize(intWidth, intHeight);
+                    }
+                }
 
                 //ToDo: Herausfinden ob rotation noch nötig ist.
                 //Rotation rotation = StaticFunctions.Rotate(ref bitmapSource, ref transformGroup);

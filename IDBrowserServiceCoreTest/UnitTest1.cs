@@ -19,6 +19,8 @@ namespace IDBrowserServiceCoreTest
 {
     public class UnitTest1
     {
+        private const string ReceipeTestGuid = "675BB1838073452BA98DF29E0D5249DD"; // "607F77D8CE8048A798C68336051E5CFC";
+
         private static List<String> ImagePropertyGuids;
         private static List<String> ImageGuids;
 
@@ -168,7 +170,7 @@ namespace IDBrowserServiceCoreTest
         [Fact]
         public async void GetImageTest()
         {
-            ActionResult<Stream> result = await Controller.GetImage(GetNextImageGuid());
+            ActionResult<Stream> result = await Controller.GetImage(ReceipeTestGuid);
             result.Value.Close();
         }
 

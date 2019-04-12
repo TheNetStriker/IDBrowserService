@@ -1,17 +1,18 @@
-﻿using ImageMagick;
+﻿using IDBrowserServiceCore.Code.XmpRecipe.Actions;
+using ImageMagick;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 
-namespace IDBrowserServiceCore.Code
+namespace IDBrowserServiceCore.Code.XmpRecipe
 {
     public class XmpRecipeHelper
     {
         private static XName xNameDescription = XName.Get("Description", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
 
-        //iles namespaces
+        //iles namespace
         private static XName xNameIles = XName.Get("iles", "http://www.w3.org/2000/xmlns/");
 
         //Rotate namespaces
@@ -113,9 +114,9 @@ namespace IDBrowserServiceCore.Code
         //    return imageStream;
         //}
 
-        public static XmpReceipe ParseXmlRecepie(XDocument xdocument)
+        public static XmpRecipeContainer ParseXmlRecepie(XDocument xdocument)
         {
-            XmpReceipe xmpReceipe = new XmpReceipe();
+            XmpRecipeContainer xmpRecipeContainer = new XmpRecipeContainer();
             IEnumerable<XNode> recipeNodes = null;
 
             if (xdocument != null)
@@ -129,153 +130,127 @@ namespace IDBrowserServiceCore.Code
 
             if (recipeNodes != null)
             {
-                //Process simple transformations
-                foreach (XElement element in recipeNodes.OfType<XElement>().Where(x => x.Name.Equals(xNameIlesRotate)))
-                {
-                    XElement currentRecipe = element.Descendants().First();
-
-                    XElement recipeEnabledElement = getXElementByXName(currentRecipe, xNameIlesRotate_RecipeEnabled);
-                    XElement friendlyNameElement = getXElementByXName(currentRecipe, xNameIlesRotate_FriendlyName);
-                    XElement opacityElement = getXElementByXName(currentRecipe, xNameIlesRotate_Opacity);
-                    XElement blendModeElement = getXElementByXName(currentRecipe, xNameIlesRotate_BlendMode);
-                    XElement angleElement = getXElementByXName(currentRecipe, xNameIlesRotate_Angle);
-                    XElement cropElement = getXElementByXName(currentRecipe, xNameIlesRotate_Crop);
-                    XElement backgroundColorElement = getXElementByXName(currentRecipe, xNameIlesRotate_BackgroundColor);
-
-                    if (recipeEnabledElement.Value.Equals("1") & angleElement != null)
-                    {
-                        double angle = Double.Parse(angleElement.Value);
-
-                        //Only 90, 180 and 270 degrees are supported
-                        if (angle == 90 | angle == 180 | angle == 270)
-                        {
-                            xmpReceipe.Rotate = angle;
-                        }
-                    }
-                }
-
-                foreach (XElement element in recipeNodes.OfType<XElement>().Where(x => x.Name.Equals(xNameIlesResizeFixed)))
-                {
-                    XElement currentRecipe = element.Descendants().First();
-
-                    XElement recipeEnabledElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_RecipeEnabled);
-                    XElement friendlyNameElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_FriendlyName);
-                    XElement guidElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_GUID);
-                    XElement resizeFixedEnabledElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_Enabled);
-                    XElement widthElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_Width);
-                    XElement heightElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_Height);
-                    XElement widthDisplayUnitElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_WidthDisplayUnit);
-                    XElement heightDisplayUnitElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_HeightDisplayUnit);
-                    XElement adjustResolutionElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_AdjustResolution);
-                    XElement resolutionElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_Resolution);
-                    XElement resolutionDisplayUnitElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_ResolutionDisplayUnit);
-                    XElement proportionalElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_Proportional);
-                    XElement proportionalSettingElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_ProportionalSetting);
-                    XElement enlargeSmallImagesElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_EnlargeSmallImages);
-                    XElement maintainRatioElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_MaintainRatio);
-                    XElement interpolatedElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_Interpolated);
-                    XElement filterElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_Filter);
-
-                    if (recipeEnabledElement.Value.Equals("1"))
-                    {
-                        int intWidth = Int32.Parse(widthElement.Value);
-                        int intHeight = Int32.Parse(heightElement.Value);
-
-                        xmpReceipe.Resize = new MagickGeometry(intWidth, intHeight);
-                    }
-                }
-
-                foreach (XElement element in recipeNodes.OfType<XElement>().Where(x => x.Name.Equals(xNameIlesStraighten)))
-                {
-                    XElement currentRecipe = element.Descendants().First();
-
-                    XElement recipeEnabledElement = getXElementByXName(currentRecipe, xNameIlesStraighten_RecipeEnabled);
-                    XElement friendlyNameElement = getXElementByXName(currentRecipe, xNameIlesStraighten_FriendlyName);
-                    XElement opacityElement = getXElementByXName(currentRecipe, xNameIlesStraighten_Opacity);
-                    XElement blendModeElement = getXElementByXName(currentRecipe, xNameIlesStraighten_BlendMode);
-                    XElement angleElement = getXElementByXName(currentRecipe, xNameIlesStraighten_Angle);
-                    XElement cropElement = getXElementByXName(currentRecipe, xNameIlesStraighten_Crop);
-                    XElement BackgroundColorElement = getXElementByXName(currentRecipe, xNameIlesStraighten_BackgroundColor);
-
-                    if (recipeEnabledElement.Value.Equals("1") & angleElement != null)
-                    {
-                        double angle = Double.Parse(angleElement.Value);
-
-                        //Only 90, 180 and 270 degrees are supported
-                        if (angle == 90 | angle == 180 | angle == 270)
-                        {
-                            xmpReceipe.Rotate = angle;
-                        }
-                    }
-                }
-
                 double flipScaleX = 1;
                 double flipScaleY = 1;
-                foreach (XElement element in recipeNodes.OfType<XElement>().Where(x => x.Name.Equals(xNameIlesFlip)))
+
+                foreach (XElement element in recipeNodes.OfType<XElement>())
                 {
                     XElement currentRecipe = element.Descendants().First();
 
-                    XElement recipeEnabledElement = getXElementByXName(currentRecipe, xNameIlesFlip_RecipeEnabled);
-                    XElement friendlyNameElement = getXElementByXName(currentRecipe, xNameIlesFlip_FriendlyName);
-                    XElement opacityElement = getXElementByXName(currentRecipe, xNameIlesFlip_Opacity);
-                    XElement blendModeElement = getXElementByXName(currentRecipe, xNameIlesFlip_BlendMode);
-                    XElement flipVerticalElement = getXElementByXName(currentRecipe, xNameIlesFlip_FlipVertical);
-                    XElement flipHorizontalElement = getXElementByXName(currentRecipe, xNameIlesFlip_FlipHorizontal);
+                    if (element.Name.Equals(xNameIlesRotate))
+                    {                        
+                        XElement recipeEnabledElement = getXElementByXName(currentRecipe, xNameIlesRotate_RecipeEnabled);
+                        XElement friendlyNameElement = getXElementByXName(currentRecipe, xNameIlesRotate_FriendlyName);
+                        XElement opacityElement = getXElementByXName(currentRecipe, xNameIlesRotate_Opacity);
+                        XElement blendModeElement = getXElementByXName(currentRecipe, xNameIlesRotate_BlendMode);
+                        XElement angleElement = getXElementByXName(currentRecipe, xNameIlesRotate_Angle);
+                        XElement cropElement = getXElementByXName(currentRecipe, xNameIlesRotate_Crop);
+                        XElement backgroundColorElement = getXElementByXName(currentRecipe, xNameIlesRotate_BackgroundColor);
 
-                    if (recipeEnabledElement.Value.Equals("1"))
-                    {
-                        flipScaleX = (flipVerticalElement != null && flipVerticalElement.Value.Equals("1")) ? -1 : flipScaleX;
-                        flipScaleY = (flipHorizontalElement != null && flipHorizontalElement.Value.Equals("1")) ? -1 : flipScaleY;
+                        if (recipeEnabledElement.Value.Equals("1") & angleElement != null)
+                        {
+                            double angle = Double.Parse(angleElement.Value);
+
+                            XmpRotate xmpRotate = new XmpRotate
+                            {
+                                Angle = angle
+                            };
+                            xmpRecipeContainer.Actions.Add(xmpRotate);
+                        }
                     }
-                }
+                    else if (element.Name.Equals(xNameIlesResizeFixed))
+                    {
+                        XElement recipeEnabledElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_RecipeEnabled);
+                        XElement friendlyNameElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_FriendlyName);
+                        XElement guidElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_GUID);
+                        XElement resizeFixedEnabledElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_Enabled);
+                        XElement widthElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_Width);
+                        XElement heightElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_Height);
+                        XElement widthDisplayUnitElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_WidthDisplayUnit);
+                        XElement heightDisplayUnitElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_HeightDisplayUnit);
+                        XElement adjustResolutionElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_AdjustResolution);
+                        XElement resolutionElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_Resolution);
+                        XElement resolutionDisplayUnitElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_ResolutionDisplayUnit);
+                        XElement proportionalElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_Proportional);
+                        XElement proportionalSettingElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_ProportionalSetting);
+                        XElement enlargeSmallImagesElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_EnlargeSmallImages);
+                        XElement maintainRatioElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_MaintainRatio);
+                        XElement interpolatedElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_Interpolated);
+                        XElement filterElement = getXElementByXName(currentRecipe, xNameIlesResizeFixed_Filter);
 
-                if (flipScaleX != 1 | flipScaleY != 1)
-                {
-                    // ToDo: herausfinden was hier zu tun ist.
-                    //ScaleTransform scaleTransform = new ScaleTransform(flipScaleX, flipScaleY, 0, 0);
-                    //transformGroup.Children.Add(scaleTransform);
-                }
+                        if (recipeEnabledElement.Value.Equals("1"))
+                        {
+                            int intWidth = Int32.Parse(widthElement.Value);
+                            int intHeight = Int32.Parse(heightElement.Value);
 
-                foreach (XElement element in recipeNodes.OfType<XElement>().Where(x => x.Name.Equals(xNameIlesFrame)))
-                {
-                    XElement currentRecipe = element.Descendants().First();
+                            XmpResize xmpResize = new XmpResize
+                            {
+                                Width = intWidth,
+                                Height = intHeight
+                            };
 
-                    XElement recipeEnabledElement = getXElementByXName(currentRecipe, xNameIlesFrame_RecipeEnabled);
-                    XElement friendlyNameElement = getXElementByXName(currentRecipe, xNameIlesFrame_FriendlyName);
-                    XElement opacityElement = getXElementByXName(currentRecipe, xNameIlesFrame_Opacity);
-                    XElement blendModeElement = getXElementByXName(currentRecipe, xNameIlesFrame_BlendMode);
-                    XElement frameStreamElement = getXElementByXName(currentRecipe, xNameIlesFrame_FrameStream);
-                }
+                            xmpRecipeContainer.Actions.Add(xmpResize);
+                        }
+                    }
+                    else if (element.Name.Equals(xNameIlesStraighten))
+                    {
+                        XElement recipeEnabledElement = getXElementByXName(currentRecipe, xNameIlesStraighten_RecipeEnabled);
+                        XElement friendlyNameElement = getXElementByXName(currentRecipe, xNameIlesStraighten_FriendlyName);
+                        XElement opacityElement = getXElementByXName(currentRecipe, xNameIlesStraighten_Opacity);
+                        XElement blendModeElement = getXElementByXName(currentRecipe, xNameIlesStraighten_BlendMode);
+                        XElement angleElement = getXElementByXName(currentRecipe, xNameIlesStraighten_Angle);
+                        XElement cropElement = getXElementByXName(currentRecipe, xNameIlesStraighten_Crop);
+                        XElement BackgroundColorElement = getXElementByXName(currentRecipe, xNameIlesStraighten_BackgroundColor);
 
-                foreach (XElement element in recipeNodes.OfType<XElement>().Where(x => x.Name.Equals(xNameIlesTitle)))
-                {
-                    XElement currentRecipe = element.Descendants().First();
+                        if (recipeEnabledElement.Value.Equals("1") & angleElement != null)
+                        {
+                            double angle = Double.Parse(angleElement.Value);
 
-                    XElement recipeEnabledElement = getXElementByXName(currentRecipe, xNameIlesTitle_RecipeEnabled);
-                    XElement friendlyNameElement = getXElementByXName(currentRecipe, xNameIlesTitle_FriendlyName);
-                    XElement titleStreamElement = getXElementByXName(currentRecipe, xNameIlesTitle_TitleStream);
-                }
+                            XmpRotate xmpRotate = new XmpRotate
+                            {
+                                Angle = angle
+                            };
+                            xmpRecipeContainer.Actions.Add(xmpRotate);
+                        }
+                    }
+                    else if (element.Name.Equals(xNameIlesFlip))
+                    {
+                        XElement recipeEnabledElement = getXElementByXName(currentRecipe, xNameIlesFlip_RecipeEnabled);
+                        XElement friendlyNameElement = getXElementByXName(currentRecipe, xNameIlesFlip_FriendlyName);
+                        XElement opacityElement = getXElementByXName(currentRecipe, xNameIlesFlip_Opacity);
+                        XElement blendModeElement = getXElementByXName(currentRecipe, xNameIlesFlip_BlendMode);
+                        XElement flipVerticalElement = getXElementByXName(currentRecipe, xNameIlesFlip_FlipVertical);
+                        XElement flipHorizontalElement = getXElementByXName(currentRecipe, xNameIlesFlip_FlipHorizontal);
 
-                foreach (XElement element in recipeNodes.OfType<XElement>().Where(x => x.Name.Equals(xNameIlesWatermarks)))
-                {
-                    XElement currentRecipe = element.Descendants().First();
-
-                    XElement recipeEnabledElement = getXElementByXName(currentRecipe, xNameIlesWatermarks_RecipeEnabled);
-                    XElement friendlyNameElement = getXElementByXName(currentRecipe, xNameIlesWatermarks_FriendlyName);
-                    XElement opacityElement = getXElementByXName(currentRecipe, xNameIlesWatermarks_Opacity);
-                    XElement blendModeElement = getXElementByXName(currentRecipe, xNameIlesWatermarks_BlendMode);
-                    XElement watermarksStreamElement = getXElementByXName(currentRecipe, xNameIlesWatermarks_WatermarksStream);
-                }
-            }
-
-            if (recipeNodes != null && xdocument != null)
-            {
-                //Process complex transformations
-                foreach (XElement element in recipeNodes)
-                {
-                    XElement currentRecipe = element.Descendants().First();
-
-                    if (element.Name.Equals(xNameIlesCrop))
+                        if (recipeEnabledElement.Value.Equals("1"))
+                        {
+                            flipScaleX = (flipVerticalElement != null && flipVerticalElement.Value.Equals("1")) ? -1 : flipScaleX;
+                            flipScaleY = (flipHorizontalElement != null && flipHorizontalElement.Value.Equals("1")) ? -1 : flipScaleY;
+                        }
+                    }
+                    else if (element.Name.Equals(xNameIlesFrame))
+                    {
+                        XElement recipeEnabledElement = getXElementByXName(currentRecipe, xNameIlesFrame_RecipeEnabled);
+                        XElement friendlyNameElement = getXElementByXName(currentRecipe, xNameIlesFrame_FriendlyName);
+                        XElement opacityElement = getXElementByXName(currentRecipe, xNameIlesFrame_Opacity);
+                        XElement blendModeElement = getXElementByXName(currentRecipe, xNameIlesFrame_BlendMode);
+                        XElement frameStreamElement = getXElementByXName(currentRecipe, xNameIlesFrame_FrameStream);
+                    }
+                    else if (element.Name.Equals(xNameIlesTitle))
+                    {
+                        XElement recipeEnabledElement = getXElementByXName(currentRecipe, xNameIlesTitle_RecipeEnabled);
+                        XElement friendlyNameElement = getXElementByXName(currentRecipe, xNameIlesTitle_FriendlyName);
+                        XElement titleStreamElement = getXElementByXName(currentRecipe, xNameIlesTitle_TitleStream);
+                    }
+                    else if (element.Name.Equals(xNameIlesWatermarks))
+                    {
+                        XElement recipeEnabledElement = getXElementByXName(currentRecipe, xNameIlesWatermarks_RecipeEnabled);
+                        XElement friendlyNameElement = getXElementByXName(currentRecipe, xNameIlesWatermarks_FriendlyName);
+                        XElement opacityElement = getXElementByXName(currentRecipe, xNameIlesWatermarks_Opacity);
+                        XElement blendModeElement = getXElementByXName(currentRecipe, xNameIlesWatermarks_BlendMode);
+                        XElement watermarksStreamElement = getXElementByXName(currentRecipe, xNameIlesWatermarks_WatermarksStream);
+                    }
+                    else if (element.Name.Equals(xNameIlesCrop))
                     {
                         XElement recipeEnabledElement = getXElementByXName(currentRecipe, xNameIlesCrop_RecipeEnabled);
                         XElement friendlyNameElement = getXElementByXName(currentRecipe, xNameIlesCrop_FriendlyName);
@@ -288,43 +263,65 @@ namespace IDBrowserServiceCore.Code
 
                         if (recipeEnabledElement.Value.Equals("1"))
                         {
-
-                            xmpReceipe.Crop = new XmpCrop()
+                            XmpCrop xmpCrop = new XmpCrop()
                             {
                                 Left = double.Parse(leftElement.Value),
                                 Top = double.Parse(topElement.Value),
                                 Right = double.Parse(rightElement.Value),
                                 Bottom = double.Parse(bottomElement.Value)
                             };
+
+                            xmpRecipeContainer.Actions.Add(xmpCrop);
                         }
                     }
                 }
+
+                // Todo: Herausfinden wie das bei gedrehten Bildern funktioniert.
+                //List<XmpCrop> xmpCrops = xmpRecipeContainer.Actions.OfType<XmpCrop>().ToList();
+                //xmpRecipeContainer.Actions.RemoveAll(x => x.GetType() == typeof(XmpCrop));
+                //xmpRecipeContainer.Actions.AddRange(xmpCrops);
+
+                if (flipScaleX != 1 | flipScaleY != 1)
+                {
+                    // ToDo: herausfinden was hier zu tun ist.
+                    //ScaleTransform scaleTransform = new ScaleTransform(flipScaleX, flipScaleY, 0, 0);
+                    //transformGroup.Children.Add(scaleTransform);
+                }
             }
 
-            return xmpReceipe;
+            return xmpRecipeContainer;
         }
 
-        public static void ApplyXmpRecipe(XmpReceipe xmpReceipe, MagickImage image) 
+        public static void ApplyXmpRecipe(XmpRecipeContainer xmpRecipeContainer, MagickImage image) 
         {
-            if (xmpReceipe.Rotate != null)
-                image.Rotate(xmpReceipe.Rotate.Value);
-
-            if (xmpReceipe.Resize != null && image.Width > xmpReceipe.Resize.Width && image.Height > xmpReceipe.Resize.Height)
+            foreach (IXmpRecipeAction action in xmpRecipeContainer.Actions)
             {
-                image.Resize(xmpReceipe.Resize);
-            }
+                if (action.GetType() == typeof(XmpRotate))
+                {
+                    XmpRotate xmpRotate = (XmpRotate)action;
+                    image.Rotate(xmpRotate.Angle);
+                }
+                else if (action.GetType() == typeof(XmpResize))
+                {
+                    XmpResize xmpResize = (XmpResize)action;
 
-            if (xmpReceipe.Crop != null)
-            {
-                int intLeftPixel = Convert.ToInt32(image.Width * xmpReceipe.Crop.Left);
-                int intTopPixel = Convert.ToInt32(image.Height * xmpReceipe.Crop.Top);
-                int intRightPixel = Convert.ToInt32(image.Width * xmpReceipe.Crop.Right);
-                int intBottomPixel = Convert.ToInt32(image.Height * xmpReceipe.Crop.Bottom);
-                int intWidth = intRightPixel - intLeftPixel;
-                int intHeight = intBottomPixel - intTopPixel;
+                    if (image.Width > xmpResize.Width && image.Height > xmpResize.Height)
+                        image.Resize(xmpResize.Width, xmpResize.Height);
+                }
+                else if (action.GetType() == typeof(XmpCrop))
+                {
+                    XmpCrop xmpCrop = (XmpCrop)action;
 
-                MagickGeometry magickGeometry = new MagickGeometry(intLeftPixel, intTopPixel, intWidth, intHeight);
-                image.Crop(magickGeometry);
+                    int intLeftPixel = Convert.ToInt32(image.Width * xmpCrop.Left);
+                    int intTopPixel = Convert.ToInt32(image.Height * xmpCrop.Top);
+                    int intRightPixel = Convert.ToInt32(image.Width * xmpCrop.Right);
+                    int intBottomPixel = Convert.ToInt32(image.Height * xmpCrop.Bottom);
+                    int intWidth = intRightPixel - intLeftPixel;
+                    int intHeight = intBottomPixel - intTopPixel;
+
+                    MagickGeometry magickGeometry = new MagickGeometry(intLeftPixel, intTopPixel, intWidth, intHeight);
+                    image.Crop(magickGeometry);
+                }
             }
         }
 
