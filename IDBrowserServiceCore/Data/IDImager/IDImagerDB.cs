@@ -26,7 +26,10 @@ namespace IDBrowserServiceCore.Data.IDImager
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<idCatalogItemDefinition>()
-                .HasKey(c => new { c.GUID });
+                .HasKey(table => new {
+                    table.GUID,
+                    table.CatalogItemGUID
+            });
 
             modelBuilder.Entity<idCatalogItem>()
                 .HasMany(e => e.idCatalogItemDefinition)
@@ -37,6 +40,11 @@ namespace IDBrowserServiceCore.Data.IDImager
                 .HasMany(e => e.idCatalogItem)
                 .WithOne(e => e.idFilePath)
                 .HasForeignKey(e => e.PathGUID);
+
+            modelBuilder.Entity<idProp>()
+                .HasMany(e => e.idCatalogItemDefinition)
+                .WithOne(e => e.idProp)
+                .HasForeignKey(e => e.GUID);
         }
     }
 }

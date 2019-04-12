@@ -743,6 +743,9 @@ namespace IDBrowserServiceCore.Controllers
         {
             try
             {
+                if (await db.idProp.Where(x => x.GUID == propertyGuid).CountAsync() == 0)
+                    throw new Exception("Image property does not exist");
+
                 var query = from tbl in db.idCatalogItemDefinition
                             where tbl.GUID == propertyGuid & tbl.CatalogItemGUID == catalogItemGUID
                             select tbl;

@@ -22,11 +22,17 @@ namespace IDBrowserServiceCoreTest
         private static List<String> ImagePropertyGuids;
         private static List<String> ImageGuids;
 
+        idCatalogItem idCatalogItemFirst;
+        idProp idPropFirst;
+
         public UnitTest1()
         {
             StaticFunctions.Configuration = Configuration;
             ImagePropertyGuids = new List<String>();
             ImageGuids = Task.Run(() => Controller.GetRandomImageGuids()).Result.Value;
+
+            idCatalogItemFirst = Db.idCatalogItem.Include("idFilePath").Where(x => x.FileName.EndsWith(".JPG")).First();
+            idPropFirst = db.idProp.First();
 
             List<ImageProperty> ImageProperties = Task.Run(() => Controller.GetImageProperties(null)).Result.Value;
             foreach (ImageProperty imageProperty in ImageProperties)
@@ -229,6 +235,18 @@ namespace IDBrowserServiceCoreTest
 
             if (result.Exceptions.Count > 0)
                 throw result.Exceptions.First();
+        }
+
+        [Fact]
+        public async void AddCatalogItemDefinitionTest()
+        {
+            await Controller.AddCatalogItemDefinition(idPropFirst.GUID, idCatalogItemFirst.GUID);
+        }
+
+        [Fact]
+        public async void DeleteCatalogItemDefinitionTest()
+        {
+            await Controller.DeleteCatalogItemDefinition(idPropFirst.GUID, idCatalogItemFirst.GUID);
         }
     }
 }

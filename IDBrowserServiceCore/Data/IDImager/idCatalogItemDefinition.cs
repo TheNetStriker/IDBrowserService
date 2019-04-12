@@ -22,6 +22,6 @@ namespace IDBrowserServiceCore.Data.IDImager
 
         public virtual idCatalogItem idCatalogItem { get; set; }
 
-        //public virtual idProp idProp { get; set; }
+        public virtual idProp idProp { get; set; }
     }
 }
