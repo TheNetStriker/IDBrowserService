@@ -301,7 +301,7 @@ namespace IDBrowserServiceCore.Controllers
             using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
                 readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
             {
-                catalogItem = await db.idCatalogItem.Include("idFilePath").SingleAsync(x => x.GUID == imageGuid);
+                catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleAsync(x => x.GUID == imageGuid);
 
                 if (catalogItem == null)
                     throw new Exception("CatalogItem not found");
@@ -462,7 +462,7 @@ namespace IDBrowserServiceCore.Controllers
             idCatalogItem catalogItem = null;
             Boolean keepAspectRatio = Boolean.Parse(configuration["IDBrowserServiceSettings:KeepAspectRatio"]);
 
-            catalogItem = await db.idCatalogItem.Include("idFilePath").SingleAsync(x => x.GUID == imageGuid);
+            catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleAsync(x => x.GUID == imageGuid);
             if (catalogItem == null)
                 throw new Exception("CatalogItem not found");
 
@@ -593,7 +593,7 @@ namespace IDBrowserServiceCore.Controllers
                 using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
                     readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
                 {
-                    catalogItem = await db.idCatalogItem.Include("idFilePath").SingleAsync(x => x.GUID == imageGuid);
+                    catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleAsync(x => x.GUID == imageGuid);
                     scope.Complete();
                 }
 

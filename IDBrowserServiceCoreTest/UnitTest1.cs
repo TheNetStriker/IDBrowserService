@@ -22,7 +22,8 @@ namespace IDBrowserServiceCoreTest
         private static List<String> ImagePropertyGuids;
         private static List<String> ImageGuids;
 
-        idCatalogItem idCatalogItemFirst;
+        idCatalogItem idCatalogItemFirstImage;
+        idCatalogItem idCatalogItemFirstVideo;
         idProp idPropFirst;
 
         public UnitTest1()
@@ -31,7 +32,8 @@ namespace IDBrowserServiceCoreTest
             ImagePropertyGuids = new List<String>();
             ImageGuids = Task.Run(() => Controller.GetRandomImageGuids()).Result.Value;
 
-            idCatalogItemFirst = Db.idCatalogItem.Include("idFilePath").Where(x => x.FileName.EndsWith(".JPG")).First();
+            idCatalogItemFirstImage = Db.idCatalogItem.Include(x => x.idFilePath).Where(x => x.FileName.EndsWith(".JPG")).First();
+            idCatalogItemFirstVideo = Db.idCatalogItem.Include(x => x.idFilePath).Where(x => x.FileName.EndsWith(".MP4")).First();
             idPropFirst = db.idProp.First();
 
             List<ImageProperty> ImageProperties = Task.Run(() => Controller.GetImageProperties(null)).Result.Value;
@@ -212,11 +214,10 @@ namespace IDBrowserServiceCoreTest
         {
             Boolean keepAspectRatio = Boolean.Parse(Configuration["IDBrowserServiceSettings:KeepAspectRatio"]);
             Boolean setGenericVideoThumbnailOnError = Boolean.Parse(Configuration["IDBrowserServiceSettings:SetGenericVideoThumbnailOnError"]);
-            idCatalogItem idCatalogItem = Db.idCatalogItem.Include("idFilePath").Where(x => x.FileName.EndsWith(".JPG")).First();
             List<String> types = new List<String>() { "T", "R", "M" };
 
             SaveImageThumbnailResult result = await StaticFunctions
-                .SaveImageThumbnail(idCatalogItem, Db, DbThumbs, types, keepAspectRatio, setGenericVideoThumbnailOnError);
+                .SaveImageThumbnail(idCatalogItemFirstImage, Db, DbThumbs, types, keepAspectRatio, setGenericVideoThumbnailOnError);
 
             if (result.Exceptions.Count > 0)
                 throw result.Exceptions.First();
@@ -227,11 +228,11 @@ namespace IDBrowserServiceCoreTest
         {
             Boolean keepAspectRatio = Boolean.Parse(Configuration["IDBrowserServiceSettings:KeepAspectRatio"]);
             Boolean setGenericVideoThumbnailOnError = Boolean.Parse(Configuration["IDBrowserServiceSettings:SetGenericVideoThumbnailOnError"]);
-            idCatalogItem idCatalogItem = Db.idCatalogItem.Include("idFilePath").Where(x => x.FileName.EndsWith(".MP4")).First();
+            
             List<String> types = new List<String>() { "T", "R", "M" };
 
             SaveImageThumbnailResult result = await StaticFunctions
-                .SaveImageThumbnail(idCatalogItem, Db, DbThumbs, types, keepAspectRatio, setGenericVideoThumbnailOnError);
+                .SaveImageThumbnail(idCatalogItemFirstVideo, Db, DbThumbs, types, keepAspectRatio, setGenericVideoThumbnailOnError);
 
             if (result.Exceptions.Count > 0)
                 throw result.Exceptions.First();
@@ -240,13 +241,13 @@ namespace IDBrowserServiceCoreTest
         [Fact]
         public async void AddCatalogItemDefinitionTest()
         {
-            await Controller.AddCatalogItemDefinition(idPropFirst.GUID, idCatalogItemFirst.GUID);
+            await Controller.AddCatalogItemDefinition(idPropFirst.GUID, idCatalogItemFirstImage.GUID);
         }
 
         [Fact]
         public async void DeleteCatalogItemDefinitionTest()
         {
-            await Controller.DeleteCatalogItemDefinition(idPropFirst.GUID, idCatalogItemFirst.GUID);
+            await Controller.DeleteCatalogItemDefinition(idPropFirst.GUID, idCatalogItemFirstImage.GUID);
         }
     }
 }

@@ -60,7 +60,7 @@ namespace IDBrowserServiceCore.Controllers
                 if (string.IsNullOrEmpty(guid))
                     return BadRequest("Missing guid parameter");
 
-                idCatalogItem catalogItem = db.idCatalogItem.Include("idFilePath").Single(x => x.GUID.Equals(guid));
+                idCatalogItem catalogItem = db.idCatalogItem.Include(x => x.idFilePath).Single(x => x.GUID.Equals(guid));
 
                 String strFilePath = StaticFunctions.GetImageFilePath(catalogItem);
                 FileInfo fileInfo = new FileInfo(strFilePath);
