@@ -14,41 +14,22 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using IDBrowserServiceCore.Data.IDImager;
 using IDBrowserServiceCore.Code;
+using Microsoft.AspNetCore.StaticFiles;
 
 namespace IDBrowserServiceCore.Controllers
 {
     [Route("api/[controller]/[action]")]
     public class MediaController : Controller
     {
-        // This will be used in copying input stream to output stream.
-        public const int ReadStreamBufferSize = 1024 * 1024;
-        // We have a read-only dictionary for mapping file extensions and MIME names. 
-        public readonly IReadOnlyDictionary<string, string> MimeNames;
+        private readonly IDImagerDB db;
+        private readonly ILogger log;
 
-        private IDImagerDB db;
-        private ILogger log;
-
-        public MediaController(IDImagerDB db, IConfiguration configuration, ILoggerFactory DepLoggerFactory, IHostingEnvironment DepHostingEnvironment)
+        public MediaController(IDImagerDB db, IConfiguration configuration, ILoggerFactory DepLoggerFactory)
         {
             this.db = db;
 
             if (log == null)
                 log = DepLoggerFactory.CreateLogger("Controllers.MediaController");
-
-            //if (db == null)
-            //    db = new IDImagerDB(configuration["ConnectionStrings:IDImager"]);
-
-            var mimeNames = new Dictionary<string, string>();
-
-            mimeNames.Add("mp3", "audio/mpeg");    // List all supported media types; 
-            mimeNames.Add("mp4", "video/mp4");
-            mimeNames.Add("ogg", "application/ogg");
-            mimeNames.Add("ogv", "video/ogg");
-            mimeNames.Add("oga", "audio/ogg");
-            mimeNames.Add("wav", "audio/x-wav");
-            mimeNames.Add("webm", "video/webm");
-
-            MimeNames = new ReadOnlyDictionary<string, string>(mimeNames);
         }
 
         [HttpGet]
@@ -60,15 +41,16 @@ namespace IDBrowserServiceCore.Controllers
                 if (string.IsNullOrEmpty(guid))
                     return BadRequest("Missing guid parameter");
 
-                idCatalogItem catalogItem = db.idCatalogItem.Include(x => x.idFilePath).Single(x => x.GUID.Equals(guid));
+                idCatalogItem catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleAsync(x => x.GUID.Equals(guid));
 
                 String strFilePath = StaticFunctions.GetImageFilePath(catalogItem);
-                FileInfo fileInfo = new FileInfo(strFilePath);
                 Stream inputStream = StaticFunctions.GetImageFileStream(strFilePath);
-                MediaTypeHeaderValue mimeType = GetMimeNameFromExt(catalogItem.idFileType);
+                string mimeType = GetMimeNameFromExt(catalogItem.FileName);
 
-                FileStreamResult fileStreamResult = new FileStreamResult(inputStream, mimeType.ToString());
-                fileStreamResult.EnableRangeProcessing = true;
+                FileStreamResult fileStreamResult = new FileStreamResult(inputStream, mimeType)
+                {
+                    EnableRangeProcessing = true
+                };
 
                 return fileStreamResult;
             }
@@ -79,14 +61,14 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
-        private MediaTypeHeaderValue GetMimeNameFromExt(string ext)
+        private string GetMimeNameFromExt(string fileName)
         {
-            string value;
-
-            if (MimeNames.TryGetValue(ext.ToLowerInvariant(), out value))
-                return new MediaTypeHeaderValue(value);
-            else
-                return new MediaTypeHeaderValue(MediaTypeNames.Application.Octet);
+            var provider = new FileExtensionContentTypeProvider();
+            if (!provider.TryGetContentType(fileName, out string contentType))
+            {
+                contentType = "application/octet-stream";
+            }
+            return contentType;
         }
     }
 }

@@ -23,14 +23,14 @@ namespace IDBrowserServiceCore.Controllers
     [Route("Service.svc/[action]")] //Compatibility to old service
     public class ValuesController : Controller
     {
-        private ILogger log;
-        private IConfiguration configuration;
+        private readonly ILogger log;
+        private readonly IConfiguration configuration;
         private TransactionOptions readUncommittedTransactionOptions;
-        private IDImagerDB db;
-        private IDImagerThumbsDB dbThumbs;
+        private readonly IDImagerDB db;
+        private readonly IDImagerThumbsDB dbThumbs;
 
         public ValuesController(IDImagerDB db, IDImagerThumbsDB dbThumbs, IConfiguration configuration, 
-            ILoggerFactory DepLoggerFactory, IHostingEnvironment DepHostingEnvironment)
+            ILoggerFactory DepLoggerFactory)
         {
             this.db = db;
             this.dbThumbs = dbThumbs;
@@ -44,24 +44,8 @@ namespace IDBrowserServiceCore.Controllers
                 IsolationLevel = IsolationLevel.ReadUncommitted
             };
         }
-        new public void Dispose()
-        {
-            try
-            {
-                base.Dispose();
 
-                if (db != null)
-                    db.Dispose();
-
-                if (dbThumbs != null)
-                    dbThumbs.Dispose();
-            }
-            catch (Exception ex)
-            {
-                log.LogError(ex.ToString());
-            }
-        }
-
+        [HttpGet()]
         [ActionName("GetStatus")]
         public string GetStatus()
         {

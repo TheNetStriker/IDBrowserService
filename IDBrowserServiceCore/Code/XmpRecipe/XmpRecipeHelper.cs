@@ -97,23 +97,6 @@ namespace IDBrowserServiceCore.Code.XmpRecipe
         private static XName xNameIlesWatermarks_BlendMode = XName.Get("BlendMode", "http://ns.idimager.com/iles/1.0/");
         private static XName xNameIlesWatermarks_WatermarksStream = XName.Get("WatermarksStream", "http://ns.idimager.com/iles/1.0/");
 
-        //public static Stream ApplyXmpRecipe(XDocument xdocument, Stream imageStream)
-        //{
-        //    MagickImage image = new MagickImage(imageStream);
-        //    imageStream.Position = 0;
-
-        //    if (ApplyXmpRecipe(xdocument, image))
-        //    {
-        //        MemoryStream resizedImageStream = new MemoryStream();
-        //        image.Write(resizedImageStream);
-        //        resizedImageStream.Position = 0;
-
-        //        return resizedImageStream;
-        //    }
-
-        //    return imageStream;
-        //}
-
         public static XmpRecipeContainer ParseXmlRecepie(XDocument xdocument)
         {
             XmpRecipeContainer xmpRecipeContainer = new XmpRecipeContainer();
@@ -130,9 +113,6 @@ namespace IDBrowserServiceCore.Code.XmpRecipe
 
             if (recipeNodes != null)
             {
-                double flipScaleX = 1;
-                double flipScaleY = 1;
-
                 foreach (XElement element in recipeNodes.OfType<XElement>())
                 {
                     XElement currentRecipe = element.Descendants().First();
@@ -205,12 +185,14 @@ namespace IDBrowserServiceCore.Code.XmpRecipe
                         if (recipeEnabledElement.Value.Equals("1") & angleElement != null)
                         {
                             double angle = Double.Parse(angleElement.Value);
+                            bool crop = cropElement != null && cropElement.Value.Equals("1") ? true : false;
 
-                            XmpRotate xmpRotate = new XmpRotate
+                            XmpStraighten xmpStraighten = new XmpStraighten
                             {
-                                Angle = angle
+                                Angle = angle,
+                                Crop = crop
                             };
-                            xmpRecipeContainer.Actions.Add(xmpRotate);
+                            xmpRecipeContainer.Actions.Add(xmpStraighten);
                         }
                     }
                     else if (element.Name.Equals(xNameIlesFlip))
@@ -222,11 +204,12 @@ namespace IDBrowserServiceCore.Code.XmpRecipe
                         XElement flipVerticalElement = getXElementByXName(currentRecipe, xNameIlesFlip_FlipVertical);
                         XElement flipHorizontalElement = getXElementByXName(currentRecipe, xNameIlesFlip_FlipHorizontal);
 
-                        if (recipeEnabledElement.Value.Equals("1"))
+                        XmpFlip xmpFlip = new XmpFlip
                         {
-                            flipScaleX = (flipVerticalElement != null && flipVerticalElement.Value.Equals("1")) ? -1 : flipScaleX;
-                            flipScaleY = (flipHorizontalElement != null && flipHorizontalElement.Value.Equals("1")) ? -1 : flipScaleY;
-                        }
+                            FlipVertical = flipVerticalElement != null && flipVerticalElement.Value.Equals("1") ? true : false,
+                            FlipHorizontal = flipHorizontalElement != null && flipHorizontalElement.Value.Equals("1") ? true : false,
+                        };
+                        xmpRecipeContainer.Actions.Add(xmpFlip);
                     }
                     else if (element.Name.Equals(xNameIlesFrame))
                     {
@@ -235,12 +218,26 @@ namespace IDBrowserServiceCore.Code.XmpRecipe
                         XElement opacityElement = getXElementByXName(currentRecipe, xNameIlesFrame_Opacity);
                         XElement blendModeElement = getXElementByXName(currentRecipe, xNameIlesFrame_BlendMode);
                         XElement frameStreamElement = getXElementByXName(currentRecipe, xNameIlesFrame_FrameStream);
+
+                        XmpWatermark xmpWatermark = new XmpWatermark
+                        {
+                            Watermark = Convert.FromBase64String(frameStreamElement.Value)
+                        };
+                        xmpRecipeContainer.Actions.Add(xmpWatermark);
+                        //File.WriteAllBytes("d:\\Frame.png", xmpWatermark.Watermark);
                     }
                     else if (element.Name.Equals(xNameIlesTitle))
                     {
                         XElement recipeEnabledElement = getXElementByXName(currentRecipe, xNameIlesTitle_RecipeEnabled);
                         XElement friendlyNameElement = getXElementByXName(currentRecipe, xNameIlesTitle_FriendlyName);
                         XElement titleStreamElement = getXElementByXName(currentRecipe, xNameIlesTitle_TitleStream);
+
+                        XmpWatermark xmpWatermark = new XmpWatermark
+                        {
+                            Watermark = Convert.FromBase64String(titleStreamElement.Value)
+                        };
+                        xmpRecipeContainer.Actions.Add(xmpWatermark);
+                        //File.WriteAllBytes("d:\\Title.png", xmpWatermark.Watermark);
                     }
                     else if (element.Name.Equals(xNameIlesWatermarks))
                     {
@@ -249,6 +246,13 @@ namespace IDBrowserServiceCore.Code.XmpRecipe
                         XElement opacityElement = getXElementByXName(currentRecipe, xNameIlesWatermarks_Opacity);
                         XElement blendModeElement = getXElementByXName(currentRecipe, xNameIlesWatermarks_BlendMode);
                         XElement watermarksStreamElement = getXElementByXName(currentRecipe, xNameIlesWatermarks_WatermarksStream);
+
+                        XmpWatermark xmpWatermark = new XmpWatermark
+                        {
+                            Watermark = Convert.FromBase64String(watermarksStreamElement.Value)
+                        };
+                        xmpRecipeContainer.Actions.Add(xmpWatermark);
+                        //File.WriteAllBytes("d:\\Watermark.png", xmpWatermark.Watermark);
                     }
                     else if (element.Name.Equals(xNameIlesCrop))
                     {
@@ -275,18 +279,6 @@ namespace IDBrowserServiceCore.Code.XmpRecipe
                         }
                     }
                 }
-
-                // Todo: Herausfinden wie das bei gedrehten Bildern funktioniert.
-                //List<XmpCrop> xmpCrops = xmpRecipeContainer.Actions.OfType<XmpCrop>().ToList();
-                //xmpRecipeContainer.Actions.RemoveAll(x => x.GetType() == typeof(XmpCrop));
-                //xmpRecipeContainer.Actions.AddRange(xmpCrops);
-
-                if (flipScaleX != 1 | flipScaleY != 1)
-                {
-                    // ToDo: herausfinden was hier zu tun ist.
-                    //ScaleTransform scaleTransform = new ScaleTransform(flipScaleX, flipScaleY, 0, 0);
-                    //transformGroup.Children.Add(scaleTransform);
-                }
             }
 
             return xmpRecipeContainer;
@@ -299,6 +291,7 @@ namespace IDBrowserServiceCore.Code.XmpRecipe
                 if (action.GetType() == typeof(XmpRotate))
                 {
                     XmpRotate xmpRotate = (XmpRotate)action;
+                    image.VirtualPixelMethod = VirtualPixelMethod.Black;
                     image.Rotate(xmpRotate.Angle);
                 }
                 else if (action.GetType() == typeof(XmpResize))
@@ -321,6 +314,37 @@ namespace IDBrowserServiceCore.Code.XmpRecipe
 
                     MagickGeometry magickGeometry = new MagickGeometry(intLeftPixel, intTopPixel, intWidth, intHeight);
                     image.Crop(magickGeometry);
+                }
+                else if (action.GetType() == typeof(XmpFlip))
+                {
+                    XmpFlip xmpFlip = (XmpFlip)action;
+
+                    if (xmpFlip.FlipVertical)
+                        image.Flop();
+
+                    if (xmpFlip.FlipHorizontal)
+                        image.Flip();
+                }
+                else if (action.GetType() == typeof(XmpStraighten))
+                {
+                    XmpStraighten xmpStraighten = (XmpStraighten)action;
+                    image.VirtualPixelMethod = VirtualPixelMethod.Black;
+
+                    if (xmpStraighten.Crop)
+                    {
+                        //http://www.imagemagick.org/Usage/distorts/#rotate_methods
+
+                        int w = image.Width;
+                        int h = image.Height;
+                        double aa = xmpStraighten.Angle * Math.PI / 180;
+                        double srt = (w * Math.Abs(Math.Sin(aa)) + h * Math.Abs(Math.Cos(aa))) / Math.Min(w,h);
+                        
+                        image.Distort(DistortMethod.ScaleRotateTranslate, srt, xmpStraighten.Angle);
+                    }
+                    else
+                    {
+                        image.Rotate(xmpStraighten.Angle);
+                    }
                 }
             }
         }
