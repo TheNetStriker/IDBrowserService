@@ -204,12 +204,15 @@ namespace IDBrowserServiceCore.Code.XmpRecipe
                         XElement flipVerticalElement = getXElementByXName(currentRecipe, xNameIlesFlip_FlipVertical);
                         XElement flipHorizontalElement = getXElementByXName(currentRecipe, xNameIlesFlip_FlipHorizontal);
 
-                        XmpFlip xmpFlip = new XmpFlip
+                        if (recipeEnabledElement.Value.Equals("1"))
                         {
-                            FlipVertical = flipVerticalElement != null && flipVerticalElement.Value.Equals("1") ? true : false,
-                            FlipHorizontal = flipHorizontalElement != null && flipHorizontalElement.Value.Equals("1") ? true : false,
-                        };
-                        xmpRecipeContainer.Actions.Add(xmpFlip);
+                            XmpFlip xmpFlip = new XmpFlip
+                            {
+                                FlipVertical = flipVerticalElement != null && flipVerticalElement.Value.Equals("1") ? true : false,
+                                FlipHorizontal = flipHorizontalElement != null && flipHorizontalElement.Value.Equals("1") ? true : false,
+                            };
+                            xmpRecipeContainer.Actions.Add(xmpFlip);
+                        }
                     }
                     else if (element.Name.Equals(xNameIlesFrame))
                     {
@@ -219,11 +222,14 @@ namespace IDBrowserServiceCore.Code.XmpRecipe
                         XElement blendModeElement = getXElementByXName(currentRecipe, xNameIlesFrame_BlendMode);
                         XElement frameStreamElement = getXElementByXName(currentRecipe, xNameIlesFrame_FrameStream);
 
-                        XmpWatermark xmpWatermark = new XmpWatermark
+                        if (recipeEnabledElement.Value.Equals("1"))
                         {
-                            Watermark = Convert.FromBase64String(frameStreamElement.Value)
-                        };
-                        xmpRecipeContainer.Actions.Add(xmpWatermark);
+                            XmpWatermark xmpWatermark = new XmpWatermark
+                            {
+                                Watermark = Convert.FromBase64String(frameStreamElement.Value)
+                            };
+                            xmpRecipeContainer.Actions.Add(xmpWatermark); // Hierbei handelt es sich um einen Delphi resource Stream.
+                        }
                         //File.WriteAllBytes("d:\\Frame.png", xmpWatermark.Watermark);
                     }
                     else if (element.Name.Equals(xNameIlesTitle))
@@ -232,12 +238,15 @@ namespace IDBrowserServiceCore.Code.XmpRecipe
                         XElement friendlyNameElement = getXElementByXName(currentRecipe, xNameIlesTitle_FriendlyName);
                         XElement titleStreamElement = getXElementByXName(currentRecipe, xNameIlesTitle_TitleStream);
 
-                        XmpWatermark xmpWatermark = new XmpWatermark
+                        if (recipeEnabledElement.Value.Equals("1"))
                         {
-                            Watermark = Convert.FromBase64String(titleStreamElement.Value)
-                        };
-                        xmpRecipeContainer.Actions.Add(xmpWatermark);
-                        //File.WriteAllBytes("d:\\Title.png", xmpWatermark.Watermark);
+                            XmpWatermark xmpWatermark = new XmpWatermark
+                            {
+                                Watermark = Convert.FromBase64String(titleStreamElement.Value)
+                            };
+                            xmpRecipeContainer.Actions.Add(xmpWatermark); // Hierbei handelt es sich um einen Delphi resource Stream.
+                            //File.WriteAllBytes("d:\\Title.png", xmpWatermark.Watermark);
+                        }
                     }
                     else if (element.Name.Equals(xNameIlesWatermarks))
                     {
@@ -247,12 +256,15 @@ namespace IDBrowserServiceCore.Code.XmpRecipe
                         XElement blendModeElement = getXElementByXName(currentRecipe, xNameIlesWatermarks_BlendMode);
                         XElement watermarksStreamElement = getXElementByXName(currentRecipe, xNameIlesWatermarks_WatermarksStream);
 
-                        XmpWatermark xmpWatermark = new XmpWatermark
+                        if (recipeEnabledElement.Value.Equals("1"))
                         {
-                            Watermark = Convert.FromBase64String(watermarksStreamElement.Value)
-                        };
-                        xmpRecipeContainer.Actions.Add(xmpWatermark);
-                        //File.WriteAllBytes("d:\\Watermark.png", xmpWatermark.Watermark);
+                            XmpWatermark xmpWatermark = new XmpWatermark
+                            {
+                                Watermark = Convert.FromBase64String(watermarksStreamElement.Value)
+                            };
+                            xmpRecipeContainer.Actions.Add(xmpWatermark); // Hierbei handelt es sich um einen Delphi resource Stream.
+                            //File.WriteAllBytes("d:\\Watermark.png", xmpWatermark.Watermark);
+                        }
                     }
                     else if (element.Name.Equals(xNameIlesCrop))
                     {
