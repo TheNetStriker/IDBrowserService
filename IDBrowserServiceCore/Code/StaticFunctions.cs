@@ -79,38 +79,7 @@ namespace IDBrowserServiceCore.Code
             try
             {
                 filePath = GetImageFilePath(catalogItem);
-
-                //if (ImageFileExtensions.Contains(catalogItem.idFileType))
-                //{
                 imageStream = GetImageFileStream(filePath);
-                //}
-                //else if (VideoFileExtensions.Contains(catalogItem.idFileType))
-                //{
-                    //try
-                    //{
-                    //    bitmapFrame = BitmapFrame.Create((BitmapSource)GenerateVideoThumbnail(filePath, new TimeSpan(0, 0, 0)));
-                    //}
-                    //catch (Exception ex)
-                    //{
-                    //    if (setGenericVideoThumbnailOnError)
-                    //    {
-                    //        result.Exceptions.Add(new Exception(String.Format("Video thumbnail generation for imageGUID {0} file {1} failed. Generic thumbnails has been set.", catalogItem.GUID, filePath), ex));
-
-                    //        Assembly assembly = Assembly.GetExecutingAssembly();
-                    //        Stream genericVideoThumbnailStream = assembly.GetManifestResourceStream(@"IDBrowserServiceCode.Images.image_ph2.png");
-                    //        bitmapFrame = BitmapFrame.Create(genericVideoThumbnailStream);
-                    //    }
-                    //    else
-                    //    {
-                    //        result.Exceptions.Add(new Exception(String.Format("Video thumbnail generation for imageGUID {0} file {1} failed.", catalogItem.GUID, filePath), ex));
-                    //        return result;
-                    //    }
-                    //}
-                //}
-                //else
-                //{
-                //    throw new Exception(String.Format("File type {0} not supported", catalogItem.idFileType));
-                //}
 
                 foreach (String type in types)
                 {
@@ -139,12 +108,19 @@ namespace IDBrowserServiceCore.Code
                     }
 
                     MemoryStream resizedImageStream = new MemoryStream();
+                    MagickReadSettings magickReadSettings = null;
+
+                    if (Enum.TryParse<MagickFormat>(catalogItem.idFileType, true, out MagickFormat magickFormat))
+                    {
+                        magickReadSettings = new MagickReadSettings { Format = magickFormat };
+                    }
 
                     imageStream.Position = 0;
-                    MagickImage image = new MagickImage(imageStream)
+
+                    MagickImage image = new MagickImage(imageStream, magickReadSettings)
                     {
-                        Format = MagickFormat.Jpeg
-                    }; // new MagickReadSettings { Format = MagickFormat.Mp4 }
+                        Format = MagickFormat.Jpeg,
+                    }; 
 
                     image.Resize(imageWidth, imageHeight);
 

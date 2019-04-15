@@ -113,7 +113,7 @@ namespace IDBrowserServiceCoreTest
             get
             {
                 if (controller == null)
-                    controller = new ValuesController(Db, DbThumbs, Configuration, Logger, null);
+                    controller = new ValuesController(Db, DbThumbs, Configuration, Logger);
 
                 return controller;
             }

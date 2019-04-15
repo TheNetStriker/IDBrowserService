@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Transactions;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -275,7 +274,7 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
-        private async Task<ActionResult<Stream>> GetImageThumbnailStream(string type, string imageGuid, string width = null, string height = null)
+        private async Task<ActionResult<Stream>> GetImageThumbnailStream(string type, string imageGuid)
         {
             if (type != "T" && type != "R" && type != "M")
                 throw new Exception("Unsupported image type");
@@ -317,72 +316,48 @@ namespace IDBrowserServiceCore.Controllers
                         //Searching with FirstOrDefault because PhotoSupreme sometimes stores the Thumbnail twice
                         thumb = await dbThumbs.idThumbs.FirstOrDefaultAsync(x => x.ImageGUID == imageGuid && x.idType == type);
                     }
+
+                    // ToDo: Externe Image Library implementieren für das.
+                    if (thumb == null && Boolean.Parse(configuration["IDBrowserServiceSettings:CreateThumbnails"]))
+                    {
+                        SaveImageThumbnailResult result = await StaticFunctions.SaveImageThumbnail(catalogItem,
+                            db, dbThumbs, new List<String>() { type }, keepAspectRatio, setGenericVideoThumbnailOnError);
+
+                        foreach (Exception ex in result.Exceptions)
+                            log.LogError(ex.ToString());
+
+                        if (result.ImageStreams.Count > 0)
+                        {
+                            imageStream = result.ImageStreams.First();
+
+                            if (HttpContext != null)
+                                HttpContext.Response.ContentType = "image/jpeg";
+
+                            LogHttpConnection(string.Format("GetImageThumbnail with type: {0} imageGuid: {1} (returned resizedImageStream)",
+                                type, imageGuid));
+                        }
+                        else
+                        {
+                            LogHttpConnection(string.Format("GetImageThumbnail with type: {0} imageGuid: {1} (returned null)",
+                                type, imageGuid));
+                        }
+                    }
+                    else
+                    {
+                        imageStream = new MemoryStream(thumb.idThumb);
+
+                        if (HttpContext != null)
+                            HttpContext.Response.ContentType = "image/jpeg";
+
+                        LogHttpConnection(string.Format("GetImageThumbnail with type: {0} imageGuid: {1} (returned imageStream)",
+                            type, imageGuid));
+                    }
+
+                    scope2.Complete();
                 }
-
-                // ToDo: Externe Image Library implementieren für das.
-                //if (thumb == null && Boolean.Parse(configuration["IDBrowserServiceSettings:CreateThumbnails"))
-                //{
-                //    SaveImageThumbnailResult result = StaticFunctions.SaveImageThumbnail(catalogItem, ref db, ref dbThumbs, new List<String>() { type }, keepAspectRatio, setGenericVideoThumbnailOnError);
-
-                //    foreach (Exception ex in result.Exceptions)
-                //        log.Error(ex.ToString());
-
-                //    if (result.ImageStreams.Count > 0)
-                //    {
-                //        imageStream = result.ImageStreams.First();
-
-                //        //if (IsRequestRest()) ??
-                //        HttpContext.Response.ContentType = "image/jpeg";
-
-                //        log.LogInformation(String.Format("GetImageThumbnail with type: {2} imageGuid: {3} (returned resizedImageStream)",
-                //            HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort, type, imageGuid));
-                //    }
-                //    else
-                //    {
-                //        log.LogInformation(String.Format("GetImageThumbnail with type: {2} imageGuid: {3} (returned null)",
-                //            HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort, type, imageGuid));
-                //    }
-                //}
-                //else
-                //{
-                imageStream = new MemoryStream(thumb.idThumb);
-
-                if (HttpContext != null)
-                    HttpContext.Response.ContentType = "image/jpeg";
-
-                LogHttpConnection(string.Format("GetImageThumbnail with type: {0} imageGuid: {1} (returned imageStream)",
-                    type, imageGuid));
-                //}
 
                 scope.Complete();
             }
-
-            // ToDo: Externe Image Library implementieren für das.
-            //if (width != null && height != null)
-            //{
-            //    TransformGroup transformGroup = new TransformGroup();
-            //    BitmapSource bitmapSource = StaticFunctions.GetBitmapFrameFromImageStream(imageStream, "JPG");
-            //    StaticFunctions.Resize(ref bitmapSource, ref transformGroup, int.Parse(width), int.Parse(height));
-
-            //    if (transformGroup != null && transformGroup.Children.Count > 0)
-            //    {
-            //        TransformedBitmap tb = new TransformedBitmap();
-            //        tb.BeginInit();
-            //        tb.Source = bitmapSource;
-            //        tb.Transform = transformGroup;
-            //        tb.EndInit();
-
-            //        bitmapSource = tb;
-
-            //        BitmapFrame transformedBitmapFrame = BitmapFrame.Create(bitmapSource);
-
-            //        JpegBitmapEncoder encoder = new JpegBitmapEncoder();
-            //        encoder.Frames.Add(transformedBitmapFrame);
-            //        imageStream = new System.IO.MemoryStream();
-            //        encoder.Save(imageStream);
-            //        imageStream.Position = 0;
-            //    }
-            //}
 
             return imageStream;
         }
