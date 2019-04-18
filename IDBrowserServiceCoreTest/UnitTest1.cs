@@ -151,6 +151,18 @@ namespace IDBrowserServiceCoreTest
             }
         }
 
+        private MediaController mediaController;
+        public MediaController MediaController
+        {
+            get
+            {
+                if (mediaController == null)
+                    mediaController = new MediaController(Db, Options.Create<ServiceSettings>(Settings), Logger);
+
+                return mediaController;
+            }
+        }
+
         private String GetNextImagePropertyGuid()
         {
             var rand = new Random();
@@ -284,6 +296,15 @@ namespace IDBrowserServiceCoreTest
         public async void DeleteCatalogItemDefinitionTest()
         {
             await Controller.DeleteCatalogItemDefinition(idPropFirst.GUID, idCatalogItemFirstImage.GUID);
+        }
+
+        [Fact]
+        public async void MediaControllerPlayTest()
+        {
+            if (!(await MediaController.Play(idCatalogItemFirstVideo.GUID) is FileStreamResult stream))
+                throw new Exception("No stream received");
+            else
+                stream.FileStream.Close();
         }
     }
 }
