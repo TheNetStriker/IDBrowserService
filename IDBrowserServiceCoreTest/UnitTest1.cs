@@ -53,6 +53,7 @@ namespace IDBrowserServiceCoreTest
             get
             {
                 if (settings == null)
+                {
                     settings = new ServiceSettings()
                     {
                         CreateThumbnails = true,
@@ -60,12 +61,16 @@ namespace IDBrowserServiceCoreTest
                         MThumbnailHeight = 1260,
                         KeepAspectRatio = true,
                         SetGenericVideoThumbnailOnError = true,
-                        FilePathReplace = new FilePathReplaceSettings()
-                        {
-                            PathMatch = "\\\\QNAPNAS01\\Multimedia",
-                            PathReplace = "\\\\172.17.2.14\\Multimedia"
-                        }
                     };
+
+                    FilePathReplaceSettings filePathReplaceSettings = new FilePathReplaceSettings()
+                    {
+                        PathMatch = "\\\\QNAPNAS01\\Multimedia",
+                        PathReplace = "\\\\172.17.2.14\\Multimedia"
+                    };
+
+                    settings.FilePathReplace.Add(filePathReplaceSettings);
+                }
 
                 return settings;
             }

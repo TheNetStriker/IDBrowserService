@@ -12,7 +12,11 @@ namespace IDBrowserServiceCore.Settings
         public int MThumbnailHeight { get; set; }
         public bool KeepAspectRatio { get; set; }
         public bool SetGenericVideoThumbnailOnError { get; set; }
-        public FilePathReplaceSettings FilePathReplace { get; set; }
-        
+        public List<FilePathReplaceSettings> FilePathReplace { get; set; }
+
+        public ServiceSettings()
+        {
+            FilePathReplace = new List<FilePathReplaceSettings>();
+        }
     }
 }

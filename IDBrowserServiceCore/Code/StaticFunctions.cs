@@ -24,17 +24,20 @@ namespace IDBrowserServiceCore.Code
             return fileStream;
         }
 
-        public static String GetImageFilePath(idCatalogItem catalogItem, FilePathReplaceSettings filePathReplaceSettings)
+        public static String GetImageFilePath(idCatalogItem catalogItem, List<FilePathReplaceSettings> filePathReplaceSettings)
         {
-            string strPathMatch = filePathReplaceSettings.PathMatch;
-            string strPathReplace = filePathReplaceSettings.PathReplace;
             string strFilePath = catalogItem.idFilePath.FilePath;
 
-            if (!string.IsNullOrEmpty(strPathMatch) && !string.IsNullOrEmpty(strPathReplace))
-                strFilePath = strFilePath.Replace(strPathMatch, strPathReplace, StringComparison.CurrentCultureIgnoreCase);
+            foreach (FilePathReplaceSettings settings in filePathReplaceSettings)
+            {
+                string strPathMatch = settings.PathMatch;
+                string strPathReplace = settings.PathReplace;
+                if (!string.IsNullOrEmpty(strPathMatch) && !string.IsNullOrEmpty(strPathReplace))
+                    strFilePath = strFilePath.Replace(strPathMatch, strPathReplace, StringComparison.CurrentCultureIgnoreCase);
 
-            if (Path.DirectorySeparatorChar != '\\')
-                strFilePath = strFilePath.Replace('\\', Path.DirectorySeparatorChar);
+                if (Path.DirectorySeparatorChar != '\\')
+                    strFilePath = strFilePath.Replace('\\', Path.DirectorySeparatorChar);
+            }
 
             return Path.Combine(strFilePath, catalogItem.FileName);
         }
