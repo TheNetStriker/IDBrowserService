@@ -15,6 +15,8 @@ using Microsoft.AspNetCore.Http;
 using IDBrowserServiceCore.Data.IDImager;
 using IDBrowserServiceCore.Code;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.Options;
+using IDBrowserServiceCore.Settings;
 
 namespace IDBrowserServiceCore.Controllers
 {
@@ -23,10 +25,12 @@ namespace IDBrowserServiceCore.Controllers
     {
         private readonly IDImagerDB db;
         private readonly ILogger log;
+        private readonly ServiceSettings serviceSettings;
 
-        public MediaController(IDImagerDB db, IConfiguration configuration, ILoggerFactory DepLoggerFactory)
+        public MediaController(IDImagerDB db, IOptions<ServiceSettings> serviceSettings, ILoggerFactory DepLoggerFactory)
         {
             this.db = db;
+            this.serviceSettings = serviceSettings.Value;
 
             if (log == null)
                 log = DepLoggerFactory.CreateLogger("Controllers.MediaController");
@@ -43,7 +47,7 @@ namespace IDBrowserServiceCore.Controllers
 
                 idCatalogItem catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleAsync(x => x.GUID.Equals(guid));
 
-                String strFilePath = StaticFunctions.GetImageFilePath(catalogItem);
+                String strFilePath = StaticFunctions.GetImageFilePath(catalogItem, serviceSettings.FilePathReplace);
                 Stream inputStream = StaticFunctions.GetImageFileStream(strFilePath);
                 string mimeType = GetMimeNameFromExt(catalogItem.FileName);
 

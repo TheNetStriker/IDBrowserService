@@ -14,6 +14,8 @@ using IDBrowserServiceCore.Code;
 using IDBrowserServiceCore.Data;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using IDBrowserServiceCore.Settings;
+using Microsoft.Extensions.Options;
 
 namespace IDBrowserServiceCoreTest
 {
@@ -30,9 +32,9 @@ namespace IDBrowserServiceCoreTest
 
         public UnitTest1()
         {
-            StaticFunctions.Configuration = Configuration;
             ImagePropertyGuids = new List<String>();
-            ImageGuids = Task.Run(() => Controller.GetRandomImageGuids()).Result.Value;
+            List<string> imageFileExtensions = new List<string>() { "JPG", "JPEG", "TIF", "PNG", "GIF", "BMP" };
+            ImageGuids = Task.Run(() => Controller.GetRandomImageGuids(imageFileExtensions)).Result.Value;
 
             idCatalogItemFirstImage = Db.idCatalogItem.Include(x => x.idFilePath).Where(x => x.FileName.EndsWith(".JPG")).First();
             idCatalogItemFirstVideo = Db.idCatalogItem.Include(x => x.idFilePath).Where(x => x.FileName.EndsWith(".MP4")).First();
@@ -45,18 +47,43 @@ namespace IDBrowserServiceCoreTest
             }
         }
 
-        private IConfiguration configuration;
-        public IConfiguration Configuration
+        private ServiceSettings settings;
+        public ServiceSettings Settings
         {
             get
             {
-                if (configuration == null)
-                    configuration = new ConfigurationBuilder()
-                        .SetBasePath(Directory.GetCurrentDirectory())
-                        .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                        .Build();
+                if (settings == null)
+                    settings = new ServiceSettings()
+                    {
+                        CreateThumbnails = true,
+                        MThumbmailWidth = 1680,
+                        MThumbnailHeight = 1260,
+                        KeepAspectRatio = true,
+                        SetGenericVideoThumbnailOnError = true,
+                        FilePathReplace = new FilePathReplaceSettings()
+                        {
+                            PathMatch = "\\\\QNAPNAS01\\Multimedia",
+                            PathReplace = "\\\\172.17.2.14\\Multimedia"
+                        }
+                    };
 
-                return configuration;
+                return settings;
+            }
+        }
+
+        public string DbConnectionString
+        {
+            get
+            {
+                return "Server=172.17.2.23;Database=photosupreme;user id=idimager_main;password=idi_main_2606;";
+            }
+        }
+
+        public string DbThumbsConnectionString
+        {
+            get
+            {
+                return "Server=172.17.2.23;Database=photosupreme_thumbs;user id=idimager_main;password=idi_main_2606;";
             }
         }
 
@@ -82,7 +109,7 @@ namespace IDBrowserServiceCoreTest
                 if (db == null)
                 {
                     var options = SqlServerDbContextOptionsExtensions
-                        .UseSqlServer(new DbContextOptionsBuilder<IDImagerDB>(), configuration["ConnectionStrings:IDImager"]).Options;
+                        .UseSqlServer(new DbContextOptionsBuilder<IDImagerDB>(), DbConnectionString).Options;
                     db = new IDImagerDB(options);
                 }
                     
@@ -99,7 +126,7 @@ namespace IDBrowserServiceCoreTest
                 if (dbThumbs == null)
                 {
                     var options = SqlServerDbContextOptionsExtensions
-                        .UseSqlServer(new DbContextOptionsBuilder<IDImagerThumbsDB>(), configuration["ConnectionStrings:IDImagerThumbs"]).Options;
+                        .UseSqlServer(new DbContextOptionsBuilder<IDImagerThumbsDB>(), DbThumbsConnectionString).Options;
                     dbThumbs = new IDImagerThumbsDB(options);
                 }
 
@@ -113,7 +140,7 @@ namespace IDBrowserServiceCoreTest
             get
             {
                 if (controller == null)
-                    controller = new ValuesController(Db, DbThumbs, Configuration, Logger);
+                    controller = new ValuesController(Db, DbThumbs, Options.Create<ServiceSettings>(Settings), Logger);
 
                 return controller;
             }
@@ -214,12 +241,13 @@ namespace IDBrowserServiceCoreTest
         [Fact]
         public async void SaveImageThumbnailTest()
         {
-            Boolean keepAspectRatio = Boolean.Parse(Configuration["IDBrowserServiceSettings:KeepAspectRatio"]);
-            Boolean setGenericVideoThumbnailOnError = Boolean.Parse(Configuration["IDBrowserServiceSettings:SetGenericVideoThumbnailOnError"]);
+            Boolean keepAspectRatio = Settings.KeepAspectRatio;
+            Boolean setGenericVideoThumbnailOnError = Settings.SetGenericVideoThumbnailOnError;
             List<String> types = new List<String>() { "T", "R", "M" };
 
             SaveImageThumbnailResult result = await StaticFunctions
-                .SaveImageThumbnail(idCatalogItemFirstImage, Db, DbThumbs, types, keepAspectRatio, setGenericVideoThumbnailOnError);
+                .SaveImageThumbnail(idCatalogItemFirstImage, Db, DbThumbs, types, keepAspectRatio,
+                setGenericVideoThumbnailOnError, Settings);
 
             if (result.Exceptions.Count > 0)
                 throw result.Exceptions.First();
@@ -228,13 +256,14 @@ namespace IDBrowserServiceCoreTest
         [Fact]
         public async void SaveVideoThumbnailTest()
         {
-            Boolean keepAspectRatio = Boolean.Parse(Configuration["IDBrowserServiceSettings:KeepAspectRatio"]);
-            Boolean setGenericVideoThumbnailOnError = Boolean.Parse(Configuration["IDBrowserServiceSettings:SetGenericVideoThumbnailOnError"]);
+            Boolean keepAspectRatio = Settings.KeepAspectRatio;
+            Boolean setGenericVideoThumbnailOnError = Settings.SetGenericVideoThumbnailOnError;
             
             List<String> types = new List<String>() { "T", "R", "M" };
 
             SaveImageThumbnailResult result = await StaticFunctions
-                .SaveImageThumbnail(idCatalogItemFirstVideo, Db, DbThumbs, types, keepAspectRatio, setGenericVideoThumbnailOnError);
+                .SaveImageThumbnail(idCatalogItemFirstVideo, Db, DbThumbs, types, keepAspectRatio,
+                setGenericVideoThumbnailOnError, Settings);
 
             if (result.Exceptions.Count > 0)
                 throw result.Exceptions.First();

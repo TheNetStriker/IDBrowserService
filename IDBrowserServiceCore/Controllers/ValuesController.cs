@@ -15,6 +15,8 @@ using IDBrowserServiceCore.Code;
 using ImageMagick;
 using System.Threading.Tasks;
 using IDBrowserServiceCore.Code.XmpRecipe;
+using IDBrowserServiceCore.Settings;
+using Microsoft.Extensions.Options;
 
 namespace IDBrowserServiceCore.Controllers
 {
@@ -23,17 +25,17 @@ namespace IDBrowserServiceCore.Controllers
     public class ValuesController : Controller
     {
         private readonly ILogger log;
-        private readonly IConfiguration configuration;
+        private readonly ServiceSettings serviceSettings;
         private TransactionOptions readUncommittedTransactionOptions;
         private readonly IDImagerDB db;
         private readonly IDImagerThumbsDB dbThumbs;
 
-        public ValuesController(IDImagerDB db, IDImagerThumbsDB dbThumbs, IConfiguration configuration, 
+        public ValuesController(IDImagerDB db, IDImagerThumbsDB dbThumbs, IOptions<ServiceSettings> serviceSettings,
             ILoggerFactory DepLoggerFactory)
         {
             this.db = db;
             this.dbThumbs = dbThumbs;
-            this.configuration = configuration;
+            this.serviceSettings = serviceSettings.Value;
 
             if (log == null)
                 log = DepLoggerFactory.CreateLogger("Controllers.ValuesController");
@@ -42,13 +44,6 @@ namespace IDBrowserServiceCore.Controllers
             {
                 IsolationLevel = IsolationLevel.ReadUncommitted
             };
-        }
-
-        [HttpGet()]
-        [ActionName("GetStatus")]
-        public string GetStatus()
-        {
-            return "online";
         }
 
         [HttpGet("{guid?}")]
@@ -297,8 +292,8 @@ namespace IDBrowserServiceCore.Controllers
                 if (type == "M" && catalogItem.idHasRecipe > 0)
                     type = "R";
 
-                Boolean keepAspectRatio = Boolean.Parse(configuration["IDBrowserServiceSettings:KeepAspectRatio"]);
-                Boolean setGenericVideoThumbnailOnError = Boolean.Parse(configuration["IDBrowserServiceSettings:SetGenericVideoThumbnailOnError"]);
+                Boolean keepAspectRatio = serviceSettings.KeepAspectRatio;
+                Boolean setGenericVideoThumbnailOnError = serviceSettings.SetGenericVideoThumbnailOnError;
 
                 idThumbs thumb = null;
 
@@ -318,10 +313,10 @@ namespace IDBrowserServiceCore.Controllers
                     }
 
                     // ToDo: Externe Image Library implementieren für das.
-                    if (thumb == null && Boolean.Parse(configuration["IDBrowserServiceSettings:CreateThumbnails"]))
+                    if (thumb == null && serviceSettings.CreateThumbnails)
                     {
                         SaveImageThumbnailResult result = await StaticFunctions.SaveImageThumbnail(catalogItem,
-                            db, dbThumbs, new List<String>() { type }, keepAspectRatio, setGenericVideoThumbnailOnError);
+                            db, dbThumbs, new List<String>() { type }, keepAspectRatio, setGenericVideoThumbnailOnError, serviceSettings);
 
                         foreach (Exception ex in result.Exceptions)
                             log.LogError(ex.ToString());
@@ -420,13 +415,13 @@ namespace IDBrowserServiceCore.Controllers
         private async Task<Stream> GetImageStream(string imageGuid, string width = null, string height = null)
         {
             idCatalogItem catalogItem = null;
-            Boolean keepAspectRatio = Boolean.Parse(configuration["IDBrowserServiceSettings:KeepAspectRatio"]);
+            Boolean keepAspectRatio = serviceSettings.KeepAspectRatio;
 
             catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleAsync(x => x.GUID == imageGuid);
             if (catalogItem == null)
                 throw new Exception("CatalogItem not found");
 
-            string strImageFilePath = StaticFunctions.GetImageFilePath(catalogItem);
+            string strImageFilePath = StaticFunctions.GetImageFilePath(catalogItem, serviceSettings.FilePathReplace);
             Stream imageStream = StaticFunctions.GetImageFileStream(strImageFilePath);
 
             XmpRecipeContainer xmpRecipeContainer = null;
@@ -518,7 +513,7 @@ namespace IDBrowserServiceCore.Controllers
         }
 
         [ActionName("GetRandomImageGuids")]
-        public async Task<ActionResult<List<String>>> GetRandomImageGuids()
+        public async Task<ActionResult<List<String>>> GetRandomImageGuids(List<string> imageFileExtensions)
         {
             try
             {
@@ -528,7 +523,7 @@ namespace IDBrowserServiceCore.Controllers
                     readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
                 {
                     var queryRandom = from x in db.idCatalogItem
-                                      where StaticFunctions.ImageFileExtensions.Contains(x.idFileType)
+                                      where imageFileExtensions.Contains(x.idFileType)
                                       orderby Guid.NewGuid()
                                       select x.GUID;
                     randomImageGuids = await queryRandom.Take(100).ToListAsync();
@@ -566,7 +561,7 @@ namespace IDBrowserServiceCore.Controllers
                 if (catalogItem == null)
                     throw new Exception("CatalogItem not found");
 
-                string strImageFilePath = StaticFunctions.GetImageFilePath(catalogItem);
+                string strImageFilePath = StaticFunctions.GetImageFilePath(catalogItem, serviceSettings.FilePathReplace);
                 fileStream = StaticFunctions.GetImageFileStream(strImageFilePath);
 
                 if (HttpContext != null)

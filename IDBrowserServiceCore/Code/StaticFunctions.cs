@@ -12,52 +12,22 @@ using System.Xml.Linq;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using IDBrowserServiceCore.Code.XmpRecipe;
+using IDBrowserServiceCore.Settings;
 
 namespace IDBrowserServiceCore.Code
 {
     public class StaticFunctions
     {
-        private static List<String> imageFileExtensions;
-        private static List<String> videoFileExtensions;
-
-        public static IConfiguration Configuration { get; set; }
-
-        public static List<String> ImageFileExtensions
-        {
-            get
-            {
-                if (imageFileExtensions == null)
-                {
-                    imageFileExtensions = Configuration["IDBrowserServiceSettings:ImageFileExtensions"]
-                        .Split(new char[] { char.Parse(",") }).ToList();
-                };
-                return imageFileExtensions;
-            }
-        }
-
-        public static List<String> VideoFileExtensions
-        {
-            get
-            {
-                if (videoFileExtensions == null)
-                {
-                    videoFileExtensions = Configuration["IDBrowserServiceSettings:VideoFileExtensions"]
-                        .Split(new char[] { char.Parse(",") }).ToList();
-                };
-                return videoFileExtensions;
-            }
-        }
-
         public static FileStream GetImageFileStream(string filePath)
         {
             FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
             return fileStream;
         }
 
-        public static String GetImageFilePath(idCatalogItem catalogItem)
+        public static String GetImageFilePath(idCatalogItem catalogItem, FilePathReplaceSettings filePathReplaceSettings)
         {
-            string strPathMatch = Configuration["IDBrowserServiceSettings:FilePathReplace:PathMatch"];
-            string strPathReplace = Configuration["IDBrowserServiceSettings:FilePathReplace:PathReplace"];
+            string strPathMatch = filePathReplaceSettings.PathMatch;
+            string strPathReplace = filePathReplaceSettings.PathReplace;
             string strFilePath = catalogItem.idFilePath.FilePath;
 
             if (!string.IsNullOrEmpty(strPathMatch) && !string.IsNullOrEmpty(strPathReplace))
@@ -70,7 +40,7 @@ namespace IDBrowserServiceCore.Code
         }
 
         public async static Task<SaveImageThumbnailResult> SaveImageThumbnail(idCatalogItem catalogItem, IDImagerDB db, IDImagerThumbsDB dbThumbs,
-            List<String> types, Boolean keepAspectRatio, Boolean setGenericVideoThumbnailOnError)
+            List<String> types, Boolean keepAspectRatio, Boolean setGenericVideoThumbnailOnError, ServiceSettings serviceSettings)
         {
             SaveImageThumbnailResult result = new SaveImageThumbnailResult();
             Stream imageStream = null;
@@ -78,7 +48,7 @@ namespace IDBrowserServiceCore.Code
 
             try
             {
-                filePath = GetImageFilePath(catalogItem);
+                filePath = GetImageFilePath(catalogItem, serviceSettings.FilePathReplace);
                 imageStream = GetImageFileStream(filePath);
 
                 foreach (String type in types)
@@ -93,8 +63,8 @@ namespace IDBrowserServiceCore.Code
                     }
                     else
                     {
-                        imageWidth = Int32.Parse(Configuration["IDBrowserServiceSettings:MThumbmailWidth"]);
-                        imageHeight = Int32.Parse(Configuration["IDBrowserServiceSettings:MThumbnailHeight"]);
+                        imageWidth = serviceSettings.MThumbmailWidth;
+                        imageHeight = serviceSettings.MThumbnailHeight;
                     }
 
                     XmpRecipeContainer xmpRecipeContainer = null;
