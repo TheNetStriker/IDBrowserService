@@ -11,11 +11,16 @@ using IDBrowserServiceCore.Data.IDImagerThumbs;
 using IDBrowserServiceCore.Code;
 using System.Collections.Generic;
 using IDBrowserServiceCore.Settings;
+using Microsoft.EntityFrameworkCore.Storage;
+using IDBrowserServiceCore.Data.PostgresHelpers;
+using System;
 
 namespace IDBrowserServiceCore
 {
     public class Startup
     {
+        private ILogger log;
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -32,40 +37,69 @@ namespace IDBrowserServiceCore
             }
 
             loggerFactory.AddLog4Net();
+            log = loggerFactory.CreateLogger("Startup");
 
-            IEnumerable<IConfigurationSection> sites = Configuration.GetSection("Sites").GetChildren();
-
-            foreach (IConfigurationSection site in sites)
+            try
             {
-                //https://www.strathweb.com/2017/04/running-multiple-independent-asp-net-core-pipelines-side-by-side-in-the-same-application/
-                app.UseBranchWithServices("/" + site.Key,
-                services =>
+                IEnumerable<IConfigurationSection> sites = Configuration.GetSection("Sites").GetChildren();
+
+                foreach (IConfigurationSection site in sites)
                 {
-                    services
-                        .AddMvc()
-                        .AddXmlSerializerFormatters();
+                    //https://www.strathweb.com/2017/04/running-multiple-independent-asp-net-core-pipelines-side-by-side-in-the-same-application/
+                    app.UseBranchWithServices("/" + site.Key,
+                    services =>
+                    {
+                        services
+                            .AddMvc()
+                            .AddXmlSerializerFormatters();
 
-                    services
-                        .AddSingleton<IConfiguration>(Configuration);
+                        services
+                            .AddSingleton<IConfiguration>(Configuration);
 
-                    services.Configure<ServiceSettings>(site.GetSection("ServiceSettings"));
+                        services.Configure<ServiceSettings>(site.GetSection("ServiceSettings"));
 
-                    var strConnection = site["ConnectionStrings:IDImager"];
-                    services.AddDbContextPool<IDImagerDB>(options => options.UseSqlServer(strConnection));
+                        var strDbType = site["ConnectionStrings:DBType"];
 
-                    var strConnectionThumbs = site["ConnectionStrings:IDImagerThumbs"];
-                    services.AddDbContextPool<IDImagerThumbsDB>(options => options.UseSqlServer(strConnectionThumbs));
-                },
-                appBuilder =>
+                        if (strDbType.Equals("MsSql"))
+                        {
+                            var strConnection = site["ConnectionStrings:IDImager"];
+                            services.AddDbContextPool<IDImagerDB>(options => options.UseSqlServer(strConnection));
+
+                            var strConnectionThumbs = site["ConnectionStrings:IDImagerThumbs"];
+                            services.AddDbContextPool<IDImagerThumbsDB>(options => options.UseSqlServer(strConnectionThumbs));
+                        }
+                        else if (strDbType.Equals("Postgres"))
+                        {
+                            var strConnection = site["ConnectionStrings:IDImager"];
+                            services.AddDbContextPool<IDImagerDB>(options => options
+                                .UseNpgsql(strConnection)
+                                .ReplaceService<ISqlGenerationHelper, SqlGenerationHelper>());
+
+                            var strConnectionThumbs = site["ConnectionStrings:IDImagerThumbs"];
+                            services.AddDbContextPool<IDImagerThumbsDB>(options => options
+                                .UseNpgsql(strConnectionThumbs)
+                                .ReplaceService<ISqlGenerationHelper, SqlGenerationHelper>());
+                        }
+                        else
+                        {
+                            throw new System.Exception("DBType not supported, supported type are 'MsSql' and 'Postgres'.");
+                        }
+                    },
+                    appBuilder =>
+                    {
+                        appBuilder.UseMvc();
+                    });
+                }
+
+                app.Run(async c =>
                 {
-                    appBuilder.UseMvc();
+                    await c.Response.WriteAsync("Service online!");
                 });
             }
-
-            app.Run(async c =>
+            catch (Exception ex)
             {
-                await c.Response.WriteAsync("Service online!");
-            });
+                log.LogError(ex.ToString());
+            }
         }
     }
 }

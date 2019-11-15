@@ -16,12 +16,15 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using IDBrowserServiceCore.Settings;
 using Microsoft.Extensions.Options;
+using Microsoft.EntityFrameworkCore.Storage;
+using IDBrowserServiceCore.Data.PostgresHelpers;
 
 namespace IDBrowserServiceCoreTest
 {
     public class UnitTest1
     {
         private const string ReceipeTestGuid = "675BB1838073452BA98DF29E0D5249DD"; // "607F77D8CE8048A798C68336051E5CFC";
+        private const string DBType = "Postgres";
 
         private static List<String> ImagePropertyGuids;
         private static List<String> ImageGuids;
@@ -113,11 +116,26 @@ namespace IDBrowserServiceCoreTest
             {
                 if (db == null)
                 {
-                    var options = SqlServerDbContextOptionsExtensions
-                        .UseSqlServer(new DbContextOptionsBuilder<IDImagerDB>(), DbConnectionString).Options;
-                    db = new IDImagerDB(options);
+                    if (DBType.Equals("MsSql"))
+                    {
+                        var options = SqlServerDbContextOptionsExtensions
+                           .UseSqlServer(new DbContextOptionsBuilder<IDImagerDB>(), DbConnectionString)
+                           .Options;
+                        db = new IDImagerDB(options);
+                    }
+                    else if (DBType.Equals("Postgres"))
+                    {
+                        var options = NpgsqlDbContextOptionsExtensions
+                            .UseNpgsql(new DbContextOptionsBuilder<IDImagerDB>(), DbConnectionString)
+                            .ReplaceService<ISqlGenerationHelper, SqlGenerationHelper>()
+                            .Options;
+                        db = new IDImagerDB(options);
+                    }
+                    else
+                    {
+                        throw new Exception("DBType not supported, supported type are 'MsSql' and 'Postgres'.");
+                    }
                 }
-                    
 
                 return db;
             }
