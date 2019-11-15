@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace IDBrowserServiceCore.Data.PostgresHelpers
 {
-    public class SqlGenerationHelper : NpgsqlSqlGenerationHelper
+    public class PostgresSqlGenerationHelper : NpgsqlSqlGenerationHelper
     {
-        public SqlGenerationHelper(RelationalSqlGenerationHelperDependencies dependencies)
+        public PostgresSqlGenerationHelper(RelationalSqlGenerationHelperDependencies dependencies)
             : base(dependencies) { }
 
         public override string DelimitIdentifier(string identifier) => identifier.Contains(".") ? base.DelimitIdentifier(identifier) : identifier;

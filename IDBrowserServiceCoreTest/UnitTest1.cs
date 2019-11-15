@@ -127,7 +127,7 @@ namespace IDBrowserServiceCoreTest
                     {
                         var options = NpgsqlDbContextOptionsExtensions
                             .UseNpgsql(new DbContextOptionsBuilder<IDImagerDB>(), DbConnectionString)
-                            .ReplaceService<ISqlGenerationHelper, SqlGenerationHelper>()
+                            .ReplaceService<ISqlGenerationHelper, PostgresSqlGenerationHelper>()
                             .Options;
                         db = new IDImagerDB(options);
                     }

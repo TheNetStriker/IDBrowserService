@@ -73,12 +73,12 @@ namespace IDBrowserServiceCore
                             var strConnection = site["ConnectionStrings:IDImager"];
                             services.AddDbContextPool<IDImagerDB>(options => options
                                 .UseNpgsql(strConnection)
-                                .ReplaceService<ISqlGenerationHelper, SqlGenerationHelper>());
+                                .ReplaceService<ISqlGenerationHelper, PostgresSqlGenerationHelper>());
 
                             var strConnectionThumbs = site["ConnectionStrings:IDImagerThumbs"];
                             services.AddDbContextPool<IDImagerThumbsDB>(options => options
                                 .UseNpgsql(strConnectionThumbs)
-                                .ReplaceService<ISqlGenerationHelper, SqlGenerationHelper>());
+                                .ReplaceService<ISqlGenerationHelper, PostgresSqlGenerationHelper>());
                         }
                         else
                         {
