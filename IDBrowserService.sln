@@ -43,7 +43,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IDBrowserStreamingService",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IDBrowserServiceCore", "IDBrowserServiceCore\IDBrowserServiceCore.csproj", "{38D4600E-5E26-43ED-BF1D-0D441AA3C8D7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IDBrowserServiceCoreTest", "IDBrowserServiceCoreTest\IDBrowserServiceCoreTest.csproj", "{FC5F649C-7E8E-4B0F-80CA-8FF0374208F6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IDBrowserServiceCoreTest", "IDBrowserServiceCoreTest\IDBrowserServiceCoreTest.csproj", "{FC5F649C-7E8E-4B0F-80CA-8FF0374208F6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

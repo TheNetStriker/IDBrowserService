@@ -1,7 +1,14 @@
-﻿using Microsoft.AspNetCore.Hosting;
+﻿using IDBrowserServiceCore.Code;
+using IDBrowserServiceCore.Data.IDImager;
+using IDBrowserServiceCore.Settings;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -10,13 +17,6 @@ using System.Linq;
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Http;
-using IDBrowserServiceCore.Data.IDImager;
-using IDBrowserServiceCore.Code;
-using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.Extensions.Options;
-using IDBrowserServiceCore.Settings;
 
 namespace IDBrowserServiceCore.Controllers
 {
@@ -24,16 +24,14 @@ namespace IDBrowserServiceCore.Controllers
     public class MediaController : Controller
     {
         private readonly IDImagerDB db;
-        private readonly ILogger log;
+        private readonly ILogger logger;
         private readonly ServiceSettings serviceSettings;
 
-        public MediaController(IDImagerDB db, IOptions<ServiceSettings> serviceSettings, ILoggerFactory DepLoggerFactory)
+        public MediaController(IDImagerDB db, IOptions<ServiceSettings> serviceSettings)
         {
             this.db = db;
             this.serviceSettings = serviceSettings.Value;
-
-            if (log == null)
-                log = DepLoggerFactory.CreateLogger("Controllers.MediaController");
+            this.logger = Log.Logger.ForContext<MediaController>(); ;
         }
 
         [HttpGet]
@@ -60,7 +58,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                log.LogError(ex.ToString());
+                logger.Error(ex.ToString());
                 return BadRequest(ex.ToString());
             }
         }

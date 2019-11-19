@@ -1,22 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Transactions;
+﻿using IDBrowserServiceCore.Code;
+using IDBrowserServiceCore.Code.XmpRecipe;
+using IDBrowserServiceCore.Data;
+using IDBrowserServiceCore.Data.IDImager;
+using IDBrowserServiceCore.Data.IDImagerThumbs;
+using IDBrowserServiceCore.Settings;
+using ImageMagick;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using IDBrowserServiceCore.Data.IDImager;
-using IDBrowserServiceCore.Data.IDImagerThumbs;
-using IDBrowserServiceCore.Data;
-using IDBrowserServiceCore.Code;
-using ImageMagick;
-using System.Threading.Tasks;
-using IDBrowserServiceCore.Code.XmpRecipe;
-using IDBrowserServiceCore.Settings;
 using Microsoft.Extensions.Options;
+using Serilog;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Transactions;
 
 namespace IDBrowserServiceCore.Controllers
 {
@@ -24,22 +24,19 @@ namespace IDBrowserServiceCore.Controllers
     [Route("Service.svc/[action]")] //Compatibility to old service
     public class ValuesController : Controller
     {
-        private readonly ILogger log;
+        private readonly ILogger logger;
         private readonly ServiceSettings serviceSettings;
         private TransactionOptions readUncommittedTransactionOptions;
         private readonly IDImagerDB db;
         private readonly IDImagerThumbsDB dbThumbs;
 
-        public ValuesController(IDImagerDB db, IDImagerThumbsDB dbThumbs, IOptions<ServiceSettings> serviceSettings,
-            ILoggerFactory DepLoggerFactory)
+        public ValuesController(IDImagerDB db, IDImagerThumbsDB dbThumbs, IOptions<ServiceSettings> serviceSettings)
         {
             this.db = db;
             this.dbThumbs = dbThumbs;
             this.serviceSettings = serviceSettings.Value;
-
-            if (log == null)
-                log = DepLoggerFactory.CreateLogger("Controllers.ValuesController");
-
+            this.logger = Log.Logger.ForContext<ValuesController>();
+            
             readUncommittedTransactionOptions = new TransactionOptions
             {
                 IsolationLevel = IsolationLevel.ReadUncommitted
@@ -94,7 +91,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                log.LogError(ex.ToString());
+                logger.Error(ex.ToString());
                 throw ex;
             }
         }
@@ -109,7 +106,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                log.LogError(ex.ToString());
+                logger.Error(ex.ToString());
                 throw;
             }
         }
@@ -202,7 +199,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                log.LogError(ex.ToString());
+                logger.Error(ex.ToString());
                 throw ex;
             }
         }
@@ -249,7 +246,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                log.LogError(ex.ToString());
+                logger.Error(ex.ToString());
                 throw ex;
             }
         }
@@ -264,7 +261,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                log.LogError(ex.ToString());
+                logger.Error(ex.ToString());
                 throw ex;
             }
         }
@@ -319,7 +316,7 @@ namespace IDBrowserServiceCore.Controllers
                             db, dbThumbs, new List<String>() { type }, keepAspectRatio, setGenericVideoThumbnailOnError, serviceSettings);
 
                         foreach (Exception ex in result.Exceptions)
-                            log.LogError(ex.ToString());
+                            logger.Error(ex.ToString());
 
                         if (result.ImageStreams.Count > 0)
                         {
@@ -379,7 +376,7 @@ namespace IDBrowserServiceCore.Controllers
             catch (Exception ex)
             {
                 if (imageStream != null) { imageStream.Close(); }
-                log.LogError(ex.ToString());
+                logger.Error(ex.ToString());
                 throw ex;
             }
         }
@@ -407,7 +404,7 @@ namespace IDBrowserServiceCore.Controllers
             catch (Exception ex)
             {
                 if (imageStream != null) { imageStream.Close(); }
-                log.LogError(ex.ToString());
+                logger.Error(ex.ToString());
                 throw ex;
             }
         }
@@ -432,7 +429,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                log.LogError(String.Format("Error in 'GetImageStream' when applying recipe on imageGuid {0}: {1}",
+                logger.Error(String.Format("Error in 'GetImageStream' when applying recipe on imageGuid {0}: {1}",
                     catalogItem.GUID, ex.ToString()));
             }
 
@@ -507,7 +504,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                log.LogError(ex.ToString());
+                logger.Error(ex.ToString());
                 throw ex;
             }
         }
@@ -535,7 +532,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                log.LogError(ex.ToString());
+                logger.Error(ex.ToString());
                 throw ex;
             }
         }
@@ -575,7 +572,7 @@ namespace IDBrowserServiceCore.Controllers
             catch (Exception ex)
             {
                 if (fileStream != null) { fileStream.Close(); }
-                log.LogError(ex.ToString());
+                logger.Error(ex.ToString());
                 throw ex;
             }
         }
@@ -610,7 +607,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                log.LogError(ex.ToString());
+                logger.Error(ex.ToString());
                 throw ex;
             }
         }
@@ -648,7 +645,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                log.LogError(ex.ToString());
+                logger.Error(ex.ToString());
                 throw ex;
             }
         }
@@ -738,7 +735,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                log.LogError(ex.ToString());
+                logger.Error(ex.ToString());
                 throw ex;
             }
         }
@@ -770,7 +767,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                log.LogError(ex.ToString());
+                logger.Error(ex.ToString());
                 throw ex;
             }
         }
@@ -858,7 +855,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                log.LogError(ex.ToString());
+                logger.Error(ex.ToString());
                 throw ex;
             }
         }
@@ -892,7 +889,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                log.LogError(ex.ToString());
+                logger.Error(ex.ToString());
                 throw ex;
             }
         }
@@ -901,12 +898,12 @@ namespace IDBrowserServiceCore.Controllers
         {
             if (HttpContext != null && HttpContext.Connection != null)
             {
-                log.LogInformation(String.Format("Client {0}:{1} called {2}", 
+                logger.Information(String.Format("Client {0}:{1} called {2}", 
                     HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort, callingMethod));
             }
             else
             {
-                log.LogInformation(String.Format("Called {0}", callingMethod));
+                logger.Information(String.Format("Called {0}", callingMethod));
             }
         }
     }
