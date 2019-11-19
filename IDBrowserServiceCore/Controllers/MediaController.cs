@@ -31,7 +31,7 @@ namespace IDBrowserServiceCore.Controllers
         {
             this.db = db;
             this.serviceSettings = serviceSettings.Value;
-            this.logger = Log.Logger.ForContext<MediaController>(); ;
+            this.logger = Log.Logger.ForContext<MediaController>();
         }
 
         [HttpGet]

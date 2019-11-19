@@ -53,9 +53,6 @@ namespace IDBrowserServiceCore
                                 .AddMvc()
                                 .AddXmlSerializerFormatters();
                         
-                            services
-                                .AddSingleton<IConfiguration>(Configuration);
-
                             services.Configure<ServiceSettings>(site.GetSection("ServiceSettings"));
 
                             var strDbType = site["ConnectionStrings:DBType"];
