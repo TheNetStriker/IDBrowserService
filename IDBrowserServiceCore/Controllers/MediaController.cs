@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Serilog;
 using System;
@@ -24,14 +25,17 @@ namespace IDBrowserServiceCore.Controllers
     public class MediaController : Controller
     {
         private readonly IDImagerDB db;
-        private readonly ILogger logger;
+        private readonly ILogger<ValuesController> logger;
+        private readonly IDiagnosticContext diagnosticContext;
         private readonly ServiceSettings serviceSettings;
 
-        public MediaController(IDImagerDB db, IOptions<ServiceSettings> serviceSettings)
+        public MediaController(IDImagerDB db, IOptions<ServiceSettings> serviceSettings,
+            ILogger<ValuesController> logger, IDiagnosticContext diagnosticContext)
         {
-            this.db = db;
-            this.serviceSettings = serviceSettings.Value;
-            this.logger = Log.Logger.ForContext<MediaController>();
+            this.db = db ?? throw new ArgumentNullException(nameof(logger));
+            this.serviceSettings = serviceSettings.Value ?? throw new ArgumentNullException(nameof(serviceSettings));
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this.diagnosticContext = diagnosticContext ?? throw new ArgumentNullException(nameof(diagnosticContext));
         }
 
         [HttpGet]
@@ -40,8 +44,9 @@ namespace IDBrowserServiceCore.Controllers
         {
             try
             {
-                if (string.IsNullOrEmpty(guid))
-                    return BadRequest("Missing guid parameter");
+                if (string.IsNullOrEmpty(guid)) return BadRequest("Missing guid parameter");
+
+                diagnosticContext.Set(nameof(guid), guid);
 
                 idCatalogItem catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleAsync(x => x.GUID.Equals(guid));
 
@@ -58,7 +63,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                logger.Error(ex.ToString());
+                logger.LogError(ex.ToString());
                 return BadRequest(ex.ToString());
             }
         }

@@ -9,12 +9,14 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 
@@ -24,18 +26,21 @@ namespace IDBrowserServiceCore.Controllers
     [Route("Service.svc/[action]")] //Compatibility to old service
     public class ValuesController : Controller
     {
-        private readonly ILogger logger;
+        private readonly ILogger<ValuesController> logger;
+        private readonly IDiagnosticContext diagnosticContext;
         private readonly ServiceSettings serviceSettings;
         private TransactionOptions readUncommittedTransactionOptions;
         private readonly IDImagerDB db;
         private readonly IDImagerThumbsDB dbThumbs;
 
-        public ValuesController(IDImagerDB db, IDImagerThumbsDB dbThumbs, IOptions<ServiceSettings> serviceSettings)
+        public ValuesController(IDImagerDB db, IDImagerThumbsDB dbThumbs, IOptions<ServiceSettings> serviceSettings,
+            ILogger<ValuesController> logger, IDiagnosticContext diagnosticContext)
         {
-            this.db = db;
-            this.dbThumbs = dbThumbs;
-            this.serviceSettings = serviceSettings.Value;
-            this.logger = Log.Logger.ForContext<ValuesController>();
+            this.db = db ?? throw new ArgumentNullException(nameof(db));
+            this.dbThumbs = dbThumbs ?? throw new ArgumentNullException(nameof(dbThumbs));
+            this.serviceSettings = serviceSettings.Value ?? throw new ArgumentNullException(nameof(serviceSettings));
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this.diagnosticContext = diagnosticContext ?? throw new ArgumentNullException(nameof(diagnosticContext));
             
             readUncommittedTransactionOptions = new TransactionOptions
             {
@@ -49,6 +54,8 @@ namespace IDBrowserServiceCore.Controllers
         {
             try
             {
+                diagnosticContext.Set(nameof(guid), guid);
+
                 if (string.IsNullOrEmpty(guid))
                     LogHttpConnection("GetImageProperties");
                 else
@@ -91,7 +98,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                logger.Error(ex.ToString());
+                logger.LogError(ex.ToString());
                 throw ex;
             }
         }
@@ -102,11 +109,17 @@ namespace IDBrowserServiceCore.Controllers
         {
             try
             {
+                if (guid is null) throw new ArgumentNullException(nameof(guid));
+                if (isCategory is null) throw new ArgumentNullException(nameof(isCategory));
+
+                diagnosticContext.Set(nameof(guid), guid);
+                diagnosticContext.Set(nameof(isCategory), isCategory);
+
                 return await GetImagePropertyThumbnailStream(guid, isCategory);
             }
             catch (Exception ex)
             {
-                logger.Error(ex.ToString());
+                logger.LogError(ex.ToString());
                 throw;
             }
         }
@@ -115,6 +128,14 @@ namespace IDBrowserServiceCore.Controllers
         [ActionName("GetResizedImagePropertyThumbnail")]
         public async Task<ActionResult<Stream>> GetResizedImagePropertyThumbnail(string guid, string isCategory, string width, string height)
         {
+            if (guid is null) throw new ArgumentNullException(nameof(guid));
+            if (isCategory is null) throw new ArgumentNullException(nameof(isCategory));
+
+            diagnosticContext.Set(nameof(guid), guid);
+            diagnosticContext.Set(nameof(isCategory), isCategory);
+            diagnosticContext.Set(nameof(width), width);
+            diagnosticContext.Set(nameof(height), height);
+
             return await GetImagePropertyThumbnailStream(guid, isCategory, width, height);
         }
 
@@ -162,6 +183,12 @@ namespace IDBrowserServiceCore.Controllers
         {
             try
             {
+                if (orderDescending is null) throw new ArgumentNullException(nameof(orderDescending));
+                if (propertyGuid is null) throw new ArgumentNullException(nameof(propertyGuid));
+
+                diagnosticContext.Set(nameof(orderDescending), orderDescending);
+                diagnosticContext.Set(nameof(propertyGuid), propertyGuid);
+
                 List<CatalogItem> catalogItems = null;
 
                 var query = from tbl in db.idCatalogItemDefinition
@@ -199,7 +226,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                logger.Error(ex.ToString());
+                logger.LogError(ex.ToString());
                 throw ex;
             }
         }
@@ -210,6 +237,12 @@ namespace IDBrowserServiceCore.Controllers
         {
             try
             {
+                if (orderDescending is null) throw new ArgumentNullException(nameof(orderDescending));
+                if (filePathGuid is null) throw new ArgumentNullException(nameof(filePathGuid));
+
+                diagnosticContext.Set(nameof(orderDescending), orderDescending);
+                diagnosticContext.Set(nameof(filePathGuid), filePathGuid);
+
                 List<CatalogItem> catalogItems = null;
 
                 var query = from tbl in db.idCatalogItem
@@ -246,7 +279,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                logger.Error(ex.ToString());
+                logger.LogError(ex.ToString());
                 throw ex;
             }
         }
@@ -257,11 +290,17 @@ namespace IDBrowserServiceCore.Controllers
         {
             try
             {
+                if (type is null) throw new ArgumentNullException(nameof(type));
+                if (imageGuid is null) throw new ArgumentNullException(nameof(imageGuid));
+
+                diagnosticContext.Set(nameof(type), type);
+                diagnosticContext.Set(nameof(imageGuid), imageGuid);
+
                 return await GetImageThumbnailStream(type, imageGuid);
             }
             catch (Exception ex)
             {
-                logger.Error(ex.ToString());
+                logger.LogError(ex.ToString());
                 throw ex;
             }
         }
@@ -316,7 +355,7 @@ namespace IDBrowserServiceCore.Controllers
                             db, dbThumbs, new List<String>() { type }, keepAspectRatio, setGenericVideoThumbnailOnError, serviceSettings);
 
                         foreach (Exception ex in result.Exceptions)
-                            logger.Error(ex.ToString());
+                            logger.LogError(ex.ToString());
 
                         if (result.ImageStreams.Count > 0)
                         {
@@ -361,6 +400,10 @@ namespace IDBrowserServiceCore.Controllers
             Stream imageStream = null;
             try
             {
+                if (imageGuid is null) throw new ArgumentNullException(nameof(imageGuid));
+
+                diagnosticContext.Set(nameof(imageGuid), imageGuid);
+
                 LogHttpConnection(string.Format("GetImage with imageGuid: {0}", imageGuid));
 
                 imageStream = await GetImageStream(imageGuid);
@@ -376,7 +419,7 @@ namespace IDBrowserServiceCore.Controllers
             catch (Exception ex)
             {
                 if (imageStream != null) { imageStream.Close(); }
-                logger.Error(ex.ToString());
+                logger.LogError(ex.ToString());
                 throw ex;
             }
         }
@@ -388,6 +431,14 @@ namespace IDBrowserServiceCore.Controllers
             Stream imageStream = null;
             try
             {
+                if (width is null) throw new ArgumentNullException(nameof(width));
+                if (height is null) throw new ArgumentNullException(nameof(height));
+                if (imageGuid is null) throw new ArgumentNullException(nameof(imageGuid));
+
+                diagnosticContext.Set(nameof(width), width);
+                diagnosticContext.Set(nameof(height), height);
+                diagnosticContext.Set(nameof(imageGuid), imageGuid);
+
                 LogHttpConnection(string.Format("GetResizedImage with width: {0} height {1} imageGuid: {2}",
                     width, height, imageGuid));
 
@@ -404,13 +455,19 @@ namespace IDBrowserServiceCore.Controllers
             catch (Exception ex)
             {
                 if (imageStream != null) { imageStream.Close(); }
-                logger.Error(ex.ToString());
+                logger.LogError(ex.ToString());
                 throw ex;
             }
         }
 
         private async Task<Stream> GetImageStream(string imageGuid, string width = null, string height = null)
         {
+            if (imageGuid is null) throw new ArgumentNullException(nameof(imageGuid));
+
+            diagnosticContext.Set(nameof(imageGuid), imageGuid);
+            diagnosticContext.Set(nameof(width), width);
+            diagnosticContext.Set(nameof(height), height);
+
             idCatalogItem catalogItem = null;
             Boolean keepAspectRatio = serviceSettings.KeepAspectRatio;
 
@@ -429,7 +486,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                logger.Error(String.Format("Error in 'GetImageStream' when applying recipe on imageGuid {0}: {1}",
+                logger.LogError(String.Format("Error in 'GetImageStream' when applying recipe on imageGuid {0}: {1}",
                     catalogItem.GUID, ex.ToString()));
             }
 
@@ -469,6 +526,10 @@ namespace IDBrowserServiceCore.Controllers
         {
             try
             {
+                if (imageGuid is null) throw new ArgumentNullException(nameof(imageGuid));
+
+                diagnosticContext.Set(nameof(imageGuid), imageGuid);
+
                 var queryXMP = from tbl in db.idSearchData
                                where tbl.RelatedGUID == imageGuid
                                && tbl.ContentType.Equals("XMP")
@@ -504,7 +565,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                logger.Error(ex.ToString());
+                logger.LogError(ex.ToString());
                 throw ex;
             }
         }
@@ -514,6 +575,10 @@ namespace IDBrowserServiceCore.Controllers
         {
             try
             {
+                if (imageFileExtensions is null) throw new ArgumentNullException(nameof(imageFileExtensions));
+
+                diagnosticContext.Set(nameof(imageFileExtensions), imageFileExtensions);
+
                 List<String> randomImageGuids;
 
                 using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
@@ -532,7 +597,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                logger.Error(ex.ToString());
+                logger.LogError(ex.ToString());
                 throw ex;
             }
         }
@@ -544,6 +609,10 @@ namespace IDBrowserServiceCore.Controllers
             Stream fileStream = null;
             try
             {
+                if (imageGuid is null) throw new ArgumentNullException(nameof(imageGuid));
+
+                diagnosticContext.Set(nameof(imageGuid), imageGuid);
+
                 LogHttpConnection(string.Format("GetFile with imageGuid: {0}", imageGuid));
 
                 idCatalogItem catalogItem;
@@ -572,7 +641,7 @@ namespace IDBrowserServiceCore.Controllers
             catch (Exception ex)
             {
                 if (fileStream != null) { fileStream.Close(); }
-                logger.Error(ex.ToString());
+                logger.LogError(ex.ToString());
                 throw ex;
             }
         }
@@ -588,6 +657,10 @@ namespace IDBrowserServiceCore.Controllers
         {
             try
             {
+                if (searchString is null) throw new ArgumentNullException(nameof(searchString));
+
+                diagnosticContext.Set(nameof(searchString), searchString);
+
                 var queryProperties = from tbl in db.idProp
                                       where tbl.PropName.Contains(searchString)
                                       orderby tbl.PropName
@@ -607,7 +680,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                logger.Error(ex.ToString());
+                logger.LogError(ex.ToString());
                 throw ex;
             }
         }
@@ -618,6 +691,10 @@ namespace IDBrowserServiceCore.Controllers
         {
             try
             {
+                if (catalogItemGUID is null) throw new ArgumentNullException(nameof(catalogItemGUID));
+
+                diagnosticContext.Set(nameof(catalogItemGUID), catalogItemGUID);
+
                 var queryCatalogItemDefinition = from tbl in db.idCatalogItemDefinition
                                                  where tbl.CatalogItemGUID == catalogItemGUID
                                                  select tbl.GUID;
@@ -645,7 +722,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                logger.Error(ex.ToString());
+                logger.LogError(ex.ToString());
                 throw ex;
             }
         }
@@ -701,6 +778,12 @@ namespace IDBrowserServiceCore.Controllers
         {
             try
             {
+                if (propertyGuid is null) throw new ArgumentNullException(nameof(propertyGuid));
+                if (catalogItemGUID is null) throw new ArgumentNullException(nameof(catalogItemGUID));
+
+                diagnosticContext.Set(nameof(propertyGuid), propertyGuid);
+                diagnosticContext.Set(nameof(catalogItemGUID), catalogItemGUID);
+
                 if (await db.idProp.Where(x => x.GUID == propertyGuid).CountAsync() == 0)
                     throw new Exception("Image property does not exist");
 
@@ -735,7 +818,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                logger.Error(ex.ToString());
+                logger.LogError(ex.ToString());
                 throw ex;
             }
         }
@@ -746,6 +829,12 @@ namespace IDBrowserServiceCore.Controllers
         {
             try
             {
+                if (propertyGuid is null) throw new ArgumentNullException(nameof(propertyGuid));
+                if (catalogItemGUID is null) throw new ArgumentNullException(nameof(catalogItemGUID));
+
+                diagnosticContext.Set(nameof(propertyGuid), propertyGuid);
+                diagnosticContext.Set(nameof(catalogItemGUID), catalogItemGUID);
+
                 idCatalogItemDefinition currentIdCatalogItemDefinition = await db.idCatalogItemDefinition
                     .SingleAsync(x => x.GUID == propertyGuid && x.CatalogItemGUID == catalogItemGUID);
                 idCatalogItem currentIdCatalogItem = await db.idCatalogItem
@@ -767,7 +856,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                logger.Error(ex.ToString());
+                logger.LogError(ex.ToString());
                 throw ex;
             }
         }
@@ -778,6 +867,12 @@ namespace IDBrowserServiceCore.Controllers
         {
             try
             {
+                if (propertyName is null) throw new ArgumentNullException(nameof(propertyName));
+                if (parentGUID is null) throw new ArgumentNullException(nameof(parentGUID));
+
+                diagnosticContext.Set(nameof(propertyName), propertyName);
+                diagnosticContext.Set(nameof(parentGUID), parentGUID);
+
                 idProp parentIdProp = await db.idProp.SingleOrDefaultAsync(x => x.GUID.Equals(parentGUID));
                 int? parentRgt;
 
@@ -802,7 +897,7 @@ namespace IDBrowserServiceCore.Controllers
 
                 foreach (idProp row in await queryUpdateNestedSetRgt.ToListAsync())
                 {
-                    row.rgt = row.rgt + 2;
+                    row.rgt += 2;
                 }
 
                 //Update nested set lft
@@ -812,7 +907,7 @@ namespace IDBrowserServiceCore.Controllers
 
                 foreach (idProp row in await queryUpdateNestedSetLft.ToListAsync())
                 {
-                    row.lft = row.lft + 2;
+                    row.lft += 2;
                 }
 
                 idProp newIdProp = new idProp
@@ -855,7 +950,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                logger.Error(ex.ToString());
+                logger.LogError(ex.ToString());
                 throw ex;
             }
         }
@@ -889,7 +984,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (Exception ex)
             {
-                logger.Error(ex.ToString());
+                logger.LogError(ex.ToString());
                 throw ex;
             }
         }
@@ -898,12 +993,12 @@ namespace IDBrowserServiceCore.Controllers
         {
             if (HttpContext != null && HttpContext.Connection != null)
             {
-                logger.Information(String.Format("Client {0}:{1} called {2}", 
+                logger.LogInformation(String.Format("Client {0}:{1} called {2}", 
                     HttpContext.Connection.RemoteIpAddress, HttpContext.Connection.RemotePort, callingMethod));
             }
             else
             {
-                logger.Information(String.Format("Called {0}", callingMethod));
+                logger.LogInformation(String.Format("Called {0}", callingMethod));
             }
         }
     }

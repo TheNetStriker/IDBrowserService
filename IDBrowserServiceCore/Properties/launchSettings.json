@@ -19,7 +19,7 @@
     "IDBrowserServiceCore": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "api/values",
+      "launchUrl": "mad/api/values/GetImageProperties",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },

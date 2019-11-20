@@ -2,7 +2,10 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Serilog;
 using System;
 
 namespace IDBrowserServiceCore.Code
@@ -10,9 +13,16 @@ namespace IDBrowserServiceCore.Code
     public static class ApplicationBuilderExtensions
     {
         public static IApplicationBuilder UseBranchWithServices(this IApplicationBuilder app, PathString path,
-            Action<IServiceCollection> servicesConfiguration, Action<IApplicationBuilder> appBuilderConfiguration)
+            Action<IServiceCollection> servicesConfiguration,
+            Action<IApplicationBuilder> appBuilderConfiguration)
         {
-            var webHost = new WebHostBuilder().UseKestrel().ConfigureServices(servicesConfiguration).UseStartup<EmptyStartup>().Build();
+            var webHost = new WebHostBuilder()
+                .UseKestrel()
+                .ConfigureServices(servicesConfiguration)
+                .UseStartup<EmptyStartup>()
+                .UseSerilog(Log.Logger)
+                .Build();
+
             var serviceProvider = webHost.Services;
             var serverFeatures = webHost.ServerFeatures;
 

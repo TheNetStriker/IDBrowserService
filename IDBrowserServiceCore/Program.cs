@@ -16,7 +16,6 @@ namespace IDBrowserServiceCore
         public static IConfiguration Configuration { get; } = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-            .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)
             .AddEnvironmentVariables()
             .Build();
 
@@ -32,12 +31,8 @@ namespace IDBrowserServiceCore
                 .UseKestrel()
                 .UseStartup<Startup>()
                 .UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
-                    .ReadFrom.Configuration(hostingContext.Configuration)
-                    .Enrich.FromLogContext()
-                    .WriteTo.Debug()
-                    .WriteTo.Console(
-                        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} " +
-                                        "{Properties:j}{NewLine}{Exception}"));
+                    .ReadFrom.Configuration(Configuration)
+                    .Enrich.FromLogContext());
         }
     }
 }
