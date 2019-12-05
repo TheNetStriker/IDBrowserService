@@ -62,7 +62,7 @@ namespace IDBrowserServiceCore.Controllers
                 
                 string mimeType = GetMimeNameFromExt(catalogItem.FileName);
 
-                if (videosize != null)
+                if (videosize != null && !videosize.Equals("Original"))
                 {
                     if (string.IsNullOrEmpty(serviceSettings.TranscodeDirectory))
                         return BadRequest("Missing TranscodeDirectory setting");
@@ -89,6 +89,7 @@ namespace IDBrowserServiceCore.Controllers
                     }                    
 
                     strFilePath = strTranscodeFilePath;
+                    mimeType = "video/mp4";
                 }
 
                 Stream inputStream = StaticFunctions.GetImageFileStream(strFilePath);
