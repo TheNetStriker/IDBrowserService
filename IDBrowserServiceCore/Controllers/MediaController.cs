@@ -67,26 +67,8 @@ namespace IDBrowserServiceCore.Controllers
                     if (string.IsNullOrEmpty(serviceSettings.TranscodeDirectory))
                         return BadRequest("Missing TranscodeDirectory setting");
 
-                    string strTranscodeDirectory = Path.Combine(serviceSettings.TranscodeDirectory, videosize);
-                    string strTranscodeFilePath = Path.Combine(strTranscodeDirectory, guid + ".mp4");
-
-                    if (!System.IO.File.Exists(strTranscodeFilePath))
-                    {
-                        var inputFile = new MediaFile(strFilePath);
-                        var outputFile = new MediaFile(strTranscodeFilePath);
-                        VideoSize videoSize = (VideoSize)Enum.Parse(typeof(VideoSize), videosize);
-
-                        if (!Directory.Exists(strTranscodeDirectory))
-                            Directory.CreateDirectory(strTranscodeDirectory);
-
-                        var conversionOptions = new ConversionOptions
-                        {
-                            VideoSize = videoSize
-                        };
-
-                        var ffmpeg = new Engine(ffmpegPath);
-                        await ffmpeg.ConvertAsync(inputFile, outputFile, conversionOptions);
-                    }                    
+                    string strTranscodeFilePath = await StaticFunctions.TranscodeVideo(strFilePath, guid,
+                        serviceSettings.TranscodeDirectory, ffmpegPath, videosize);
 
                     strFilePath = strTranscodeFilePath;
                     mimeType = "video/mp4";

@@ -45,6 +45,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IDBrowserServiceCore", "IDB
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IDBrowserServiceCoreTest", "IDBrowserServiceCoreTest\IDBrowserServiceCoreTest.csproj", "{FC5F649C-7E8E-4B0F-80CA-8FF0374208F6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagementConsole", "ManagementConsole\ManagementConsole.csproj", "{D02718FC-158D-424A-B799-A7F0049F8CC7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +89,10 @@ Global
 		{FC5F649C-7E8E-4B0F-80CA-8FF0374208F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FC5F649C-7E8E-4B0F-80CA-8FF0374208F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FC5F649C-7E8E-4B0F-80CA-8FF0374208F6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D02718FC-158D-424A-B799-A7F0049F8CC7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D02718FC-158D-424A-B799-A7F0049F8CC7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D02718FC-158D-424A-B799-A7F0049F8CC7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D02718FC-158D-424A-B799-A7F0049F8CC7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

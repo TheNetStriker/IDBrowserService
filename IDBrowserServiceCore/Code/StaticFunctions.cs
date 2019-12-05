@@ -13,6 +13,8 @@ using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using IDBrowserServiceCore.Code.XmpRecipe;
 using IDBrowserServiceCore.Settings;
+using FFmpeg.NET;
+using FFmpeg.NET.Enums;
 
 namespace IDBrowserServiceCore.Code
 {
@@ -28,15 +30,18 @@ namespace IDBrowserServiceCore.Code
         {
             string strFilePath = catalogItem.idFilePath.FilePath;
 
-            foreach (FilePathReplaceSettings settings in filePathReplaceSettings)
+            if (filePathReplaceSettings != null)
             {
-                string strPathMatch = settings.PathMatch;
-                string strPathReplace = settings.PathReplace;
-                if (!string.IsNullOrEmpty(strPathMatch) && !string.IsNullOrEmpty(strPathReplace))
-                    strFilePath = strFilePath.Replace(strPathMatch, strPathReplace, StringComparison.CurrentCultureIgnoreCase);
+                foreach (FilePathReplaceSettings settings in filePathReplaceSettings)
+                {
+                    string strPathMatch = settings.PathMatch;
+                    string strPathReplace = settings.PathReplace;
+                    if (!string.IsNullOrEmpty(strPathMatch) && !string.IsNullOrEmpty(strPathReplace))
+                        strFilePath = strFilePath.Replace(strPathMatch, strPathReplace, StringComparison.CurrentCultureIgnoreCase);
 
-                if (Path.DirectorySeparatorChar != '\\')
-                    strFilePath = strFilePath.Replace('\\', Path.DirectorySeparatorChar);
+                    if (Path.DirectorySeparatorChar != '\\')
+                        strFilePath = strFilePath.Replace('\\', Path.DirectorySeparatorChar);
+                }
             }
 
             return Path.Combine(strFilePath, catalogItem.FileName);
@@ -182,6 +187,32 @@ namespace IDBrowserServiceCore.Code
             {
                 image.Resize(width, height);
             }
+        }
+
+        public async static Task<string> TranscodeVideo(string filePath, string guid, string transcodeDirectory, string ffmpegPath, string videosize)
+        {
+            string strTranscodeDirectory = Path.Combine(transcodeDirectory, videosize, guid.Substring(0, 2));
+            string strTranscodeFilePath = Path.Combine(strTranscodeDirectory, guid + ".mp4");
+
+            if (!File.Exists(strTranscodeFilePath))
+            {
+                var inputFile = new MediaFile(filePath);
+                var outputFile = new MediaFile(strTranscodeFilePath);
+                VideoSize videoSize = (VideoSize)Enum.Parse(typeof(VideoSize), videosize);
+
+                if (!Directory.Exists(strTranscodeDirectory))
+                    Directory.CreateDirectory(strTranscodeDirectory);
+
+                var conversionOptions = new ConversionOptions
+                {
+                    VideoSize = videoSize
+                };
+
+                var ffmpeg = new Engine(ffmpegPath);
+                await ffmpeg.ConvertAsync(inputFile, outputFile, conversionOptions);
+            }
+
+            return strTranscodeFilePath;
         }
 
         //public static Rotation Rotate(ref BitmapSource bitmapSource, ref TransformGroup transformGroup)
