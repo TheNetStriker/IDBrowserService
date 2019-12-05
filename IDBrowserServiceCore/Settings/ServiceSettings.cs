@@ -13,6 +13,7 @@ namespace IDBrowserServiceCore.Settings
         public bool KeepAspectRatio { get; set; }
         public bool SetGenericVideoThumbnailOnError { get; set; }
         public List<FilePathReplaceSettings> FilePathReplace { get; set; }
+        public string TranscodeDirectory { get; set; }
 
         public ServiceSettings()
         {

@@ -1,4 +1,6 @@
-﻿using IDBrowserServiceCore.Code;
+﻿using FFmpeg.NET;
+using FFmpeg.NET.Enums;
+using IDBrowserServiceCore.Code;
 using IDBrowserServiceCore.Data.IDImager;
 using IDBrowserServiceCore.Settings;
 using Microsoft.AspNetCore.Hosting;
@@ -27,33 +29,69 @@ namespace IDBrowserServiceCore.Controllers
         private readonly IDImagerDB db;
         private readonly ILogger<ValuesController> logger;
         private readonly IDiagnosticContext diagnosticContext;
+        private readonly IConfiguration configuration;
         private readonly ServiceSettings serviceSettings;
 
-        public MediaController(IDImagerDB db, IOptions<ServiceSettings> serviceSettings,
+        private readonly string ffmpegPath;
+
+        public MediaController(IDImagerDB db, IConfiguration configuration, IOptions<ServiceSettings> serviceSettings,
             ILogger<ValuesController> logger, IDiagnosticContext diagnosticContext)
         {
             this.db = db ?? throw new ArgumentNullException(nameof(logger));
+            this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.serviceSettings = serviceSettings.Value ?? throw new ArgumentNullException(nameof(serviceSettings));
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.diagnosticContext = diagnosticContext ?? throw new ArgumentNullException(nameof(diagnosticContext));
+
+            this.ffmpegPath = configuration.GetValue<string>("FFMpegPath");
         }
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> Play(string guid)
+        public async Task<IActionResult> Play(string guid, string videosize)
         {
             try
             {
                 if (string.IsNullOrEmpty(guid)) return BadRequest("Missing guid parameter");
 
                 diagnosticContext.Set(nameof(guid), guid);
+                diagnosticContext.Set(nameof(videosize), videosize);
 
                 idCatalogItem catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleAsync(x => x.GUID.Equals(guid));
-
                 String strFilePath = StaticFunctions.GetImageFilePath(catalogItem, serviceSettings.FilePathReplace);
-                Stream inputStream = StaticFunctions.GetImageFileStream(strFilePath);
+                
                 string mimeType = GetMimeNameFromExt(catalogItem.FileName);
 
+                if (videosize != null)
+                {
+                    if (string.IsNullOrEmpty(serviceSettings.TranscodeDirectory))
+                        return BadRequest("Missing TranscodeDirectory setting");
+
+                    string strTranscodeDirectory = Path.Combine(serviceSettings.TranscodeDirectory, videosize);
+                    string strTranscodeFilePath = Path.Combine(strTranscodeDirectory, guid + ".mp4");
+
+                    if (!System.IO.File.Exists(strTranscodeFilePath))
+                    {
+                        var inputFile = new MediaFile(strFilePath);
+                        var outputFile = new MediaFile(strTranscodeFilePath);
+                        VideoSize videoSize = (VideoSize)Enum.Parse(typeof(VideoSize), videosize);
+
+                        if (!Directory.Exists(strTranscodeDirectory))
+                            Directory.CreateDirectory(strTranscodeDirectory);
+
+                        var conversionOptions = new ConversionOptions
+                        {
+                            VideoSize = videoSize
+                        };
+
+                        var ffmpeg = new Engine(ffmpegPath);
+                        await ffmpeg.ConvertAsync(inputFile, outputFile, conversionOptions);
+                    }                    
+
+                    strFilePath = strTranscodeFilePath;
+                }
+
+                Stream inputStream = StaticFunctions.GetImageFileStream(strFilePath);
                 FileStreamResult fileStreamResult = new FileStreamResult(inputStream, mimeType)
                 {
                     EnableRangeProcessing = true
