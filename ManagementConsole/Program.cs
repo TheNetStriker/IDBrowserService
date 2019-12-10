@@ -46,7 +46,7 @@ namespace ManagementConsole
             {
                 String strFilePath = StaticFunctions.GetImageFilePath(catalogItem, null);
                 string strTranscodedFile = StaticFunctions.TranscodeVideo(strFilePath, catalogItem.GUID,
-                    strTranscodeDirectory, null, strVideoSize).Result;
+                    strTranscodeDirectory, strVideoSize).Result;
 
                 intCounter++;
 

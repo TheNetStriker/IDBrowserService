@@ -63,6 +63,43 @@ namespace IDBrowserServiceCoreTest
             }
         }
 
+        private IConfiguration configuration;
+        public IConfiguration Configuration
+        {
+            get
+            {
+                if (configuration == null)
+                {
+                    configuration = new ConfigurationBuilder()
+                        .SetBasePath(Directory.GetCurrentDirectory())
+                        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                        .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
+                        .AddEnvironmentVariables()
+                        .Build();
+                }
+
+                return configuration;
+            }
+        }
+
+        private IConfigurationSection settingsSection;
+        public IConfigurationSection SettingsSection
+        {
+            get
+            {
+                if (settingsSection == null)
+                {
+                    settingsSection = Configuration
+                        .GetSection("Sites")
+                        .GetChildren()
+                        .First()
+                        .GetSection("ServiceSettings");
+                }
+
+                return settingsSection;
+            }
+        }
+
         private ServiceSettings settings;
         public ServiceSettings Settings
         {
@@ -70,22 +107,8 @@ namespace IDBrowserServiceCoreTest
             {
                 if (settings == null)
                 {
-                    settings = new ServiceSettings()
-                    {
-                        CreateThumbnails = true,
-                        MThumbmailWidth = 1680,
-                        MThumbnailHeight = 1260,
-                        KeepAspectRatio = true,
-                        SetGenericVideoThumbnailOnError = true,
-                    };
-
-                    FilePathReplaceSettings filePathReplaceSettings = new FilePathReplaceSettings()
-                    {
-                        PathMatch = "\\\\QNAPNAS01\\Multimedia",
-                        PathReplace = "\\\\172.17.2.14\\Multimedia"
-                    };
-
-                    settings.FilePathReplace.Add(filePathReplaceSettings);
+                    settings = new ServiceSettings();
+                    SettingsSection.Bind(settings);
                 }
 
                 return settings;
@@ -204,13 +227,12 @@ namespace IDBrowserServiceCoreTest
                            .ReplaceService<ISqlGenerationHelper, PostgresSqlGenerationHelper>())
                        .AddDbContextPool<IDImagerThumbsDB>(options => options.UseNpgsql(DbThumbsConnectionString)
                            .ReplaceService<ISqlGenerationHelper, PostgresSqlGenerationHelper>())
-                       .AddSingleton<IOptions<ServiceSettings>>(Options.Create<ServiceSettings>(Settings))
+                       .Configure<ServiceSettings>(SettingsSection)
                        .AddSingleton<ILoggerFactory>(services => new SerilogLoggerFactory(Logger, false))
                        .AddSingleton<ILogger<ValuesController>>(loggerFactory.CreateLogger<ValuesController>())
                        .AddSingleton<ILogger<MediaController>>(loggerFactory.CreateLogger<MediaController>())
                        .AddSingleton(diagnosticContext)
                        .AddSingleton<IDiagnosticContext>(diagnosticContext)
-                       .AddSingleton<IConfiguration>(Configuration)
                        .AddTransient<ValuesController, ValuesController>()
                        .AddTransient<MediaController, MediaController>();
 
@@ -384,6 +406,15 @@ namespace IDBrowserServiceCoreTest
         public async void MediaControllerPlayTest()
         {
             if (!(await MediaController.Play(idCatalogItemFirstVideo.GUID, null) is FileStreamResult stream))
+                throw new Exception("No stream received");
+            else
+                stream.FileStream.Close();
+        }
+
+        [Fact]
+        public async void MediaControllerPlayTranscodeTest()
+        {
+            if (!(await MediaController.Play(idCatalogItemFirstVideo.GUID, "Hd480") is FileStreamResult stream))
                 throw new Exception("No stream received");
             else
                 stream.FileStream.Close();

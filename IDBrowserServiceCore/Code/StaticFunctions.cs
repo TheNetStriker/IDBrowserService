@@ -189,7 +189,7 @@ namespace IDBrowserServiceCore.Code
             }
         }
 
-        public async static Task<string> TranscodeVideo(string filePath, string guid, string transcodeDirectory, string ffmpegPath, string videosize)
+        public async static Task<string> TranscodeVideo(string filePath, string guid, string transcodeDirectory, string videosize)
         {
             string strTranscodeDirectory = Path.Combine(transcodeDirectory, videosize, guid.Substring(0, 2));
             string strTranscodeFilePath = Path.Combine(strTranscodeDirectory, guid + ".mp4");
@@ -208,7 +208,7 @@ namespace IDBrowserServiceCore.Code
                     VideoSize = videoSize
                 };
 
-                var ffmpeg = new Engine(ffmpegPath);
+                var ffmpeg = new Engine();
                 await ffmpeg.ConvertAsync(inputFile, outputFile, conversionOptions);
             }
 

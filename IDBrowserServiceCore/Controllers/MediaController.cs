@@ -29,21 +29,15 @@ namespace IDBrowserServiceCore.Controllers
         private readonly IDImagerDB db;
         private readonly ILogger<ValuesController> logger;
         private readonly IDiagnosticContext diagnosticContext;
-        private readonly IConfiguration configuration;
         private readonly ServiceSettings serviceSettings;
 
-        private readonly string ffmpegPath;
-
-        public MediaController(IDImagerDB db, IConfiguration configuration, IOptions<ServiceSettings> serviceSettings,
+        public MediaController(IDImagerDB db, IOptions<ServiceSettings> serviceSettings,
             ILogger<ValuesController> logger, IDiagnosticContext diagnosticContext)
         {
             this.db = db ?? throw new ArgumentNullException(nameof(logger));
-            this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.serviceSettings = serviceSettings.Value ?? throw new ArgumentNullException(nameof(serviceSettings));
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.diagnosticContext = diagnosticContext ?? throw new ArgumentNullException(nameof(diagnosticContext));
-
-            this.ffmpegPath = configuration.GetValue<string>("FFMpegPath");
         }
 
         [HttpGet]
@@ -68,7 +62,7 @@ namespace IDBrowserServiceCore.Controllers
                         return BadRequest("Missing TranscodeDirectory setting");
 
                     string strTranscodeFilePath = await StaticFunctions.TranscodeVideo(strFilePath, guid,
-                        serviceSettings.TranscodeDirectory, ffmpegPath, videosize);
+                        serviceSettings.TranscodeDirectory, videosize);
 
                     strFilePath = strTranscodeFilePath;
                     mimeType = "video/mp4";
