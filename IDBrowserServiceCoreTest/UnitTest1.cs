@@ -1,23 +1,28 @@
-using IDBrowserServiceCore;
+using IDBrowserServiceCore.Code;
 using IDBrowserServiceCore.Controllers;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+using IDBrowserServiceCore.Data;
+using IDBrowserServiceCore.Data.IDImager;
+using IDBrowserServiceCore.Data.IDImagerThumbs;
+using IDBrowserServiceCore.Data.PostgresHelpers;
+using IDBrowserServiceCore.Settings;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
+using Serilog;
+using Serilog.Core;
+using Serilog.Extensions.Hosting;
+using Serilog.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Xunit;
-using IDBrowserServiceCore.Data.IDImager;
-using IDBrowserServiceCore.Data.IDImagerThumbs;
-using IDBrowserServiceCore.Code;
-using IDBrowserServiceCore.Data;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using IDBrowserServiceCore.Settings;
-using Microsoft.Extensions.Options;
-using Microsoft.EntityFrameworkCore.Storage;
-using IDBrowserServiceCore.Data.PostgresHelpers;
+using Xunit;
 
 namespace IDBrowserServiceCoreTest
 {
@@ -37,13 +42,21 @@ namespace IDBrowserServiceCoreTest
         {
             ImagePropertyGuids = new List<String>();
             List<string> imageFileExtensions = new List<string>() { "JPG", "JPEG", "TIF", "PNG", "GIF", "BMP" };
-            ImageGuids = Task.Run(() => Controller.GetRandomImageGuids(imageFileExtensions)).Result.Value;
+            ImageGuids = Task.Run(() => ValuesController.GetRandomImageGuids(imageFileExtensions)).Result.Value;
 
-            idCatalogItemFirstImage = Db.idCatalogItem.Include(x => x.idFilePath).Where(x => x.FileName.EndsWith(".JPG")).First();
-            idCatalogItemFirstVideo = Db.idCatalogItem.Include(x => x.idFilePath).Where(x => x.FileName.EndsWith(".MP4")).First();
-            idPropFirst = db.idProp.First();
+            idCatalogItemFirstImage = Db.idCatalogItem
+                .Include(x => x.idFilePath)
+                .Where(x => x.FileName.EndsWith(".JPG"))
+                .OrderBy(x => x.DateTimeStamp)
+                .First();
+            idCatalogItemFirstVideo = Db.idCatalogItem
+                .Include(x => x.idFilePath)
+                .Where(x => x.FileName.EndsWith(".MP4"))
+                .OrderBy(x => x.DateTimeStamp)
+                .First();
+            idPropFirst = Db.idProp.First();
 
-            List<ImageProperty> ImageProperties = Task.Run(() => Controller.GetImageProperties(null)).Result.Value;
+            List<ImageProperty> ImageProperties = Task.Run(() => ValuesController.GetImageProperties(null)).Result.Value;
             foreach (ImageProperty imageProperty in ImageProperties)
             {
                 ImagePropertyGuids.Add(imageProperty.GUID);
@@ -83,7 +96,7 @@ namespace IDBrowserServiceCoreTest
         {
             get
             {
-                return "Server=172.17.2.23;Database=photosupreme;user id=idimager_main;password=idi_main_2606;";
+                return "Host=172.17.2.17;Database=photosupreme_mad;Username=idimager_main;Password=idi_main_2606;";
             }
         }
 
@@ -91,19 +104,19 @@ namespace IDBrowserServiceCoreTest
         {
             get
             {
-                return "Server=172.17.2.23;Database=photosupreme_thumbs;user id=idimager_main;password=idi_main_2606;";
+                return "Host=172.17.2.17;Database=photosupreme_mad_thumbs;Username=idimager_main;Password=idi_main_2606;";
             }
         }
 
-        private ILoggerFactory logger;
-        public ILoggerFactory Logger
+        private Logger logger;
+        public Logger Logger
         {
             get
             {
                 if (logger == null)
-                    logger = new LoggerFactory()
-                        .AddConsole()
-                        .AddDebug();
+                    logger = new LoggerConfiguration()
+                        .WriteTo.Console()
+                        .CreateLogger();
 
                 return logger;
             }
@@ -146,26 +159,77 @@ namespace IDBrowserServiceCoreTest
         {
             get
             {
-                if (dbThumbs == null)
+                if (DBType.Equals("MsSql"))
                 {
                     var options = SqlServerDbContextOptionsExtensions
-                        .UseSqlServer(new DbContextOptionsBuilder<IDImagerThumbsDB>(), DbThumbsConnectionString).Options;
+                       .UseSqlServer(new DbContextOptionsBuilder<IDImagerThumbsDB>(), DbThumbsConnectionString)
+                       .Options;
                     dbThumbs = new IDImagerThumbsDB(options);
+                }
+                else if (DBType.Equals("Postgres"))
+                {
+                    var options = NpgsqlDbContextOptionsExtensions
+                        .UseNpgsql(new DbContextOptionsBuilder<IDImagerThumbsDB>(), DbThumbsConnectionString)
+                        .ReplaceService<ISqlGenerationHelper, PostgresSqlGenerationHelper>()
+                        .Options;
+                    dbThumbs = new IDImagerThumbsDB(options);
+                }
+                else
+                {
+                    throw new Exception("DBType not supported, supported type are 'MsSql' and 'Postgres'.");
                 }
 
                 return dbThumbs;
             }
         }
 
-        private ValuesController controller;
-        public ValuesController Controller
+        private ServiceProvider serviceProvider;
+        public ServiceProvider ServiceProvider
         {
             get
             {
-                if (controller == null)
-                    controller = new ValuesController(Db, DbThumbs, Options.Create<ServiceSettings>(Settings), Logger);
+                if (serviceProvider == null)
+                {
+                    var diagnosticContext = new DiagnosticContext(Logger);
+                    var loggerFactory = new LoggerFactory();
 
-                return controller;
+                    IConfiguration Configuration = new ConfigurationBuilder()
+                        .SetBasePath(Directory.GetCurrentDirectory())
+                        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                        .AddEnvironmentVariables()
+                        .Build();
+
+                    var serviceCollection = new ServiceCollection()
+                       .AddDbContextPool<IDImagerDB>(options => options.UseNpgsql(DbConnectionString)
+                           .ReplaceService<ISqlGenerationHelper, PostgresSqlGenerationHelper>())
+                       .AddDbContextPool<IDImagerThumbsDB>(options => options.UseNpgsql(DbThumbsConnectionString)
+                           .ReplaceService<ISqlGenerationHelper, PostgresSqlGenerationHelper>())
+                       .AddSingleton<IOptions<ServiceSettings>>(Options.Create<ServiceSettings>(Settings))
+                       .AddSingleton<ILoggerFactory>(services => new SerilogLoggerFactory(Logger, false))
+                       .AddSingleton<ILogger<ValuesController>>(loggerFactory.CreateLogger<ValuesController>())
+                       .AddSingleton<ILogger<MediaController>>(loggerFactory.CreateLogger<MediaController>())
+                       .AddSingleton(diagnosticContext)
+                       .AddSingleton<IDiagnosticContext>(diagnosticContext)
+                       .AddSingleton<IConfiguration>(Configuration)
+                       .AddTransient<ValuesController, ValuesController>()
+                       .AddTransient<MediaController, MediaController>();
+
+                    serviceProvider = serviceCollection.BuildServiceProvider();
+                }
+
+                return serviceProvider;
+            }
+        }
+
+        private ValuesController valuesController;
+        public ValuesController ValuesController
+        {
+            get
+            {
+                if (valuesController == null)
+                    valuesController = ServiceProvider.GetService<ValuesController>();
+
+                return valuesController;
             }
         }
 
@@ -175,7 +239,7 @@ namespace IDBrowserServiceCoreTest
             get
             {
                 if (mediaController == null)
-                    mediaController = new MediaController(Db, Options.Create<ServiceSettings>(Settings), Logger);
+                    mediaController = ServiceProvider.GetService<MediaController>();
 
                 return mediaController;
             }
@@ -203,56 +267,56 @@ namespace IDBrowserServiceCoreTest
         [Fact]
         public async void GetImagePropertiesTest()
         {
-            ActionResult<List<ImageProperty>> result = await Controller.GetImageProperties(null);
-            result = await Controller.GetImageProperties(result.Value.First().GUID);
+            ActionResult<List<ImageProperty>> result = await ValuesController.GetImageProperties(null);
+            result = await ValuesController.GetImageProperties(result.Value.First().GUID);
         }
 
         [Fact]
         public async void GetImagePropertyThumbnailTest()
         {
             String imagePropertyGuid = GetNextImagePropertyGuid();
-            await Controller.GetImagePropertyThumbnail(imagePropertyGuid, "true");
+            await ValuesController.GetImagePropertyThumbnail(imagePropertyGuid, "true");
         }
 
         [Fact]
         public async void GetCatalogItemsTest()
         {
-            await Controller.GetCatalogItems("true", GetNextImagePropertyGuid());
+            await ValuesController.GetCatalogItems("true", GetNextImagePropertyGuid());
         }
 
         [Fact]
         public async void GetImageThumbnailTest()
         {
-            ActionResult<Stream> result = await Controller.GetImageThumbnail("T", GetNextImageGuid());
+            ActionResult<Stream> result = await ValuesController.GetImageThumbnail("T", GetNextImageGuid());
             result.Value.Close();
-            result = await Controller.GetImageThumbnail("M", GetNextImageGuid());
+            result = await ValuesController.GetImageThumbnail("M", GetNextImageGuid());
             result.Value.Close();
         }
 
         [Fact]
         public async void GetImageTest()
         {
-            ActionResult<Stream> result = await Controller.GetImage(ReceipeTestGuid);
+            ActionResult<Stream> result = await ValuesController.GetImage(ReceipeTestGuid);
             result.Value.Close();
         }
 
         [Fact]
         public async void GetResizedImageTest()
         {
-            ActionResult<Stream> result = await Controller.GetResizedImage("640", "480", GetNextImageGuid());
+            ActionResult<Stream> result = await ValuesController.GetResizedImage("640", "480", GetNextImageGuid());
             result.Value.Close();
         }
 
         [Fact]
         public async void GetImageInfoTest()
         {
-            await Controller.GetImageInfo(GetNextImageGuid());
+            await ValuesController.GetImageInfo(GetNextImageGuid());
         }
 
         [Fact]
         public async void SearchImagePropertiesTest()
         {
-            ActionResult<List<ImagePropertyRecursive>> result = await Controller.SearchImageProperties("David Masshardt");
+            ActionResult<List<ImagePropertyRecursive>> result = await ValuesController.SearchImageProperties("David Masshardt");
             if (result.Value.Count == 0)
                 throw new Exception("No items found with SearchImagePropertiesSoap");
         }
@@ -260,7 +324,7 @@ namespace IDBrowserServiceCoreTest
         [Fact]
         public async void GetCatalogItemImagePropertiesTest()
         {
-            ActionResult<List<ImagePropertyRecursive>> result = await Controller.GetCatalogItemImageProperties(GetNextImageGuid());
+            ActionResult<List<ImagePropertyRecursive>> result = await ValuesController.GetCatalogItemImageProperties(GetNextImageGuid());
             if (result.Value.Count == 0)
                 throw new Exception("No image properties found with GetCatalogItemImagePropertiesSoap");
         }
@@ -268,7 +332,7 @@ namespace IDBrowserServiceCoreTest
         [Fact]
         public async void GetFilePathsTest()
         {
-            ActionResult<List<FilePath>> result = await Controller.GetFilePaths();
+            ActionResult<List<FilePath>> result = await ValuesController.GetFilePaths();
             if (result.Value.Count == 0)
                 throw new Exception("No file paths found with GetFilePathsSoap");
         }
@@ -307,19 +371,19 @@ namespace IDBrowserServiceCoreTest
         [Fact]
         public async void AddCatalogItemDefinitionTest()
         {
-            await Controller.AddCatalogItemDefinition(idPropFirst.GUID, idCatalogItemFirstImage.GUID);
+            await ValuesController.AddCatalogItemDefinition(idPropFirst.GUID, idCatalogItemFirstImage.GUID);
         }
 
         [Fact]
         public async void DeleteCatalogItemDefinitionTest()
         {
-            await Controller.DeleteCatalogItemDefinition(idPropFirst.GUID, idCatalogItemFirstImage.GUID);
+            await ValuesController.DeleteCatalogItemDefinition(idPropFirst.GUID, idCatalogItemFirstImage.GUID);
         }
 
         [Fact]
         public async void MediaControllerPlayTest()
         {
-            if (!(await MediaController.Play(idCatalogItemFirstVideo.GUID) is FileStreamResult stream))
+            if (!(await MediaController.Play(idCatalogItemFirstVideo.GUID, null) is FileStreamResult stream))
                 throw new Exception("No stream received");
             else
                 stream.FileStream.Close();

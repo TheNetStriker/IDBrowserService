@@ -666,14 +666,7 @@ namespace IDBrowserServiceCore.Controllers
                                       orderby tbl.PropName
                                       select tbl;
 
-                List<ImagePropertyRecursive> listImagePropertyRecursive;
-
-                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
-                    readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
-                {
-                    listImagePropertyRecursive = await GetImagePropertyRecursive(queryProperties);
-                    scope.Complete();
-                }
+                List<ImagePropertyRecursive> listImagePropertyRecursive = await GetImagePropertyRecursive(queryProperties);
 
                 LogHttpConnection(string.Format("SearchImagePropertiesSoap with searchString: {0}", searchString));
                 return listImagePropertyRecursive;
@@ -702,19 +695,14 @@ namespace IDBrowserServiceCore.Controllers
                 List<String> propertyGuids;
                 List<ImagePropertyRecursive> listImagePropertyRecursive;
 
-                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
-                    readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
-                {
-                    propertyGuids = await queryCatalogItemDefinition.ToListAsync();
+                propertyGuids = await queryCatalogItemDefinition.ToListAsync();
 
-                    var queryProperties = from tbl in db.idProp
-                                          where propertyGuids.Contains(tbl.GUID)
-                                          orderby tbl.PropName
-                                          select tbl;
+                var queryProperties = from tbl in db.idProp
+                                        where propertyGuids.Contains(tbl.GUID)
+                                        orderby tbl.PropName
+                                        select tbl;
 
-                    listImagePropertyRecursive = await GetImagePropertyRecursive(queryProperties);
-                    scope.Complete();
-                }
+                listImagePropertyRecursive = await GetImagePropertyRecursive(queryProperties);
 
                 LogHttpConnection(string.Format("GetCatalogItemImageProperties with catalogItemGUID: {0}",
                     catalogItemGUID));
@@ -730,33 +718,27 @@ namespace IDBrowserServiceCore.Controllers
         private async Task<List<ImagePropertyRecursive>> GetImagePropertyRecursive(IQueryable<idProp> query)
         {
             List<ImagePropertyRecursive> listImagePropertyRecursive = new List<ImagePropertyRecursive>();
-            foreach (idProp row in query)
+            foreach (idProp row in query.ToList())
             {
                 String parentGuid = row.ParentGUID;
                 List<String> parentProperties = new List<string>();
 
-                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
-                    readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
+                while (parentGuid != null)
                 {
-                    while (parentGuid != null)
+                    idProp parentProperty = await db.idProp.SingleOrDefaultAsync(x => x.GUID == parentGuid);
+
+                    if (parentProperty == null)
                     {
-                        idProp parentProperty = await db.idProp.SingleOrDefaultAsync(x => x.GUID == parentGuid);
-
-                        if (parentProperty == null)
-                        {
-                            idPropCategory parentPropCategory = await db.idPropCategory.SingleOrDefaultAsync(x => x.GUID == parentGuid);
-                            if (parentPropCategory != null)
-                                parentProperties.Insert(0, parentPropCategory.CategoryName);
-                            parentGuid = null;
-                        }
-                        else
-                        {
-                            parentProperties.Insert(0, parentProperty.PropName);
-                            parentGuid = parentProperty.ParentGUID;
-                        }
+                        idPropCategory parentPropCategory = await db.idPropCategory.SingleOrDefaultAsync(x => x.GUID == parentGuid);
+                        if (parentPropCategory != null)
+                            parentProperties.Insert(0, parentPropCategory.CategoryName);
+                        parentGuid = null;
                     }
-
-                    scope.Complete();
+                    else
+                    {
+                        parentProperties.Insert(0, parentProperty.PropName);
+                        parentGuid = parentProperty.ParentGUID;
+                    }
                 }
 
                 ImagePropertyRecursive imagePropertyRecursive = new ImagePropertyRecursive
@@ -806,9 +788,9 @@ namespace IDBrowserServiceCore.Controllers
 
                 db.idCatalogItemDefinition.Add(newIdCatalogItemDefinition);
 
-                currentIdCatalogItem.idInSync = currentIdCatalogItem.idInSync >> 2;
+                currentIdCatalogItem.idInSync >>= 2;
                 if (currentIdImageVersion != null)
-                    currentIdImageVersion.idInSync = currentIdImageVersion.idInSync >> 2;
+                    currentIdImageVersion.idInSync >>= 2;
 
                 await db.SaveChangesAsync();
 

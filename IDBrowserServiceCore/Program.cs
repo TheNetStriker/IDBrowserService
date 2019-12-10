@@ -27,8 +27,12 @@ namespace IDBrowserServiceCore
         public static IWebHostBuilder CreateWebHostBuilder(string[] args)
         {
             return WebHost.CreateDefaultBuilder(args)
+                .ConfigureKestrel(serverOptions =>
+                {
+                    serverOptions.ListenAnyIP(5000);
+                })
+                .UseIISIntegration()
                 .UseUrls(Configuration.GetValue<string>("urls"))
-                .UseKestrel()
                 .UseStartup<Startup>()
                 .UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
                     .ReadFrom.Configuration(Configuration)
