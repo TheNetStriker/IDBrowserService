@@ -138,7 +138,6 @@ namespace IDBrowserServiceCoreTest
             {
                 if (logger == null)
                     logger = new LoggerConfiguration()
-                        .WriteTo.Console()
                         .CreateLogger();
 
                 return logger;
