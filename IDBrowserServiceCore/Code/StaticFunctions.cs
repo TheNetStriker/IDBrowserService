@@ -16,6 +16,8 @@ using IDBrowserServiceCore.Settings;
 using FFmpeg.NET;
 using FFmpeg.NET.Enums;
 using System.Runtime.InteropServices;
+using Microsoft.EntityFrameworkCore.Storage;
+using IDBrowserServiceCore.Data.PostgresHelpers;
 
 namespace IDBrowserServiceCore.Code
 {
@@ -216,59 +218,192 @@ namespace IDBrowserServiceCore.Code
             return strTranscodeFilePath;
         }
 
-        //public static Rotation Rotate(ref BitmapSource bitmapSource, ref TransformGroup transformGroup)
-        //{
-        //    Rotation rotation = StaticFunctions.GetRotation(bitmapSource);
-        //    if (rotation != Rotation.Rotate0)
-        //    {
-        //        RotateTransform rotateTransform = new RotateTransform();
+        public static void SetDbContextOptions(DbContextOptionsBuilder optionsBuilder, string dbType,
+            string connectionString)
+        {
+            if (dbType.Equals("MsSql"))
+            {
+                optionsBuilder.UseSqlServer(connectionString);
+            }
+            else if (dbType.Equals("Postgres"))
+            {
+                optionsBuilder.UseNpgsql(connectionString);
+                optionsBuilder.ReplaceService<ISqlGenerationHelper, PostgresSqlGenerationHelper>();
+            }
+            else
+            {
+                throw new Exception("DBType not supported, supported type are 'MsSql' and 'Postgres'.");
+            }
+        }
 
-        //        switch (rotation)
-        //        {
-        //            case Rotation.Rotate90:
-        //                rotateTransform.Angle = 90;
-        //                break;
-        //            case Rotation.Rotate180:
-        //                rotateTransform.Angle = 180;
-        //                break;
-        //            case Rotation.Rotate270:
-        //                rotateTransform.Angle = 270;
-        //                break;
-        //        }
+        public static DbContextOptionsBuilder<TContext> GetIDImagerDBOptionsBuilder<TContext>(string dbType,
+            string connectionString) where TContext : DbContext
+        {
+            DbContextOptionsBuilder<TContext> optionsBuilder = new DbContextOptionsBuilder<TContext>();
+            SetDbContextOptions(optionsBuilder, dbType, connectionString);
+            return optionsBuilder;
+        }
 
-        //        transformGroup.Children.Add(rotateTransform);
-        //    }
+        /// <summary>
+        /// Transcode's all videos of a site
+        /// </summary>
+        /// <param name="configuration">Json configuration of IDBrowserService as IDBrowserConfiguration class</param>
+        /// <param name="siteName">Site name to transcode</param>
+        /// <param name="videoSize">Video size to transcode. (e.g. Hd480, Hd720, Hd1080)</param>
+        public static void TranscodeAllVideos(IDBrowserConfiguration configuration, string siteName, string videoSize)
+        {
+            SiteSettings siteSettings = configuration.Sites[siteName];
 
-        //    return rotation;
-        //}
+            IDImagerDB db = new IDImagerDB(GetIDImagerDBOptionsBuilder<IDImagerDB>(siteSettings.ConnectionStrings.DBType,
+                siteSettings.ConnectionStrings.IDImager).Options);
 
+            var query = db.idCatalogItem
+                .Include(x => x.idFilePath)
+                .Where(x => configuration.VideoFileExtensions.Contains(x.idFileType));
 
-        public const string OrientationQuery = "System.Photo.Orientation";
+            int intTotalCount = query.Count();
+            int intCounter = 0;
 
-        //public static Rotation GetRotation(BitmapSource bitmapSource)
-        //{
-        //    BitmapMetadata bitmapMetadata = bitmapSource.Metadata as BitmapMetadata;
+            foreach (idCatalogItem catalogItem in query)
+            {
+                string strFilePath = StaticFunctions.GetImageFilePath(catalogItem, siteSettings.ServiceSettings.FilePathReplace);
+                string strTranscodedFile = StaticFunctions.TranscodeVideo(strFilePath, catalogItem.GUID,
+                    siteSettings.ServiceSettings.TranscodeDirectory, videoSize).Result;
 
-        //    if ((bitmapMetadata != null) && (bitmapMetadata.ContainsQuery(OrientationQuery)))
-        //    {
-        //        object o = bitmapMetadata.GetQuery(OrientationQuery);
+                intCounter++;
 
-        //        if (o != null)
-        //        {
-        //            //refer to http://www.impulseadventure.com/photo/exif-orientation.html for details on orientation values
-        //            switch ((ushort)o)
-        //            {
-        //                case 6:
-        //                    return Rotation.Rotate90;
-        //                case 3:
-        //                    return Rotation.Rotate180;
-        //                case 8:
-        //                    return Rotation.Rotate270;
-        //            }
-        //        }
-        //    }
+                Console.WriteLine(string.Format("{0}/{1}: {2}", intCounter, intTotalCount, strFilePath));
+            }
+        }
 
-        //    return Rotation.Rotate0;
-        //}
+        /// <summary>
+        /// Generates thumbnails based on parameters
+        /// </summary>
+        /// <param name="configuration">Json configuration of IDBrowserService as IDBrowserConfiguration class</param>
+        /// <param name="siteName">Site name to generate thumbnails</param>
+        /// <param name="fromDateTime">From date filter</param>
+        /// <param name="toDateTime">To date filter</param>
+        /// <param name="fileFilter">File type filter</param>
+        /// <param name="imageGuid">Generate single image guid</param>
+        /// <param name="overwrite">Overwrite existing thumbnails</param>
+        public async static void GenerateThumbnails(IDBrowserConfiguration configuration, string siteName, DateTime fromDateTime,
+            DateTime toDateTime, string fileFilter, string imageGuid, bool overwrite)
+        {
+            SiteSettings siteSettings = configuration.Sites[siteName];
+
+            var optionsBuilder = new DbContextOptionsBuilder<IDImagerDB>();
+
+            if (siteSettings.ConnectionStrings.DBType.Equals("MsSql"))
+            {
+                optionsBuilder.UseSqlServer(siteSettings.ConnectionStrings.IDImager);
+            }
+            else if (siteSettings.ConnectionStrings.DBType.Equals("Postgres"))
+            {
+                optionsBuilder.UseNpgsql(siteSettings.ConnectionStrings.IDImager);
+                optionsBuilder.ReplaceService<ISqlGenerationHelper, PostgresSqlGenerationHelper>();
+            }
+
+            IDImagerDB db = new IDImagerDB(GetIDImagerDBOptionsBuilder<IDImagerDB>(siteSettings.ConnectionStrings.DBType,
+                siteSettings.ConnectionStrings.IDImager).Options);
+            IDImagerThumbsDB dbThumbs = new IDImagerThumbsDB(GetIDImagerDBOptionsBuilder<IDImagerThumbsDB>(siteSettings.ConnectionStrings.DBType,
+                siteSettings.ConnectionStrings.IDImagerThumbs).Options);
+
+            var queryCatalogItem = from catalogItem in db.idCatalogItem.Include("idFilePath")
+                                   where configuration.ImageFileExtensions.Contains(catalogItem.idFileType) 
+                                   || configuration.VideoFileExtensions.Contains(catalogItem.idFileType)
+                                   select catalogItem;
+
+            if (fromDateTime != DateTime.MinValue)
+                queryCatalogItem = queryCatalogItem.Where(x => x.idCreated >= fromDateTime);
+
+            if (toDateTime != DateTime.MinValue)
+                queryCatalogItem = queryCatalogItem.Where(x => x.idCreated <= toDateTime);
+
+            if (!string.IsNullOrEmpty(fileFilter))
+                queryCatalogItem = queryCatalogItem.Where(x => x.idFileType.ToLower().Equals(fileFilter.ToLower()));
+
+            if (!string.IsNullOrEmpty(imageGuid))
+                queryCatalogItem = queryCatalogItem.Where(x => x.GUID.Equals(imageGuid, StringComparison.OrdinalIgnoreCase));
+
+            int intCountCatalogItem = queryCatalogItem.Count();
+            int intCatalogItemCounter = 0;
+            int intThumbnailsGenerated = 0;
+
+            foreach (idCatalogItem catalogItem in queryCatalogItem)
+            {
+                List<String> typesToGenerate = new List<String>();
+                List<idThumbs> idThumbsT = dbThumbs.idThumbs.Where(x => x.ImageGUID == catalogItem.GUID && x.idType.Equals("T")).ToList();
+                List<idThumbs> idThumbsM = dbThumbs.idThumbs.Where(x => x.ImageGUID == catalogItem.GUID && x.idType.Equals("M")).ToList();
+                List<idThumbs> idThumbsR = dbThumbs.idThumbs.Where(x => x.ImageGUID == catalogItem.GUID && x.idType.Equals("R")).ToList();
+
+                if (idThumbsT.Count() == 0)
+                    typesToGenerate.Add("T");
+
+                if (idThumbsM.Count() == 0)
+                    typesToGenerate.Add("M");
+
+                if (catalogItem.idHasRecipe > 0 && idThumbsR.Count() == 0)
+                    typesToGenerate.Add("R");
+
+                if (overwrite)
+                {
+                    foreach (idThumbs thumb in idThumbsT)
+                        dbThumbs.idThumbs.Remove(thumb);
+
+                    foreach (idThumbs thumb in idThumbsM)
+                        dbThumbs.idThumbs.Remove(thumb);
+
+                    foreach (idThumbs thumb in idThumbsR)
+                        dbThumbs.idThumbs.Remove(thumb);
+
+                    typesToGenerate.Clear();
+                    typesToGenerate.Add("T");
+                    typesToGenerate.Add("M");
+                    if (catalogItem.idHasRecipe > 0)
+                        typesToGenerate.Add("R");
+                }
+
+                if (typesToGenerate.Count() > 0)
+                {
+                    try
+                    {
+                        SaveImageThumbnailResult result = await SaveImageThumbnail(catalogItem, db, dbThumbs, typesToGenerate, 
+                            siteSettings.ServiceSettings.KeepAspectRatio, siteSettings.ServiceSettings.SetGenericVideoThumbnailOnError,
+                            siteSettings.ServiceSettings);
+                        foreach (Exception ex in result.Exceptions)
+                        {
+                            LogGenerateThumbnailsException(ex);
+                            Console.WriteLine(ex.ToString());
+                        }
+
+                        if (result.Exceptions.Count > 0)
+                            LogGenerateThumbnailsFailedCatalogItem(catalogItem);
+
+                        intThumbnailsGenerated += result.ImageStreams.Count();
+                    }
+                    catch (Exception e)
+                    {
+                        LogGenerateThumbnailsException(e);
+                        LogGenerateThumbnailsFailedCatalogItem(catalogItem);
+                        Console.WriteLine(e.ToString());
+                    }
+                }
+
+                intCatalogItemCounter += 1;
+
+                Console.CursorLeft = 0;
+                Console.Write(String.Format("{0} of {1} catalogitems checked. {2} thumbnails generated", intCatalogItemCounter, intCountCatalogItem, intThumbnailsGenerated));
+            }
+        }
+
+        private static void LogGenerateThumbnailsException(Exception e)
+        {
+            File.AppendAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ThumbnailGeneratorErrorLog.txt"), e.ToString() + "\r\n-----------------------------------\r\n");
+        }
+
+        private static void LogGenerateThumbnailsFailedCatalogItem(idCatalogItem catalogItem)
+        {
+            File.AppendAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ThumbnailGeneratorFailedCatalogItems.txt"), catalogItem.GUID + "\r\n");
+        }
     }
 }

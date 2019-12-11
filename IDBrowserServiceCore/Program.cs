@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore;
+﻿using IDBrowserServiceCore.Code;
+using IDBrowserServiceCore.Settings;
+using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -21,7 +23,14 @@ namespace IDBrowserServiceCore
 
         public static void Main(string[] args)
         {
-            CreateWebHostBuilder(args).Build().Run();
+            if (args.Count() > 0 && !args[0].Equals("%LAUNCHER_ARGS%"))
+            {
+                CommandLineHandler.Handle(args);
+            }
+            else
+            {
+                CreateWebHostBuilder(args).Build().Run();
+            }
         }
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args)

@@ -52,7 +52,7 @@ namespace IDBrowserServiceCore.Controllers
                 diagnosticContext.Set(nameof(videosize), videosize);
 
                 idCatalogItem catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleAsync(x => x.GUID.Equals(guid));
-                String strFilePath = StaticFunctions.GetImageFilePath(catalogItem, serviceSettings.FilePathReplace);
+                string strFilePath = StaticFunctions.GetImageFilePath(catalogItem, serviceSettings.FilePathReplace);
                 
                 string mimeType = GetMimeNameFromExt(catalogItem.FileName);
 

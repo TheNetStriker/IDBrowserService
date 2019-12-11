@@ -58,31 +58,13 @@ namespace IDBrowserServiceCore
                             services.Configure<ServiceSettings>(site.GetSection("ServiceSettings"));
 
                             var strDbType = site["ConnectionStrings:DBType"];
+                            var strConnection = site["ConnectionStrings:IDImager"];
+                            var strConnectionThumbs = site["ConnectionStrings:IDImagerThumbs"];
 
-                            if (strDbType.Equals("MsSql"))
-                            {
-                                var strConnection = site["ConnectionStrings:IDImager"];
-                                services.AddDbContextPool<IDImagerDB>(options => options.UseSqlServer(strConnection));
-
-                                var strConnectionThumbs = site["ConnectionStrings:IDImagerThumbs"];
-                                services.AddDbContextPool<IDImagerThumbsDB>(options => options.UseSqlServer(strConnectionThumbs));
-                            }
-                            else if (strDbType.Equals("Postgres"))
-                            {
-                                var strConnection = site["ConnectionStrings:IDImager"];
-                                services.AddDbContextPool<IDImagerDB>(options => options
-                                    .UseNpgsql(strConnection)
-                                    .ReplaceService<ISqlGenerationHelper, PostgresSqlGenerationHelper>());
-
-                                var strConnectionThumbs = site["ConnectionStrings:IDImagerThumbs"];
-                                services.AddDbContextPool<IDImagerThumbsDB>(options => options
-                                    .UseNpgsql(strConnectionThumbs)
-                                    .ReplaceService<ISqlGenerationHelper, PostgresSqlGenerationHelper>());
-                            }
-                            else
-                            {
-                                throw new Exception("DBType not supported, supported type are 'MsSql' and 'Postgres'.");
-                            }
+                            services.AddDbContextPool<IDImagerDB>(options => StaticFunctions
+                                .SetDbContextOptions(options, strDbType, strConnection));
+                            services.AddDbContextPool<IDImagerThumbsDB>(options => StaticFunctions
+                                .SetDbContextOptions(options, strDbType, strConnectionThumbs));
                         },
                         appBuilder =>
                         {
