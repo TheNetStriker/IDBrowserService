@@ -32,7 +32,7 @@ namespace IDBrowserServiceCore
                     serverOptions.ListenAnyIP(5000);
                 })
                 .UseIISIntegration()
-                .UseUrls(Configuration.GetValue<string>("urls"))
+                .UseUrls(Configuration.GetValue<string>("Urls"))
                 .UseStartup<Startup>()
                 .UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
                     .ReadFrom.Configuration(Configuration)
