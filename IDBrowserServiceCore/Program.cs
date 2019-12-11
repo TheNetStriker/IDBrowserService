@@ -44,8 +44,7 @@ namespace IDBrowserServiceCore
                 .UseUrls(Configuration.GetValue<string>("Urls"))
                 .UseStartup<Startup>()
                 .UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
-                    .ReadFrom.Configuration(Configuration)
-                    .Enrich.FromLogContext());
+                    .ReadFrom.Configuration(Configuration));
         }
     }
 }

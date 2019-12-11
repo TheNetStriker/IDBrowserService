@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Serilog;
+using Serilog.Context;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -52,54 +53,55 @@ namespace IDBrowserServiceCore.Controllers
         [ActionName("GetImageProperties")]
         public async Task<ActionResult<List<ImageProperty>>> GetImageProperties(string guid)
         {
-            try
+            using (LogContext.PushProperty(nameof(guid), guid))
             {
-                diagnosticContext.Set(nameof(guid), guid);
-
-                if (string.IsNullOrEmpty(guid))
-                    LogHttpConnection("GetImageProperties");
-                else
-                    LogHttpConnection(string.Format("GetImageProperties with guid: {0}", guid));
-
-                List<ImageProperty> listImageProperty;
-
-                if (guid == null)
+                try
                 {
-                    var query = from tbl in db.v_PropCategory
-                                where !tbl.CategoryName.Equals("Internal")
-                                orderby tbl.CategoryName
-                                select new ImageProperty
-                                {
-                                    GUID = tbl.GUID,
-                                    Name = tbl.CategoryName,
-                                    ImageCount = tbl.idPhotoCount,
-                                    SubPropertyCount = db.idProp.Where(x => x.ParentGUID == tbl.GUID).Count()
-                                };
+                    if (string.IsNullOrEmpty(guid))
+                        LogHttpConnection("GetImageProperties");
+                    else
+                        LogHttpConnection(string.Format("GetImageProperties with guid: {0}", guid));
 
-                    listImageProperty = await query.ToListAsync();
+                    List<ImageProperty> listImageProperty;
+
+                    if (guid == null)
+                    {
+                        var query = from tbl in db.v_PropCategory
+                                    where !tbl.CategoryName.Equals("Internal")
+                                    orderby tbl.CategoryName
+                                    select new ImageProperty
+                                    {
+                                        GUID = tbl.GUID,
+                                        Name = tbl.CategoryName,
+                                        ImageCount = tbl.idPhotoCount,
+                                        SubPropertyCount = db.idProp.Where(x => x.ParentGUID == tbl.GUID).Count()
+                                    };
+
+                        listImageProperty = await query.ToListAsync();
+                    }
+                    else
+                    {
+                        var query = from tbl in db.v_prop
+                                    where tbl.ParentGUID == guid
+                                    orderby tbl.PropName
+                                    select new ImageProperty
+                                    {
+                                        GUID = tbl.GUID,
+                                        Name = tbl.PropName,
+                                        ImageCount = tbl.idPhotoCount,
+                                        SubPropertyCount = db.idProp.Where(x => x.ParentGUID == tbl.GUID).Count()
+                                    };
+
+                        listImageProperty = await query.ToListAsync();
+                    }
+
+                    return listImageProperty;
                 }
-                else
+                catch (Exception ex)
                 {
-                    var query = from tbl in db.v_prop
-                                where tbl.ParentGUID == guid
-                                orderby tbl.PropName
-                                select new ImageProperty
-                                {
-                                    GUID = tbl.GUID,
-                                    Name = tbl.PropName,
-                                    ImageCount = tbl.idPhotoCount,
-                                    SubPropertyCount = db.idProp.Where(x => x.ParentGUID == tbl.GUID).Count()
-                                };
-
-                    listImageProperty = await query.ToListAsync();
+                    logger.LogError(ex.ToString());
+                    throw ex;
                 }
-
-                return listImageProperty;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex.ToString());
-                throw ex;
             }
         }
 
@@ -107,20 +109,21 @@ namespace IDBrowserServiceCore.Controllers
         [ActionName("GetImagePropertyThumbnail")]
         public async Task<ActionResult<Stream>> GetImagePropertyThumbnail(string guid, string isCategory)
         {
-            try
+            using (LogContext.PushProperty(nameof(guid), guid))
+            using (LogContext.PushProperty(nameof(isCategory), isCategory))
             {
-                if (guid is null) throw new ArgumentNullException(nameof(guid));
-                if (isCategory is null) throw new ArgumentNullException(nameof(isCategory));
+                try
+                {
+                    if (guid is null) throw new ArgumentNullException(nameof(guid));
+                    if (isCategory is null) throw new ArgumentNullException(nameof(isCategory));
 
-                diagnosticContext.Set(nameof(guid), guid);
-                diagnosticContext.Set(nameof(isCategory), isCategory);
-
-                return await GetImagePropertyThumbnailStream(guid, isCategory);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex.ToString());
-                throw;
+                    return await GetImagePropertyThumbnailStream(guid, isCategory);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex.ToString());
+                    throw;
+                }
             }
         }
 
@@ -128,15 +131,21 @@ namespace IDBrowserServiceCore.Controllers
         [ActionName("GetResizedImagePropertyThumbnail")]
         public async Task<ActionResult<Stream>> GetResizedImagePropertyThumbnail(string guid, string isCategory, string width, string height)
         {
-            if (guid is null) throw new ArgumentNullException(nameof(guid));
-            if (isCategory is null) throw new ArgumentNullException(nameof(isCategory));
-
-            diagnosticContext.Set(nameof(guid), guid);
-            diagnosticContext.Set(nameof(isCategory), isCategory);
-            diagnosticContext.Set(nameof(width), width);
-            diagnosticContext.Set(nameof(height), height);
-
-            return await GetImagePropertyThumbnailStream(guid, isCategory, width, height);
+            using (LogContext.PushProperty(nameof(guid), guid))
+            using (LogContext.PushProperty(nameof(isCategory), isCategory))
+            using (LogContext.PushProperty(nameof(width), width))
+            using (LogContext.PushProperty(nameof(height), height))
+            {
+                try
+                {
+                    return await GetImagePropertyThumbnailStream(guid, isCategory, width, height);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex.ToString());
+                    throw;
+                }
+            }
         }
 
         private async Task<ActionResult<Stream>> GetImagePropertyThumbnailStream(string guid, string isCategory, string width = null, string height = null)
@@ -181,53 +190,54 @@ namespace IDBrowserServiceCore.Controllers
         [ActionName("GetCatalogItems")]
         public async Task<ActionResult<List<CatalogItem>>> GetCatalogItems(string orderDescending, string propertyGuid)
         {
-            try
+            using (LogContext.PushProperty(nameof(orderDescending), orderDescending))
+            using (LogContext.PushProperty(nameof(propertyGuid), propertyGuid))
             {
-                if (orderDescending is null) throw new ArgumentNullException(nameof(orderDescending));
-                if (propertyGuid is null) throw new ArgumentNullException(nameof(propertyGuid));
-
-                diagnosticContext.Set(nameof(orderDescending), orderDescending);
-                diagnosticContext.Set(nameof(propertyGuid), propertyGuid);
-
-                List<CatalogItem> catalogItems = null;
-
-                var query = from tbl in db.idCatalogItemDefinition
-                            where tbl.GUID == propertyGuid
-                            select tbl;
-
-                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
-                    readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
+                try
                 {
-                    if (Boolean.Parse(orderDescending))
+                    if (orderDescending is null) throw new ArgumentNullException(nameof(orderDescending));
+                    if (propertyGuid is null) throw new ArgumentNullException(nameof(propertyGuid));
+
+                    List<CatalogItem> catalogItems = null;
+
+                    var query = from tbl in db.idCatalogItemDefinition
+                                where tbl.GUID == propertyGuid
+                                select tbl;
+
+                    using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
+                        readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
                     {
-                        query = query.OrderByDescending(x => x.idCatalogItem.DateTimeStamp);
-                    }
-                    else
-                    {
-                        query = query.OrderBy(x => x.idCatalogItem.DateTimeStamp);
+                        if (Boolean.Parse(orderDescending))
+                        {
+                            query = query.OrderByDescending(x => x.idCatalogItem.DateTimeStamp);
+                        }
+                        else
+                        {
+                            query = query.OrderBy(x => x.idCatalogItem.DateTimeStamp);
+                        }
+
+                        catalogItems = await query.Select(x => new CatalogItem
+                        {
+                            GUID = x.CatalogItemGUID,
+                            FileName = x.idCatalogItem.FileName,
+                            FileType = x.idCatalogItem.idFileType,
+                            FilePath = x.idCatalogItem.idFilePath.FilePath,
+                            HasRecipe = x.idCatalogItem.idHasRecipe
+                        }).ToListAsync();
+
+                        scope.Complete();
                     }
 
-                    catalogItems = await query.Select(x => new CatalogItem
-                    {
-                        GUID = x.CatalogItemGUID,
-                        FileName = x.idCatalogItem.FileName,
-                        FileType = x.idCatalogItem.idFileType,
-                        FilePath = x.idCatalogItem.idFilePath.FilePath,
-                        HasRecipe = x.idCatalogItem.idHasRecipe
-                    }).ToListAsync();
+                    LogHttpConnection(string.Format("GetCatalogItems with orderDescending: {0} propertyGuid: {1}",
+                         orderDescending, propertyGuid));
 
-                    scope.Complete();
+                    return catalogItems;
                 }
-
-                LogHttpConnection(string.Format("GetCatalogItems with orderDescending: {0} propertyGuid: {1}",
-                     orderDescending, propertyGuid));
-
-                return catalogItems;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex.ToString());
-                throw ex;
+                catch (Exception ex)
+                {
+                    logger.LogError(ex.ToString());
+                    throw ex;
+                }
             }
         }
 
@@ -235,52 +245,53 @@ namespace IDBrowserServiceCore.Controllers
         [ActionName("GetCatalogItemsByFilePath")]
         public async Task<ActionResult<List<CatalogItem>>> GetCatalogItemsByFilePath(string orderDescending, string filePathGuid)
         {
-            try
+            using (LogContext.PushProperty(nameof(orderDescending), orderDescending))
+            using (LogContext.PushProperty(nameof(filePathGuid), filePathGuid))
             {
-                if (orderDescending is null) throw new ArgumentNullException(nameof(orderDescending));
-                if (filePathGuid is null) throw new ArgumentNullException(nameof(filePathGuid));
-
-                diagnosticContext.Set(nameof(orderDescending), orderDescending);
-                diagnosticContext.Set(nameof(filePathGuid), filePathGuid);
-
-                List<CatalogItem> catalogItems = null;
-
-                var query = from tbl in db.idCatalogItem
-                            where tbl.PathGUID == filePathGuid
-                            select tbl;
-
-                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
-                    readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
+                try
                 {
-                    if (Boolean.Parse(orderDescending))
+                    if (orderDescending is null) throw new ArgumentNullException(nameof(orderDescending));
+                    if (filePathGuid is null) throw new ArgumentNullException(nameof(filePathGuid));
+
+                    List<CatalogItem> catalogItems = null;
+
+                    var query = from tbl in db.idCatalogItem
+                                where tbl.PathGUID == filePathGuid
+                                select tbl;
+
+                    using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
+                        readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
                     {
-                        query = query.OrderByDescending(x => x.DateTimeStamp);
-                    }
-                    else
-                    {
-                        query = query.OrderBy(x => x.DateTimeStamp);
+                        if (Boolean.Parse(orderDescending))
+                        {
+                            query = query.OrderByDescending(x => x.DateTimeStamp);
+                        }
+                        else
+                        {
+                            query = query.OrderBy(x => x.DateTimeStamp);
+                        }
+
+                        catalogItems = await query.Select(x => new CatalogItem
+                        {
+                            GUID = x.GUID,
+                            FileName = x.FileName,
+                            FileType = x.idFileType,
+                            FilePath = x.idFilePath.FilePath,
+                            HasRecipe = x.idHasRecipe
+                        }).ToListAsync();
+
+                        scope.Complete();
                     }
 
-                    catalogItems = await query.Select(x => new CatalogItem
-                    {
-                        GUID = x.GUID,
-                        FileName = x.FileName,
-                        FileType = x.idFileType,
-                        FilePath = x.idFilePath.FilePath,
-                        HasRecipe = x.idHasRecipe
-                    }).ToListAsync();
-
-                    scope.Complete();
+                    LogHttpConnection(string.Format("GetCatalogItemsByFilePath with orderDescending: {0} filePathGuid: {1}",
+                        orderDescending, filePathGuid));
+                    return catalogItems;
                 }
-
-                LogHttpConnection(string.Format("GetCatalogItemsByFilePath with orderDescending: {0} filePathGuid: {1}",
-                    orderDescending, filePathGuid));
-                return catalogItems;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex.ToString());
-                throw ex;
+                catch (Exception ex)
+                {
+                    logger.LogError(ex.ToString());
+                    throw ex;
+                }
             }
         }
 
@@ -288,20 +299,21 @@ namespace IDBrowserServiceCore.Controllers
         [ActionName("GetImageThumbnail")]
         public async Task<ActionResult<Stream>> GetImageThumbnail(string type, string imageGuid)
         {
-            try
+            using (LogContext.PushProperty(nameof(type), type))
+            using (LogContext.PushProperty(nameof(imageGuid), imageGuid))
             {
-                if (type is null) throw new ArgumentNullException(nameof(type));
-                if (imageGuid is null) throw new ArgumentNullException(nameof(imageGuid));
+                try
+                {
+                    if (type is null) throw new ArgumentNullException(nameof(type));
+                    if (imageGuid is null) throw new ArgumentNullException(nameof(imageGuid));
 
-                diagnosticContext.Set(nameof(type), type);
-                diagnosticContext.Set(nameof(imageGuid), imageGuid);
-
-                return await GetImageThumbnailStream(type, imageGuid);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex.ToString());
-                throw ex;
+                    return await GetImageThumbnailStream(type, imageGuid);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex.ToString());
+                    throw ex;
+                }
             }
         }
 
@@ -397,76 +409,74 @@ namespace IDBrowserServiceCore.Controllers
         [ActionName("GetImage")]
         public async Task<ActionResult<Stream>> GetImage(string imageGuid)
         {
-            Stream imageStream = null;
-            try
+            using (LogContext.PushProperty(nameof(imageGuid), imageGuid))
             {
-                if (imageGuid is null) throw new ArgumentNullException(nameof(imageGuid));
-
-                diagnosticContext.Set(nameof(imageGuid), imageGuid);
-
-                LogHttpConnection(string.Format("GetImage with imageGuid: {0}", imageGuid));
-
-                imageStream = await GetImageStream(imageGuid);
-
-                if (HttpContext != null)
+                Stream imageStream = null;
+                try
                 {
-                    HttpContext.Response.ContentType = "image/jpeg";
-                    HttpContext.Response.Headers.Add("Content-Size", imageStream.Length.ToString());
-                }
+                    if (imageGuid is null) throw new ArgumentNullException(nameof(imageGuid));
 
-                return imageStream;
-            }
-            catch (Exception ex)
-            {
-                if (imageStream != null) { imageStream.Close(); }
-                logger.LogError(ex.ToString());
-                throw ex;
-            }
+                    LogHttpConnection(string.Format("GetImage with imageGuid: {0}", imageGuid));
+
+                    imageStream = await GetImageStream(imageGuid);
+
+                    if (HttpContext != null)
+                    {
+                        HttpContext.Response.ContentType = "image/jpeg";
+                        HttpContext.Response.Headers.Add("Content-Size", imageStream.Length.ToString());
+                    }
+
+                    return imageStream;
+                }
+                catch (Exception ex)
+                {
+                    if (imageStream != null) { imageStream.Close(); }
+                    logger.LogError(ex.ToString());
+                    throw ex;
+                }
+            }  
         }
 
         [HttpGet("{width}/{height}/{imageGuid}")]
         [ActionName("GetResizedImage")]
         public async Task<ActionResult<Stream>> GetResizedImage(string width, string height, string imageGuid)
         {
-            Stream imageStream = null;
-            try
+            using (LogContext.PushProperty(nameof(width), width))
+            using (LogContext.PushProperty(nameof(height), height))
+            using (LogContext.PushProperty(nameof(imageGuid), imageGuid))
             {
-                if (width is null) throw new ArgumentNullException(nameof(width));
-                if (height is null) throw new ArgumentNullException(nameof(height));
-                if (imageGuid is null) throw new ArgumentNullException(nameof(imageGuid));
-
-                diagnosticContext.Set(nameof(width), width);
-                diagnosticContext.Set(nameof(height), height);
-                diagnosticContext.Set(nameof(imageGuid), imageGuid);
-
-                LogHttpConnection(string.Format("GetResizedImage with width: {0} height {1} imageGuid: {2}",
-                    width, height, imageGuid));
-
-                imageStream = await GetImageStream(imageGuid, width, height);
-
-                if (HttpContext != null)
+                Stream imageStream = null;
+                try
                 {
-                    HttpContext.Response.ContentType = "image/jpeg";
-                    HttpContext.Response.Headers.Add("Content-Size", imageStream.Length.ToString());
-                }
+                    if (width is null) throw new ArgumentNullException(nameof(width));
+                    if (height is null) throw new ArgumentNullException(nameof(height));
+                    if (imageGuid is null) throw new ArgumentNullException(nameof(imageGuid));
 
-                return imageStream;
-            }
-            catch (Exception ex)
-            {
-                if (imageStream != null) { imageStream.Close(); }
-                logger.LogError(ex.ToString());
-                throw ex;
+                    LogHttpConnection(string.Format("GetResizedImage with width: {0} height {1} imageGuid: {2}",
+                        width, height, imageGuid));
+
+                    imageStream = await GetImageStream(imageGuid, width, height);
+
+                    if (HttpContext != null)
+                    {
+                        HttpContext.Response.ContentType = "image/jpeg";
+                        HttpContext.Response.Headers.Add("Content-Size", imageStream.Length.ToString());
+                    }
+
+                    return imageStream;
+                }
+                catch (Exception ex)
+                {
+                    if (imageStream != null) { imageStream.Close(); }
+                    logger.LogError(ex.ToString());
+                    throw ex;
+                }
             }
         }
 
         private async Task<Stream> GetImageStream(string imageGuid, string width = null, string height = null)
         {
             if (imageGuid is null) throw new ArgumentNullException(nameof(imageGuid));
-
-            diagnosticContext.Set(nameof(imageGuid), imageGuid);
-            diagnosticContext.Set(nameof(width), width);
-            diagnosticContext.Set(nameof(height), height);
 
             idCatalogItem catalogItem = null;
             Boolean keepAspectRatio = serviceSettings.KeepAspectRatio;
@@ -524,195 +534,195 @@ namespace IDBrowserServiceCore.Controllers
         [ActionName("GetImageInfo")]
         public async Task<ActionResult<ImageInfo>> GetImageInfo(string imageGuid)
         {
-            try
+            using (LogContext.PushProperty(nameof(imageGuid), imageGuid))
             {
-                if (imageGuid is null) throw new ArgumentNullException(nameof(imageGuid));
-
-                diagnosticContext.Set(nameof(imageGuid), imageGuid);
-
-                var queryXMP = from tbl in db.idSearchData
-                               where tbl.RelatedGUID == imageGuid
-                               && tbl.ContentType.Equals("XMP")
-                               select new XmpProperty { Name = tbl.ContentGroup, Value = tbl.ContentValue };
-
-                ImageInfo imageInfo = null;
-
-                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
-                    readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
+                try
                 {
-                    imageInfo = await (from tbl in db.idCatalogItem
-                                 where tbl.GUID == imageGuid
-                                 select new ImageInfo
-                                 {
-                                     FileSize = tbl.FileSize,
-                                     FileType = tbl.idFileType,
-                                     ImageDescription = tbl.ImageDescription,
-                                     ImageName = tbl.ImageName,
-                                     ImageResolution = tbl.UDF2,
-                                     Rating = tbl.Rating,
-                                     Timestamp = tbl.DateTimeStamp,
-                                     GPSLat = tbl.idGPSLat,
-                                     GPSLon = tbl.idGPSLon
-                                 }).SingleAsync();
+                    if (imageGuid is null) throw new ArgumentNullException(nameof(imageGuid));
 
-                    imageInfo.XmpProperties = await queryXMP.Distinct().ToListAsync();
+                    var queryXMP = from tbl in db.idSearchData
+                                   where tbl.RelatedGUID == imageGuid
+                                   && tbl.ContentType.Equals("XMP")
+                                   select new XmpProperty { Name = tbl.ContentGroup, Value = tbl.ContentValue };
 
-                    scope.Complete();
+                    ImageInfo imageInfo = null;
+
+                    using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
+                        readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
+                    {
+                        imageInfo = await (from tbl in db.idCatalogItem
+                                           where tbl.GUID == imageGuid
+                                           select new ImageInfo
+                                           {
+                                               FileSize = tbl.FileSize,
+                                               FileType = tbl.idFileType,
+                                               ImageDescription = tbl.ImageDescription,
+                                               ImageName = tbl.ImageName,
+                                               ImageResolution = tbl.UDF2,
+                                               Rating = tbl.Rating,
+                                               Timestamp = tbl.DateTimeStamp,
+                                               GPSLat = tbl.idGPSLat,
+                                               GPSLon = tbl.idGPSLon
+                                           }).SingleAsync();
+
+                        imageInfo.XmpProperties = await queryXMP.Distinct().ToListAsync();
+
+                        scope.Complete();
+                    }
+
+                    LogHttpConnection(string.Format("GetImageInfo with imageGuid: {0}", imageGuid));
+                    return imageInfo;
                 }
-
-                LogHttpConnection(string.Format("GetImageInfo with imageGuid: {0}", imageGuid));
-                return imageInfo;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex.ToString());
-                throw ex;
+                catch (Exception ex)
+                {
+                    logger.LogError(ex.ToString());
+                    throw ex;
+                }
             }
         }
 
         [ActionName("GetRandomImageGuids")]
         public async Task<ActionResult<List<String>>> GetRandomImageGuids(List<string> imageFileExtensions)
         {
-            try
+            using (LogContext.PushProperty(nameof(imageFileExtensions), imageFileExtensions))
             {
-                if (imageFileExtensions is null) throw new ArgumentNullException(nameof(imageFileExtensions));
-
-                diagnosticContext.Set(nameof(imageFileExtensions), imageFileExtensions);
-
-                List<String> randomImageGuids;
-
-                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
-                    readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
+                try
                 {
-                    var queryRandom = from x in db.idCatalogItem
-                                      where imageFileExtensions.Contains(x.idFileType)
-                                      orderby Guid.NewGuid()
-                                      select x.GUID;
-                    randomImageGuids = await queryRandom.Take(100).ToListAsync();
-                    scope.Complete();
-                }
+                    if (imageFileExtensions is null) throw new ArgumentNullException(nameof(imageFileExtensions));
 
-                LogHttpConnection("GetRandomImageGuids");
-                return randomImageGuids;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex.ToString());
-                throw ex;
-            }
+                    List<String> randomImageGuids;
+
+                    using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
+                        readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
+                    {
+                        var queryRandom = from x in db.idCatalogItem
+                                          where imageFileExtensions.Contains(x.idFileType)
+                                          orderby Guid.NewGuid()
+                                          select x.GUID;
+                        randomImageGuids = await queryRandom.Take(100).ToListAsync();
+                        scope.Complete();
+                    }
+
+                    LogHttpConnection("GetRandomImageGuids");
+                    return randomImageGuids;
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex.ToString());
+                    throw ex;
+                }
+            } 
         }
 
         [HttpGet("{imageGuid}")]
         [ActionName("GetFile")]
         public async Task<ActionResult<Stream>> GetFile(string imageGuid)
         {
-            Stream fileStream = null;
-            try
+            using (LogContext.PushProperty(nameof(imageGuid), imageGuid))
             {
-                if (imageGuid is null) throw new ArgumentNullException(nameof(imageGuid));
-
-                diagnosticContext.Set(nameof(imageGuid), imageGuid);
-
-                LogHttpConnection(string.Format("GetFile with imageGuid: {0}", imageGuid));
-
-                idCatalogItem catalogItem;
-
-                using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
-                    readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
+                Stream fileStream = null;
+                try
                 {
-                    catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleAsync(x => x.GUID == imageGuid);
-                    scope.Complete();
+                    if (imageGuid is null) throw new ArgumentNullException(nameof(imageGuid));
+
+                    LogHttpConnection(string.Format("GetFile with imageGuid: {0}", imageGuid));
+
+                    idCatalogItem catalogItem;
+
+                    using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
+                        readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
+                    {
+                        catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleAsync(x => x.GUID == imageGuid);
+                        scope.Complete();
+                    }
+
+                    if (catalogItem == null)
+                        throw new Exception("CatalogItem not found");
+
+                    string strImageFilePath = StaticFunctions.GetImageFilePath(catalogItem, serviceSettings.FilePathReplace);
+                    fileStream = StaticFunctions.GetImageFileStream(strImageFilePath);
+
+                    if (HttpContext != null)
+                    {
+                        HttpContext.Response.ContentType = "application/octet-stream";
+                        HttpContext.Response.Headers.Add("Content-Size", fileStream.Length.ToString());
+                    }
+
+                    return fileStream;
                 }
-
-                if (catalogItem == null)
-                    throw new Exception("CatalogItem not found");
-
-                string strImageFilePath = StaticFunctions.GetImageFilePath(catalogItem, serviceSettings.FilePathReplace);
-                fileStream = StaticFunctions.GetImageFileStream(strImageFilePath);
-
-                if (HttpContext != null)
+                catch (Exception ex)
                 {
-                    HttpContext.Response.ContentType = "application/octet-stream";
-                    HttpContext.Response.Headers.Add("Content-Size", fileStream.Length.ToString());
+                    if (fileStream != null) { fileStream.Close(); }
+                    logger.LogError(ex.ToString());
+                    throw ex;
                 }
-
-                return fileStream;
-            }
-            catch (Exception ex)
-            {
-                if (fileStream != null) { fileStream.Close(); }
-                logger.LogError(ex.ToString());
-                throw ex;
             }
         }
-
-        //private bool IsRequestRest()
-        //{
-        //    return OperationContext.Current.EndpointDispatcher.ChannelDispatcher.BindingName.Equals("http://tempuri.org/:WebHttpBinding");
-        //}
 
         [HttpGet("{searchString}")]
         [ActionName("SearchImageProperties")]
         public async Task<ActionResult<List<ImagePropertyRecursive>>> SearchImageProperties(string searchString)
         {
-            try
+            using (LogContext.PushProperty(nameof(searchString), searchString))
             {
-                if (searchString is null) throw new ArgumentNullException(nameof(searchString));
+                try
+                {
+                    if (searchString is null) throw new ArgumentNullException(nameof(searchString));
 
-                diagnosticContext.Set(nameof(searchString), searchString);
+                    var queryProperties = from tbl in db.idProp
+                                          where tbl.PropName.Contains(searchString)
+                                          orderby tbl.PropName
+                                          select tbl;
 
-                var queryProperties = from tbl in db.idProp
-                                      where tbl.PropName.Contains(searchString)
-                                      orderby tbl.PropName
-                                      select tbl;
+                    List<ImagePropertyRecursive> listImagePropertyRecursive = await GetImagePropertyRecursive(queryProperties);
 
-                List<ImagePropertyRecursive> listImagePropertyRecursive = await GetImagePropertyRecursive(queryProperties);
-
-                LogHttpConnection(string.Format("SearchImagePropertiesSoap with searchString: {0}", searchString));
-                return listImagePropertyRecursive;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex.ToString());
-                throw ex;
-            }
+                    LogHttpConnection(string.Format("SearchImagePropertiesSoap with searchString: {0}", searchString));
+                    return listImagePropertyRecursive;
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex.ToString());
+                    throw ex;
+                }
+            } 
         }
 
         [HttpGet("{catalogItemGUID}")]
         [ActionName("GetCatalogItemImageProperties")]
         public async Task<ActionResult<List<ImagePropertyRecursive>>> GetCatalogItemImageProperties(string catalogItemGUID)
         {
-            try
+            using (LogContext.PushProperty(nameof(catalogItemGUID), catalogItemGUID))
             {
-                if (catalogItemGUID is null) throw new ArgumentNullException(nameof(catalogItemGUID));
+                try
+                {
+                    if (catalogItemGUID is null) throw new ArgumentNullException(nameof(catalogItemGUID));
 
-                diagnosticContext.Set(nameof(catalogItemGUID), catalogItemGUID);
+                    var queryCatalogItemDefinition = from tbl in db.idCatalogItemDefinition
+                                                     where tbl.CatalogItemGUID == catalogItemGUID
+                                                     select tbl.GUID;
 
-                var queryCatalogItemDefinition = from tbl in db.idCatalogItemDefinition
-                                                 where tbl.CatalogItemGUID == catalogItemGUID
-                                                 select tbl.GUID;
+                    List<String> propertyGuids;
+                    List<ImagePropertyRecursive> listImagePropertyRecursive;
 
-                List<String> propertyGuids;
-                List<ImagePropertyRecursive> listImagePropertyRecursive;
+                    propertyGuids = await queryCatalogItemDefinition.ToListAsync();
 
-                propertyGuids = await queryCatalogItemDefinition.ToListAsync();
+                    var queryProperties = from tbl in db.idProp
+                                          where propertyGuids.Contains(tbl.GUID)
+                                          orderby tbl.PropName
+                                          select tbl;
 
-                var queryProperties = from tbl in db.idProp
-                                        where propertyGuids.Contains(tbl.GUID)
-                                        orderby tbl.PropName
-                                        select tbl;
+                    listImagePropertyRecursive = await GetImagePropertyRecursive(queryProperties);
 
-                listImagePropertyRecursive = await GetImagePropertyRecursive(queryProperties);
-
-                LogHttpConnection(string.Format("GetCatalogItemImageProperties with catalogItemGUID: {0}",
-                    catalogItemGUID));
-                return listImagePropertyRecursive;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex.ToString());
-                throw ex;
-            }
+                    LogHttpConnection(string.Format("GetCatalogItemImageProperties with catalogItemGUID: {0}",
+                        catalogItemGUID));
+                    return listImagePropertyRecursive;
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex.ToString());
+                    throw ex;
+                }
+            } 
         }
 
         private async Task<List<ImagePropertyRecursive>> GetImagePropertyRecursive(IQueryable<idProp> query)
@@ -758,50 +768,51 @@ namespace IDBrowserServiceCore.Controllers
         [ActionName("AddCatalogItemDefinition")]
         public async Task<ActionResult<string>> AddCatalogItemDefinition(string propertyGuid, string catalogItemGUID)
         {
-            try
+            using (LogContext.PushProperty(nameof(propertyGuid), propertyGuid))
+            using (LogContext.PushProperty(nameof(catalogItemGUID), catalogItemGUID))
             {
-                if (propertyGuid is null) throw new ArgumentNullException(nameof(propertyGuid));
-                if (catalogItemGUID is null) throw new ArgumentNullException(nameof(catalogItemGUID));
-
-                diagnosticContext.Set(nameof(propertyGuid), propertyGuid);
-                diagnosticContext.Set(nameof(catalogItemGUID), catalogItemGUID);
-
-                if (await db.idProp.Where(x => x.GUID == propertyGuid).CountAsync() == 0)
-                    throw new Exception("Image property does not exist");
-
-                var query = from tbl in db.idCatalogItemDefinition
-                            where tbl.GUID == propertyGuid & tbl.CatalogItemGUID == catalogItemGUID
-                            select tbl;
-
-                if (await query.CountAsync() > 0)
-                    throw new Exception("CatalogItemDefinition already exists");
-
-                idCatalogItem currentIdCatalogItem = await db.idCatalogItem.SingleAsync(x => x.GUID == catalogItemGUID);
-                idImageVersion currentIdImageVersion = await db.idImageVersion.SingleOrDefaultAsync(x => x.MainImageGUID == catalogItemGUID);
-
-                idCatalogItemDefinition newIdCatalogItemDefinition = new idCatalogItemDefinition
+                try
                 {
-                    GUID = propertyGuid,
-                    CatalogItemGUID = catalogItemGUID,
-                    idAssigned = DateTime.Now
-                };
+                    if (propertyGuid is null) throw new ArgumentNullException(nameof(propertyGuid));
+                    if (catalogItemGUID is null) throw new ArgumentNullException(nameof(catalogItemGUID));
 
-                db.idCatalogItemDefinition.Add(newIdCatalogItemDefinition);
+                    if (await db.idProp.Where(x => x.GUID == propertyGuid).CountAsync() == 0)
+                        throw new Exception("Image property does not exist");
 
-                currentIdCatalogItem.idInSync >>= 2;
-                if (currentIdImageVersion != null)
-                    currentIdImageVersion.idInSync >>= 2;
+                    var query = from tbl in db.idCatalogItemDefinition
+                                where tbl.GUID == propertyGuid & tbl.CatalogItemGUID == catalogItemGUID
+                                select tbl;
 
-                await db.SaveChangesAsync();
+                    if (await query.CountAsync() > 0)
+                        throw new Exception("CatalogItemDefinition already exists");
 
-                LogHttpConnection(string.Format("AddCatalogItemDefinition with propertyGuid: {0} and catalogItemGUID {1}",
-                    propertyGuid, catalogItemGUID));
-                return "OK";
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex.ToString());
-                throw ex;
+                    idCatalogItem currentIdCatalogItem = await db.idCatalogItem.SingleAsync(x => x.GUID == catalogItemGUID);
+                    idImageVersion currentIdImageVersion = await db.idImageVersion.SingleOrDefaultAsync(x => x.MainImageGUID == catalogItemGUID);
+
+                    idCatalogItemDefinition newIdCatalogItemDefinition = new idCatalogItemDefinition
+                    {
+                        GUID = propertyGuid,
+                        CatalogItemGUID = catalogItemGUID,
+                        idAssigned = DateTime.Now
+                    };
+
+                    db.idCatalogItemDefinition.Add(newIdCatalogItemDefinition);
+
+                    currentIdCatalogItem.idInSync >>= 2;
+                    if (currentIdImageVersion != null)
+                        currentIdImageVersion.idInSync >>= 2;
+
+                    await db.SaveChangesAsync();
+
+                    LogHttpConnection(string.Format("AddCatalogItemDefinition with propertyGuid: {0} and catalogItemGUID {1}",
+                        propertyGuid, catalogItemGUID));
+                    return "OK";
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex.ToString());
+                    throw ex;
+                }
             }
         }
 
@@ -809,37 +820,38 @@ namespace IDBrowserServiceCore.Controllers
         [ActionName("DeleteCatalogItemDefinition")]
         public async Task<ActionResult<string>> DeleteCatalogItemDefinition(string propertyGuid, string catalogItemGUID)
         {
-            try
+            using (LogContext.PushProperty(nameof(propertyGuid), propertyGuid))
+            using (LogContext.PushProperty(nameof(catalogItemGUID), catalogItemGUID))
             {
-                if (propertyGuid is null) throw new ArgumentNullException(nameof(propertyGuid));
-                if (catalogItemGUID is null) throw new ArgumentNullException(nameof(catalogItemGUID));
+                try
+                {
+                    if (propertyGuid is null) throw new ArgumentNullException(nameof(propertyGuid));
+                    if (catalogItemGUID is null) throw new ArgumentNullException(nameof(catalogItemGUID));
 
-                diagnosticContext.Set(nameof(propertyGuid), propertyGuid);
-                diagnosticContext.Set(nameof(catalogItemGUID), catalogItemGUID);
+                    idCatalogItemDefinition currentIdCatalogItemDefinition = await db.idCatalogItemDefinition
+                        .SingleAsync(x => x.GUID == propertyGuid && x.CatalogItemGUID == catalogItemGUID);
+                    idCatalogItem currentIdCatalogItem = await db.idCatalogItem
+                        .SingleAsync(x => x.GUID == catalogItemGUID);
+                    idImageVersion currentIdImageVersion = await db.idImageVersion
+                        .SingleOrDefaultAsync(x => x.MainImageGUID == catalogItemGUID);
 
-                idCatalogItemDefinition currentIdCatalogItemDefinition = await db.idCatalogItemDefinition
-                    .SingleAsync(x => x.GUID == propertyGuid && x.CatalogItemGUID == catalogItemGUID);
-                idCatalogItem currentIdCatalogItem = await db.idCatalogItem
-                    .SingleAsync(x => x.GUID == catalogItemGUID);
-                idImageVersion currentIdImageVersion = await db.idImageVersion
-                    .SingleOrDefaultAsync(x => x.MainImageGUID == catalogItemGUID);
+                    db.idCatalogItemDefinition.Remove(currentIdCatalogItemDefinition);
 
-                db.idCatalogItemDefinition.Remove(currentIdCatalogItemDefinition);
+                    currentIdCatalogItem.idInSync = currentIdCatalogItem.idInSync >> 2;
+                    if (currentIdImageVersion != null)
+                        currentIdImageVersion.idInSync = currentIdImageVersion.idInSync >> 2;
 
-                currentIdCatalogItem.idInSync = currentIdCatalogItem.idInSync >> 2;
-                if (currentIdImageVersion != null)
-                    currentIdImageVersion.idInSync = currentIdImageVersion.idInSync >> 2;
+                    await db.SaveChangesAsync();
 
-                await db.SaveChangesAsync();
-
-                LogHttpConnection(string.Format("DeleteCatalogItemDefinition with propertyGuid: {0} and catalogItemGUID {1}",
-                    propertyGuid, catalogItemGUID));
-                return "OK";
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex.ToString());
-                throw ex;
+                    LogHttpConnection(string.Format("DeleteCatalogItemDefinition with propertyGuid: {0} and catalogItemGUID {1}",
+                        propertyGuid, catalogItemGUID));
+                    return "OK";
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex.ToString());
+                    throw ex;
+                }
             }
         }
 
@@ -847,93 +859,94 @@ namespace IDBrowserServiceCore.Controllers
         [ActionName("AddImageProperty")]
         public async Task<ActionResult<string>> AddImageProperty(string propertyName, string parentGUID)
         {
-            try
+            using (LogContext.PushProperty(nameof(propertyName), propertyName))
+            using (LogContext.PushProperty(nameof(parentGUID), parentGUID))
             {
-                if (propertyName is null) throw new ArgumentNullException(nameof(propertyName));
-                if (parentGUID is null) throw new ArgumentNullException(nameof(parentGUID));
-
-                diagnosticContext.Set(nameof(propertyName), propertyName);
-                diagnosticContext.Set(nameof(parentGUID), parentGUID);
-
-                idProp parentIdProp = await db.idProp.SingleOrDefaultAsync(x => x.GUID.Equals(parentGUID));
-                int? parentRgt;
-
-                if (parentIdProp == null)
-                    parentRgt = await db.idProp.Where(x => x.ParentGUID.Equals(parentGUID)).MaxAsync(x => x.rgt);
-                else
-                    parentRgt = parentIdProp.rgt;
-
-                idUser user = await db.idUser.FirstAsync();
-                DateTime dtNow = DateTime.Now;
-                String guid = Guid.NewGuid().ToString();
-
-                while (await db.idProp.Where(x => x.GUID == guid).CountAsync() > 0)
+                try
                 {
-                    guid = Guid.NewGuid().ToString();
+                    if (propertyName is null) throw new ArgumentNullException(nameof(propertyName));
+                    if (parentGUID is null) throw new ArgumentNullException(nameof(parentGUID));
+
+                    idProp parentIdProp = await db.idProp.SingleOrDefaultAsync(x => x.GUID.Equals(parentGUID));
+                    int? parentRgt;
+
+                    if (parentIdProp == null)
+                        parentRgt = await db.idProp.Where(x => x.ParentGUID.Equals(parentGUID)).MaxAsync(x => x.rgt);
+                    else
+                        parentRgt = parentIdProp.rgt;
+
+                    idUser user = await db.idUser.FirstAsync();
+                    DateTime dtNow = DateTime.Now;
+                    String guid = Guid.NewGuid().ToString();
+
+                    while (await db.idProp.Where(x => x.GUID == guid).CountAsync() > 0)
+                    {
+                        guid = Guid.NewGuid().ToString();
+                    }
+
+                    //Update nested set rgt
+                    var queryUpdateNestedSetRgt = from tbl in db.idProp
+                                                  where tbl.rgt >= parentRgt
+                                                  select tbl;
+
+                    foreach (idProp row in await queryUpdateNestedSetRgt.ToListAsync())
+                    {
+                        row.rgt += 2;
+                    }
+
+                    //Update nested set lft
+                    var queryUpdateNestedSetLft = from tbl in db.idProp
+                                                  where tbl.lft > parentRgt
+                                                  select tbl;
+
+                    foreach (idProp row in await queryUpdateNestedSetLft.ToListAsync())
+                    {
+                        row.lft += 2;
+                    }
+
+                    idProp newIdProp = new idProp
+                    {
+                        GUID = guid,
+                        ParentGUID = parentGUID,
+                        PropName = propertyName,
+                        PropValue = "",
+                        Quick = 0,
+                        UserGUID = user.GUID,
+                        idCreated = dtNow,
+                        idLastAccess = dtNow,
+                        PropXMPLink = "",
+                        lft = parentRgt,
+                        rgt = parentRgt + 1,
+                        idImage = null,
+                        ParentAssign = 0,
+                        ParentXMPLinkAssign = 0,
+                        idSynonyms = "",
+                        idGPSLon = 90,
+                        idGPSLat = 90,
+                        idGPSAlt = 0,
+                        idGPSGeoTag = 0,
+                        idGPSGeoTagIfExist = 0,
+                        idGPSRadius = 0,
+                        idShortCut = 0,
+                        MutualExclusive = 0,
+                        idDescription = "",
+                        idDetails = null,
+                        idProps = null,
+                        ApplyProps = 0
+                    };
+
+                    db.idProp.Add(newIdProp);
+                    await db.SaveChangesAsync();
+
+                    LogHttpConnection(string.Format("AddImageProperty with propertyName: {0}, parentGUID {1}, lft {2}, rgt {3}",
+                        propertyName, parentGUID, newIdProp.lft, newIdProp.rgt));
+                    return "OK";
                 }
-
-                //Update nested set rgt
-                var queryUpdateNestedSetRgt = from tbl in db.idProp
-                                              where tbl.rgt >= parentRgt
-                                              select tbl;
-
-                foreach (idProp row in await queryUpdateNestedSetRgt.ToListAsync())
+                catch (Exception ex)
                 {
-                    row.rgt += 2;
+                    logger.LogError(ex.ToString());
+                    throw ex;
                 }
-
-                //Update nested set lft
-                var queryUpdateNestedSetLft = from tbl in db.idProp
-                                              where tbl.lft > parentRgt
-                                              select tbl;
-
-                foreach (idProp row in await queryUpdateNestedSetLft.ToListAsync())
-                {
-                    row.lft += 2;
-                }
-
-                idProp newIdProp = new idProp
-                {
-                    GUID = guid,
-                    ParentGUID = parentGUID,
-                    PropName = propertyName,
-                    PropValue = "",
-                    Quick = 0,
-                    UserGUID = user.GUID,
-                    idCreated = dtNow,
-                    idLastAccess = dtNow,
-                    PropXMPLink = "",
-                    lft = parentRgt,
-                    rgt = parentRgt + 1,
-                    idImage = null,
-                    ParentAssign = 0,
-                    ParentXMPLinkAssign = 0,
-                    idSynonyms = "",
-                    idGPSLon = 90,
-                    idGPSLat = 90,
-                    idGPSAlt = 0,
-                    idGPSGeoTag = 0,
-                    idGPSGeoTagIfExist = 0,
-                    idGPSRadius = 0,
-                    idShortCut = 0,
-                    MutualExclusive = 0,
-                    idDescription = "",
-                    idDetails = null,
-                    idProps = null,
-                    ApplyProps = 0
-                };
-
-                db.idProp.Add(newIdProp);
-                await db.SaveChangesAsync();
-
-                LogHttpConnection(string.Format("AddImageProperty with propertyName: {0}, parentGUID {1}, lft {2}, rgt {3}",
-                    propertyName, parentGUID, newIdProp.lft, newIdProp.rgt));
-                return "OK";
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex.ToString());
-                throw ex;
             }
         }
 

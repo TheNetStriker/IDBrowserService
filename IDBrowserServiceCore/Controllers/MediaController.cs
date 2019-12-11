@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Serilog;
+using Serilog.Context;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -44,43 +45,44 @@ namespace IDBrowserServiceCore.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Play(string guid, string videosize)
         {
-            try
+            using (LogContext.PushProperty(nameof(guid), guid))
+            using (LogContext.PushProperty(nameof(videosize), videosize))
             {
-                if (string.IsNullOrEmpty(guid)) return BadRequest("Missing guid parameter");
-
-                diagnosticContext.Set(nameof(guid), guid);
-                diagnosticContext.Set(nameof(videosize), videosize);
-
-                idCatalogItem catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleAsync(x => x.GUID.Equals(guid));
-                string strFilePath = StaticFunctions.GetImageFilePath(catalogItem, serviceSettings.FilePathReplace);
-                
-                string mimeType = GetMimeNameFromExt(catalogItem.FileName);
-
-                if (videosize != null && !videosize.Equals("Original"))
+                try
                 {
-                    if (string.IsNullOrEmpty(serviceSettings.TranscodeDirectory))
-                        return BadRequest("Missing TranscodeDirectory setting");
+                    if (string.IsNullOrEmpty(guid)) return BadRequest("Missing guid parameter");
 
-                    string strTranscodeFilePath = await StaticFunctions.TranscodeVideo(strFilePath, guid,
-                        serviceSettings.TranscodeDirectory, videosize);
+                    idCatalogItem catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleAsync(x => x.GUID.Equals(guid));
+                    string strFilePath = StaticFunctions.GetImageFilePath(catalogItem, serviceSettings.FilePathReplace);
 
-                    strFilePath = strTranscodeFilePath;
-                    mimeType = "video/mp4";
+                    string mimeType = GetMimeNameFromExt(catalogItem.FileName);
+
+                    if (videosize != null && !videosize.Equals("Original"))
+                    {
+                        if (string.IsNullOrEmpty(serviceSettings.TranscodeDirectory))
+                            return BadRequest("Missing TranscodeDirectory setting");
+
+                        string strTranscodeFilePath = await StaticFunctions.TranscodeVideo(strFilePath, guid,
+                            serviceSettings.TranscodeDirectory, videosize);
+
+                        strFilePath = strTranscodeFilePath;
+                        mimeType = "video/mp4";
+                    }
+
+                    Stream inputStream = StaticFunctions.GetImageFileStream(strFilePath);
+                    FileStreamResult fileStreamResult = new FileStreamResult(inputStream, mimeType)
+                    {
+                        EnableRangeProcessing = true
+                    };
+
+                    return fileStreamResult;
                 }
-
-                Stream inputStream = StaticFunctions.GetImageFileStream(strFilePath);
-                FileStreamResult fileStreamResult = new FileStreamResult(inputStream, mimeType)
+                catch (Exception ex)
                 {
-                    EnableRangeProcessing = true
-                };
-
-                return fileStreamResult;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex.ToString());
-                return BadRequest(ex.ToString());
-            }
+                    logger.LogError(ex.ToString());
+                    return BadRequest(ex.ToString());
+                }
+            }  
         }
 
         private string GetMimeNameFromExt(string fileName)
