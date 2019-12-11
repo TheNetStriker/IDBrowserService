@@ -15,6 +15,7 @@ using IDBrowserServiceCore.Code.XmpRecipe;
 using IDBrowserServiceCore.Settings;
 using FFmpeg.NET;
 using FFmpeg.NET.Enums;
+using System.Runtime.InteropServices;
 
 namespace IDBrowserServiceCore.Code
 {
@@ -208,7 +209,7 @@ namespace IDBrowserServiceCore.Code
                     VideoSize = videoSize
                 };
 
-                var ffmpeg = new Engine();
+                var ffmpeg = new Engine(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "ffmpeg.exe" : "ffmpeg");
                 await ffmpeg.ConvertAsync(inputFile, outputFile, conversionOptions);
             }
 
