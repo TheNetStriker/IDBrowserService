@@ -20,7 +20,7 @@ Currently actively maintained .Net Core based webservice. Works under Mac, Linux
 
 For compiled versions please look at the releases tab. 
 
-For instructions how to configure the service please look at the [readme in the IDBrowserServiceCore folder](/IDBrowserServiceCode/Readme.md).
+For instructions how to configure the service please look at the [readme in the IDBrowserServiceCore folder](https://github.com/TheNetStriker/IDBrowserService/tree/master/IDBrowserServiceCore).
 
 ## IDBrowserServiceCoreTest
 
