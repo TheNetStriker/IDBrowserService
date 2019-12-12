@@ -14,6 +14,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Models;
 using Serilog;
 using Serilog.Extensions.Hosting;
 using System;
@@ -33,6 +34,9 @@ namespace IDBrowserServiceCore
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostEnvironment env, ILogger<Startup> logger)
         {
+            IDBrowserConfiguration configuration = new IDBrowserConfiguration();
+            Configuration.Bind(configuration);
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -40,31 +44,53 @@ namespace IDBrowserServiceCore
 
             app.UseSerilogRequestLogging();
 
+            if (configuration.UseResponseCompression)
+                app.UseResponseCompression();
+
+            // Enable middleware to serve generated Swagger as a JSON endpoint.
+            app.UseSwagger();
+
+            // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
+            // specifying the Swagger JSON endpoint.
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "IDBrowserServiceCore V1");
+            });
+
             try
             {
                 IEnumerable<IConfigurationSection> sites = Configuration.GetSection("Sites").GetChildren();
 
-                foreach (IConfigurationSection site in sites)
+                foreach (KeyValuePair<string, SiteSettings> siteKeyValuePair in configuration.Sites)
                 {
+                    string strSiteName = siteKeyValuePair.Key;
+                    SiteSettings siteSettings = siteKeyValuePair.Value;
+                    ConnectionStringSettings connectionStringSettings = siteSettings.ConnectionStrings;
+                    ServiceSettings serviceSettings = siteSettings.ServiceSettings;
+
                     //https://www.strathweb.com/2017/04/running-multiple-independent-asp-net-core-pipelines-side-by-side-in-the-same-application/
-                    app.UseBranchWithServices("/" + site.Key,
+                    app.UseBranchWithServices("/" + strSiteName,
                         services =>
                         {
                             services
                                 .AddMvc(option => option.EnableEndpointRouting = false)
                                 .AddXmlSerializerFormatters();
 
-                            services.AddSingleton<IConfiguration>(Configuration);
-                            services.Configure<ServiceSettings>(site.GetSection("ServiceSettings"));
+                            services.AddSingleton<ServiceSettings>(serviceSettings);
 
-                            var strDbType = site["ConnectionStrings:DBType"];
-                            var strConnection = site["ConnectionStrings:IDImager"];
-                            var strConnectionThumbs = site["ConnectionStrings:IDImagerThumbs"];
+                            // Register the Swagger generator, defining 1 or more Swagger documents
+                            services.AddSwaggerGen(c =>
+                            {
+                                c.SwaggerDoc("v1", new OpenApiInfo { Title = "IDBrowserServiceCore", Version = "v1" });
+                            });
+
+                            if (configuration.UseResponseCompression)
+                                services.AddResponseCompression();
 
                             services.AddDbContextPool<IDImagerDB>(options => StaticFunctions
-                                .SetDbContextOptions(options, strDbType, strConnection));
+                                .SetDbContextOptions(options, connectionStringSettings.IDImager, connectionStringSettings.IDImager));
                             services.AddDbContextPool<IDImagerThumbsDB>(options => StaticFunctions
-                                .SetDbContextOptions(options, strDbType, strConnectionThumbs));
+                                .SetDbContextOptions(options, connectionStringSettings.IDImager, connectionStringSettings.IDImagerThumbs));
                         },
                         appBuilder =>
                         {
