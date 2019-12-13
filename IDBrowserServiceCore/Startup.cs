@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
@@ -19,6 +20,9 @@ using Serilog;
 using Serilog.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 
 namespace IDBrowserServiceCore
 {
@@ -44,23 +48,8 @@ namespace IDBrowserServiceCore
 
             app.UseSerilogRequestLogging();
 
-            if (configuration.UseResponseCompression)
-                app.UseResponseCompression();
-
-            // Enable middleware to serve generated Swagger as a JSON endpoint.
-            app.UseSwagger();
-
-            // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
-            // specifying the Swagger JSON endpoint.
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "IDBrowserServiceCore V1");
-            });
-
             try
             {
-                IEnumerable<IConfigurationSection> sites = Configuration.GetSection("Sites").GetChildren();
-
                 foreach (KeyValuePair<string, SiteSettings> siteKeyValuePair in configuration.Sites)
                 {
                     string strSiteName = siteKeyValuePair.Key;
@@ -78,23 +67,59 @@ namespace IDBrowserServiceCore
 
                             services.AddSingleton<ServiceSettings>(serviceSettings);
 
-                            // Register the Swagger generator, defining 1 or more Swagger documents
-                            services.AddSwaggerGen(c =>
+                            if (configuration.UseSwagger)
                             {
-                                c.SwaggerDoc("v1", new OpenApiInfo { Title = "IDBrowserServiceCore", Version = "v1" });
-                            });
+                                //Register the Swagger generator, defining 1 or more Swagger documents
+                                services.AddSwaggerGen(c =>
+                                {
+                                    c.SwaggerDoc("v1", new OpenApiInfo 
+                                    { 
+                                        Title = $"IDBrowserService Core Site \"{strSiteName}\"", 
+                                        Version = "v1",
+                                        Description = "Webservice for IDBrowser Android app."
+                                    });
+
+                                    // Set the comments path for the Swagger JSON and UI.
+                                    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                                    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+
+                                    if (File.Exists(xmlPath))
+                                        c.IncludeXmlComments(xmlPath);
+                                });
+                            }
 
                             if (configuration.UseResponseCompression)
-                                services.AddResponseCompression();
+                                services.AddResponseCompression(options =>
+                                {
+                                    options.Providers.Add<BrotliCompressionProvider>();
+                                    options.Providers.Add<GzipCompressionProvider>();
+                                    options.EnableForHttps = true;
+                                });
 
                             services.AddDbContextPool<IDImagerDB>(options => StaticFunctions
-                                .SetDbContextOptions(options, connectionStringSettings.IDImager, connectionStringSettings.IDImager));
+                                .SetDbContextOptions(options, connectionStringSettings.DBType, connectionStringSettings.IDImager));
                             services.AddDbContextPool<IDImagerThumbsDB>(options => StaticFunctions
-                                .SetDbContextOptions(options, connectionStringSettings.IDImager, connectionStringSettings.IDImagerThumbs));
+                                .SetDbContextOptions(options, connectionStringSettings.DBType, connectionStringSettings.IDImagerThumbs));
                         },
                         appBuilder =>
                         {
+                            if (configuration.UseResponseCompression)
+                                appBuilder.UseResponseCompression();
+
                             appBuilder.UseMvc();
+
+                            if (configuration.UseSwagger)
+                            {
+                                // Enable middleware to serve generated Swagger as a JSON endpoint.
+                                appBuilder.UseSwagger();
+
+                                // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
+                                // specifying the Swagger JSON endpoint.
+                                appBuilder.UseSwaggerUI(c =>
+                                {
+                                    c.SwaggerEndpoint($"/{strSiteName}/swagger/v1/swagger.json", "IDBrowserServiceCore V1");
+                                });
+                            }
                         });
                 }
 

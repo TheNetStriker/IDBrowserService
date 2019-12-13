@@ -23,6 +23,9 @@ using System.Transactions;
 
 namespace IDBrowserServiceCore.Controllers
 {
+    /// <summary>
+    /// Controller for Photosupreme values
+    /// </summary>
     [Route("api/[controller]/[action]")]
     [Route("Service.svc/[action]")] //Compatibility to old service
     public class ValuesController : Controller
@@ -34,24 +37,46 @@ namespace IDBrowserServiceCore.Controllers
         private readonly IDImagerDB db;
         private readonly IDImagerThumbsDB dbThumbs;
 
-        public ValuesController(IDImagerDB db, IDImagerThumbsDB dbThumbs, IOptions<ServiceSettings> serviceSettings,
+        /// <summary>
+        /// Controller constructor
+        /// </summary>
+        /// <param name="db">IDImagerDB</param>
+        /// <param name="dbThumbs">IDImagerThumbsDB</param>
+        /// <param name="serviceSettings">ServiceSettings</param>
+        /// <param name="logger">Logger</param>
+        /// <param name="diagnosticContext">Logger diagnostic context</param>
+        public ValuesController(IDImagerDB db, IDImagerThumbsDB dbThumbs, ServiceSettings serviceSettings,
             ILogger<ValuesController> logger, IDiagnosticContext diagnosticContext)
         {
             this.db = db ?? throw new ArgumentNullException(nameof(db));
             this.dbThumbs = dbThumbs ?? throw new ArgumentNullException(nameof(dbThumbs));
-            this.serviceSettings = serviceSettings.Value ?? throw new ArgumentNullException(nameof(serviceSettings));
+            this.serviceSettings = serviceSettings ?? throw new ArgumentNullException(nameof(serviceSettings));
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.diagnosticContext = diagnosticContext ?? throw new ArgumentNullException(nameof(diagnosticContext));
-            
+
             readUncommittedTransactionOptions = new TransactionOptions
             {
                 IsolationLevel = IsolationLevel.ReadUncommitted
             };
         }
 
-        [HttpGet("{guid?}")]
-        [ActionName("GetImageProperties")]
-        public async Task<ActionResult<List<ImageProperty>>> GetImageProperties(string guid)
+        /// <summary>
+        /// Returns the image categories
+        /// </summary>
+        /// <returns>Image categories</returns>
+        [HttpGet()]
+        public async Task<ActionResult<List<ImageProperty>>> GetImageProperties()
+        {
+            return await GetImageProperties(null);
+        }
+
+        /// <summary>
+        /// Query image properties
+        /// </summary>
+        /// <param name="guid">Guid of the image properties to return.</param>
+        /// <returns>Image properties</returns>
+        [HttpGet("{guid}")]
+        public async Task<ActionResult<List<ImageProperty>>> GetImageProperties(string guid = null)
         {
             using (LogContext.PushProperty(nameof(guid), guid))
             {
@@ -105,8 +130,13 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
+        /// <summary>
+        /// Returns image property or image category thumbnail
+        /// </summary>
+        /// <param name="guid">Guid of the image property</param>
+        /// <param name="isCategory">True if the property is an image category</param>
+        /// <returns>image property or image category thumbnail</returns>
         [HttpGet("{guid}/{isCategory}")]
-        [ActionName("GetImagePropertyThumbnail")]
         public async Task<ActionResult<Stream>> GetImagePropertyThumbnail(string guid, string isCategory)
         {
             using (LogContext.PushProperty(nameof(guid), guid))
@@ -127,8 +157,15 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
+        /// <summary>
+        /// Returns resized image property or image category thumbnail
+        /// </summary>
+        /// <param name="guid">Guid of the image property</param>
+        /// <param name="isCategory">True if the property is an image category</param>
+        /// <param name="width">Image width</param>
+        /// <param name="height">Image height</param>
+        /// <returns>Resized image property or image category thumbnail</returns>
         [HttpGet("{guid}/{isCategory}/{width}/{height}")]
-        [ActionName("GetResizedImagePropertyThumbnail")]
         public async Task<ActionResult<Stream>> GetResizedImagePropertyThumbnail(string guid, string isCategory, string width, string height)
         {
             using (LogContext.PushProperty(nameof(guid), guid))
@@ -186,8 +223,13 @@ namespace IDBrowserServiceCore.Controllers
             return imageStream;
         }
 
+        /// <summary>
+        /// Returns catalog items of image property guid. 
+        /// </summary>
+        /// <param name="orderDescending">Order catalog items descending</param>
+        /// <param name="propertyGuid">Image property guid</param>
+        /// <returns>Catalog items</returns>
         [HttpGet("{orderDescending}/{propertyGuid}")]
-        [ActionName("GetCatalogItems")]
         public async Task<ActionResult<List<CatalogItem>>> GetCatalogItems(string orderDescending, string propertyGuid)
         {
             using (LogContext.PushProperty(nameof(orderDescending), orderDescending))
@@ -241,8 +283,13 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
+        /// <summary>
+        /// Returns catalog items of image file path. 
+        /// </summary>
+        /// <param name="orderDescending">Order catalog items descending</param>
+        /// <param name="filePathGuid">File path guid</param>
+        /// <returns>Catalog items</returns>
         [HttpGet("{orderDescending}/{filePathGuid}")]
-        [ActionName("GetCatalogItemsByFilePath")]
         public async Task<ActionResult<List<CatalogItem>>> GetCatalogItemsByFilePath(string orderDescending, string filePathGuid)
         {
             using (LogContext.PushProperty(nameof(orderDescending), orderDescending))
@@ -295,8 +342,13 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
+        /// <summary>
+        /// Returns image thumbnail for image guid.
+        /// </summary>
+        /// <param name="type">Thumbnail size</param>
+        /// <param name="imageGuid">Image guid</param>
+        /// <returns>Image thumbnail</returns>
         [HttpGet("{type}/{imageGuid}")]
-        [ActionName("GetImageThumbnail")]
         public async Task<ActionResult<Stream>> GetImageThumbnail(string type, string imageGuid)
         {
             using (LogContext.PushProperty(nameof(type), type))
@@ -340,9 +392,6 @@ namespace IDBrowserServiceCore.Controllers
                 if (type == "M" && catalogItem.idHasRecipe > 0)
                     type = "R";
 
-                Boolean keepAspectRatio = serviceSettings.KeepAspectRatio;
-                Boolean setGenericVideoThumbnailOnError = serviceSettings.SetGenericVideoThumbnailOnError;
-
                 idThumbs thumb = null;
 
                 // Distributed transaction are not supported
@@ -364,7 +413,7 @@ namespace IDBrowserServiceCore.Controllers
                     if (thumb == null && serviceSettings.CreateThumbnails)
                     {
                         SaveImageThumbnailResult result = await StaticFunctions.SaveImageThumbnail(catalogItem,
-                            db, dbThumbs, new List<String>() { type }, keepAspectRatio, setGenericVideoThumbnailOnError, serviceSettings);
+                            db, dbThumbs, new List<string>() { type }, serviceSettings);
 
                         foreach (Exception ex in result.Exceptions)
                             logger.LogError(ex.ToString());
@@ -405,8 +454,12 @@ namespace IDBrowserServiceCore.Controllers
             return imageStream;
         }
 
+        /// <summary>
+        /// Retuns full size image by image guid and applies image recipies.
+        /// </summary>
+        /// <param name="imageGuid">Image guid</param>
+        /// <returns>Full size image</returns>
         [HttpGet("{imageGuid}")]
-        [ActionName("GetImage")]
         public async Task<ActionResult<Stream>> GetImage(string imageGuid)
         {
             using (LogContext.PushProperty(nameof(imageGuid), imageGuid))
@@ -437,8 +490,14 @@ namespace IDBrowserServiceCore.Controllers
             }  
         }
 
+        /// <summary>
+        /// Returns resized image from original file and applies image recipies.
+        /// </summary>
+        /// <param name="width">Image width</param>
+        /// <param name="height">Image height</param>
+        /// <param name="imageGuid">Image guid</param>
+        /// <returns>Resized image</returns>
         [HttpGet("{width}/{height}/{imageGuid}")]
-        [ActionName("GetResizedImage")]
         public async Task<ActionResult<Stream>> GetResizedImage(string width, string height, string imageGuid)
         {
             using (LogContext.PushProperty(nameof(width), width))
@@ -479,7 +538,6 @@ namespace IDBrowserServiceCore.Controllers
             if (imageGuid is null) throw new ArgumentNullException(nameof(imageGuid));
 
             idCatalogItem catalogItem = null;
-            Boolean keepAspectRatio = serviceSettings.KeepAspectRatio;
 
             catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleAsync(x => x.GUID == imageGuid);
             if (catalogItem == null)
@@ -530,8 +588,12 @@ namespace IDBrowserServiceCore.Controllers
             return imageStream;
         }
 
+        /// <summary>
+        /// Returns image infos for image guid.
+        /// </summary>
+        /// <param name="imageGuid">Image guid</param>
+        /// <returns>Image infos</returns>
         [HttpGet("{imageGuid}")]
-        [ActionName("GetImageInfo")]
         public async Task<ActionResult<ImageInfo>> GetImageInfo(string imageGuid)
         {
             using (LogContext.PushProperty(nameof(imageGuid), imageGuid))
@@ -581,8 +643,13 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
-        [ActionName("GetRandomImageGuids")]
-        public async Task<ActionResult<List<String>>> GetRandomImageGuids(List<string> imageFileExtensions)
+        /// <summary>
+        /// Returns random image guids.
+        /// </summary>
+        /// <param name="imageFileExtensions">File extensions to include.</param>
+        /// <returns>Random image guids.</returns>
+        [HttpGet()]
+        public async Task<ActionResult<List<String>>> GetRandomImageGuids([FromQuery] List<string> imageFileExtensions)
         {
             using (LogContext.PushProperty(nameof(imageFileExtensions), imageFileExtensions))
             {
@@ -614,8 +681,12 @@ namespace IDBrowserServiceCore.Controllers
             } 
         }
 
+        /// <summary>
+        /// Returns raw source file by image guid.
+        /// </summary>
+        /// <param name="imageGuid">Image guid</param>
+        /// <returns>Raw image file</returns>
         [HttpGet("{imageGuid}")]
-        [ActionName("GetFile")]
         public async Task<ActionResult<Stream>> GetFile(string imageGuid)
         {
             using (LogContext.PushProperty(nameof(imageGuid), imageGuid))
@@ -659,8 +730,12 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
+        /// <summary>
+        /// Search for image properties
+        /// </summary>
+        /// <param name="searchString">Search text</param>
+        /// <returns>Image properties</returns>
         [HttpGet("{searchString}")]
-        [ActionName("SearchImageProperties")]
         public async Task<ActionResult<List<ImagePropertyRecursive>>> SearchImageProperties(string searchString)
         {
             using (LogContext.PushProperty(nameof(searchString), searchString))
@@ -687,8 +762,12 @@ namespace IDBrowserServiceCore.Controllers
             } 
         }
 
+        /// <summary>
+        /// Returns image properties by catalog item guid.
+        /// </summary>
+        /// <param name="catalogItemGUID">Catalog item guid</param>
+        /// <returns>Image properties</returns>
         [HttpGet("{catalogItemGUID}")]
-        [ActionName("GetCatalogItemImageProperties")]
         public async Task<ActionResult<List<ImagePropertyRecursive>>> GetCatalogItemImageProperties(string catalogItemGUID)
         {
             using (LogContext.PushProperty(nameof(catalogItemGUID), catalogItemGUID))
@@ -764,8 +843,13 @@ namespace IDBrowserServiceCore.Controllers
             return listImagePropertyRecursive;
         }
 
+        /// <summary>
+        /// Adds an image property to a catalog item.
+        /// </summary>
+        /// <param name="propertyGuid">Image property to add</param>
+        /// <param name="catalogItemGUID">Catalog item to add the property to</param>
+        /// <returns>"OK" if property was added.</returns>
         [HttpGet("{propertyGuid}/{catalogItemGUID}")]
-        [ActionName("AddCatalogItemDefinition")]
         public async Task<ActionResult<string>> AddCatalogItemDefinition(string propertyGuid, string catalogItemGUID)
         {
             using (LogContext.PushProperty(nameof(propertyGuid), propertyGuid))
@@ -816,8 +900,13 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
+        /// <summary>
+        /// Deletes an image propery of a catalog item.
+        /// </summary>
+        /// <param name="propertyGuid">Property guid to delete</param>
+        /// <param name="catalogItemGUID">Catalog item guid to remove the property from</param>
+        /// <returns>"OK" if property was added.</returns>
         [HttpGet("{propertyGuid}/{catalogItemGUID}")]
-        [ActionName("DeleteCatalogItemDefinition")]
         public async Task<ActionResult<string>> DeleteCatalogItemDefinition(string propertyGuid, string catalogItemGUID)
         {
             using (LogContext.PushProperty(nameof(propertyGuid), propertyGuid))
@@ -837,9 +926,9 @@ namespace IDBrowserServiceCore.Controllers
 
                     db.idCatalogItemDefinition.Remove(currentIdCatalogItemDefinition);
 
-                    currentIdCatalogItem.idInSync = currentIdCatalogItem.idInSync >> 2;
+                    currentIdCatalogItem.idInSync >>= 2;
                     if (currentIdImageVersion != null)
-                        currentIdImageVersion.idInSync = currentIdImageVersion.idInSync >> 2;
+                        currentIdImageVersion.idInSync >>= 2;
 
                     await db.SaveChangesAsync();
 
@@ -855,8 +944,13 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
+        /// <summary>
+        /// Adds an new image property.
+        /// </summary>
+        /// <param name="propertyName">Property name</param>
+        /// <param name="parentGUID">Parent image property or image category guid</param>
+        /// <returns>"OK" if property was added.</returns>
         [HttpGet("{propertyName}/{parentGUID}")]
-        [ActionName("AddImageProperty")]
         public async Task<ActionResult<string>> AddImageProperty(string propertyName, string parentGUID)
         {
             using (LogContext.PushProperty(nameof(propertyName), propertyName))
@@ -950,7 +1044,11 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
-        [ActionName("GetFilePaths")]
+        /// <summary>
+        /// Returns all file paths
+        /// </summary>
+        /// <returns>All file paths</returns>
+        [HttpGet]
         public async Task<ActionResult<List<FilePath>>> GetFilePaths()
         {
             try

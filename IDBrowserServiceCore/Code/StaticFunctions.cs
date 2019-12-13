@@ -51,7 +51,7 @@ namespace IDBrowserServiceCore.Code
         }
 
         public async static Task<SaveImageThumbnailResult> SaveImageThumbnail(idCatalogItem catalogItem, IDImagerDB db, IDImagerThumbsDB dbThumbs,
-            List<String> types, Boolean keepAspectRatio, Boolean setGenericVideoThumbnailOnError, ServiceSettings serviceSettings)
+            List<string> types, ServiceSettings serviceSettings)
         {
             SaveImageThumbnailResult result = new SaveImageThumbnailResult();
             Stream imageStream = null;
@@ -368,7 +368,6 @@ namespace IDBrowserServiceCore.Code
                     try
                     {
                         SaveImageThumbnailResult result = await SaveImageThumbnail(catalogItem, db, dbThumbs, typesToGenerate, 
-                            siteSettings.ServiceSettings.KeepAspectRatio, siteSettings.ServiceSettings.SetGenericVideoThumbnailOnError,
                             siteSettings.ServiceSettings);
                         foreach (Exception ex in result.Exceptions)
                         {

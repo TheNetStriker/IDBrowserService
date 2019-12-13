@@ -24,6 +24,9 @@ using System.Threading.Tasks;
 
 namespace IDBrowserServiceCore.Controllers
 {
+    /// <summary>
+    /// Controller for video streaming
+    /// </summary>
     [Route("api/[controller]/[action]")]
     public class MediaController : Controller
     {
@@ -32,15 +35,28 @@ namespace IDBrowserServiceCore.Controllers
         private readonly IDiagnosticContext diagnosticContext;
         private readonly ServiceSettings serviceSettings;
 
-        public MediaController(IDImagerDB db, IOptions<ServiceSettings> serviceSettings,
+        /// <summary>
+        /// Controller constructor
+        /// </summary>
+        /// <param name="db">IDImagerDB</param>
+        /// <param name="serviceSettings">ServiceSettings</param>
+        /// <param name="logger">Logger</param>
+        /// <param name="diagnosticContext">Logger diagnostic context</param>
+        public MediaController(IDImagerDB db, ServiceSettings serviceSettings,
             ILogger<ValuesController> logger, IDiagnosticContext diagnosticContext)
         {
             this.db = db ?? throw new ArgumentNullException(nameof(logger));
-            this.serviceSettings = serviceSettings.Value ?? throw new ArgumentNullException(nameof(serviceSettings));
+            this.serviceSettings = serviceSettings ?? throw new ArgumentNullException(nameof(serviceSettings));
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.diagnosticContext = diagnosticContext ?? throw new ArgumentNullException(nameof(diagnosticContext));
         }
 
+        /// <summary>
+        /// Returns an http video stream
+        /// </summary>
+        /// <param name="guid">Image guid of video to stream</param>
+        /// <param name="videosize">Optional videosize parameter for video transcoding</param>
+        /// <returns>Http video stream</returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Play(string guid, string videosize)

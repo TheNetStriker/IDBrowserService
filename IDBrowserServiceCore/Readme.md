@@ -17,6 +17,8 @@ Currently actively maintained .Net Core based webservice. Works under Mac, Linux
 | Urls | Url to host the webservice. Multiple URL's can be set using a semicolon as delimiter. |
 | ImageFileExtensions | List of file extensions for images. (Used for batch thumbnail generation) |
 | VideoFileExtensions | List of file extensions for videos. (Used for batch thumbnail generation and video transformation) |
+| UseResponseCompression | Enables http response compression (gzip and brotli) |
+| UseSwagger | Enables webservice swagger documentation on /SitName/swagger. |
 | Sites | In this section is is possible to define multiple sites with different Photosupreme databases. This way a single service can provide access to multiple Photosupreme databases. The name of the site must then be used in the url. (e.g. http://192.168.1.1/SiteName/values/GetImageProperties) Please take a look at the Site Settings section how to configure a new site. |
 | Serilog | Logging configuration |
 ### Site settings
@@ -28,8 +30,6 @@ Currently actively maintained .Net Core based webservice. Works under Mac, Linux
 | ServiceSettings.CreateThumbnails | If set to "true" the service will try to generate thumbnails if they don't exist. |
 | ServiceSettings.MThumbmailWidth | Thumbnail width for thumbnail generation. |
 | ServiceSettings.MThumbnailHeight | Thumbnail height for thumbnail generation. |
-| ServiceSettings.KeepAspectRatio | Setting to keep aspect ratio for thumbnail generation. |
-| ServiceSettings.SetGenericVideoThumbnailOnError | Not used anymore |
 | ServiceSettings.FilePathReplace | Using this settings the file paths in the database can be adapted to the local path where the service is running. (e.g. if the database was created under windows and the service runs under Linux) |
 | ServiceSettings.TranscodeDirectory | Directory to put transcoded video files for this site. |
 

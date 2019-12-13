@@ -226,7 +226,7 @@ namespace IDBrowserServiceCoreTest
                            .ReplaceService<ISqlGenerationHelper, PostgresSqlGenerationHelper>())
                        .AddDbContextPool<IDImagerThumbsDB>(options => options.UseNpgsql(DbThumbsConnectionString)
                            .ReplaceService<ISqlGenerationHelper, PostgresSqlGenerationHelper>())
-                       .Configure<ServiceSettings>(SettingsSection)
+                       .AddSingleton<ServiceSettings>(Settings)
                        .AddSingleton<ILoggerFactory>(services => new SerilogLoggerFactory(Logger, false))
                        .AddSingleton<ILogger<ValuesController>>(loggerFactory.CreateLogger<ValuesController>())
                        .AddSingleton<ILogger<MediaController>>(loggerFactory.CreateLogger<MediaController>())
@@ -361,13 +361,10 @@ namespace IDBrowserServiceCoreTest
         [Fact]
         public async void SaveImageThumbnailTest()
         {
-            Boolean keepAspectRatio = Settings.KeepAspectRatio;
-            Boolean setGenericVideoThumbnailOnError = Settings.SetGenericVideoThumbnailOnError;
-            List<String> types = new List<String>() { "T", "R", "M" };
+            List<string> types = new List<string>() { "T", "R", "M" };
 
             SaveImageThumbnailResult result = await StaticFunctions
-                .SaveImageThumbnail(idCatalogItemFirstImage, Db, DbThumbs, types, keepAspectRatio,
-                setGenericVideoThumbnailOnError, Settings);
+                .SaveImageThumbnail(idCatalogItemFirstImage, Db, DbThumbs, types, Settings);
 
             if (result.Exceptions.Count > 0)
                 throw result.Exceptions.First();
@@ -375,15 +372,11 @@ namespace IDBrowserServiceCoreTest
 
         [Fact]
         public async void SaveVideoThumbnailTest()
-        {
-            Boolean keepAspectRatio = Settings.KeepAspectRatio;
-            Boolean setGenericVideoThumbnailOnError = Settings.SetGenericVideoThumbnailOnError;
-            
-            List<String> types = new List<String>() { "T", "R", "M" };
+        {         
+            List<string> types = new List<string>() { "T", "R", "M" };
 
             SaveImageThumbnailResult result = await StaticFunctions
-                .SaveImageThumbnail(idCatalogItemFirstVideo, Db, DbThumbs, types, keepAspectRatio,
-                setGenericVideoThumbnailOnError, Settings);
+                .SaveImageThumbnail(idCatalogItemFirstVideo, Db, DbThumbs, types, Settings);
 
             if (result.Exceptions.Count > 0)
                 throw result.Exceptions.First();

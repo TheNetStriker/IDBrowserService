@@ -11,6 +11,7 @@ namespace IDBrowserServiceCore.Settings
         public List<string> ImageFileExtensions { get; set; }
         public List<string> VideoFileExtensions { get; set; }
         public bool UseResponseCompression { get; set; }
+        public bool UseSwagger { get; set; }
         public Dictionary<string, SiteSettings> Sites { get; set; }
     }
 }

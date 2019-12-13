@@ -1,0 +1,201 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>IDBrowserServiceCore</name>
+    </assembly>
+    <members>
+        <member name="M:IDBrowserServiceCore.Code.StaticFunctions.TranscodeAllVideos(IDBrowserServiceCore.Settings.IDBrowserConfiguration,System.String,System.String)">
+            <summary>
+            Transcode's all videos of a site
+            </summary>
+            <param name="configuration">Json configuration of IDBrowserService as IDBrowserConfiguration class</param>
+            <param name="siteName">Site name to transcode</param>
+            <param name="videoSize">Video size to transcode. (e.g. Hd480, Hd720, Hd1080)</param>
+        </member>
+        <member name="M:IDBrowserServiceCore.Code.StaticFunctions.GenerateThumbnails(IDBrowserServiceCore.Settings.IDBrowserConfiguration,System.String,System.DateTime,System.DateTime,System.String,System.String,System.Boolean)">
+            <summary>
+            Generates thumbnails based on parameters
+            </summary>
+            <param name="configuration">Json configuration of IDBrowserService as IDBrowserConfiguration class</param>
+            <param name="siteName">Site name to generate thumbnails</param>
+            <param name="fromDateTime">From date filter</param>
+            <param name="toDateTime">To date filter</param>
+            <param name="fileFilter">File type filter</param>
+            <param name="imageGuid">Generate single image guid</param>
+            <param name="overwrite">Overwrite existing thumbnails</param>
+        </member>
+        <member name="T:IDBrowserServiceCore.Controllers.MediaController">
+            <summary>
+            Controller for video streaming
+            </summary>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.MediaController.#ctor(IDBrowserServiceCore.Data.IDImager.IDImagerDB,IDBrowserServiceCore.Settings.ServiceSettings,Microsoft.Extensions.Logging.ILogger{IDBrowserServiceCore.Controllers.ValuesController},Serilog.IDiagnosticContext)">
+            <summary>
+            Controller constructor
+            </summary>
+            <param name="db">IDImagerDB</param>
+            <param name="serviceSettings">ServiceSettings</param>
+            <param name="logger">Logger</param>
+            <param name="diagnosticContext">Logger diagnostic context</param>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.MediaController.Play(System.String,System.String)">
+            <summary>
+            Returns an http video stream
+            </summary>
+            <param name="guid">Image guid of video to stream</param>
+            <param name="videosize">Optional videosize parameter for video transcoding</param>
+            <returns>Http video stream</returns>
+        </member>
+        <member name="T:IDBrowserServiceCore.Controllers.ValuesController">
+            <summary>
+            Controller for Photosupreme values
+            </summary>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.#ctor(IDBrowserServiceCore.Data.IDImager.IDImagerDB,IDBrowserServiceCore.Data.IDImagerThumbs.IDImagerThumbsDB,IDBrowserServiceCore.Settings.ServiceSettings,Microsoft.Extensions.Logging.ILogger{IDBrowserServiceCore.Controllers.ValuesController},Serilog.IDiagnosticContext)">
+            <summary>
+            Controller constructor
+            </summary>
+            <param name="db">IDImagerDB</param>
+            <param name="dbThumbs">IDImagerThumbsDB</param>
+            <param name="serviceSettings">ServiceSettings</param>
+            <param name="logger">Logger</param>
+            <param name="diagnosticContext">Logger diagnostic context</param>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetImageProperties">
+            <summary>
+            Returns the image categories
+            </summary>
+            <returns>Image categories</returns>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetImageProperties(System.String)">
+            <summary>
+            Query image properties
+            </summary>
+            <param name="guid">Guid of the image properties to return.</param>
+            <returns>Image properties</returns>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetImagePropertyThumbnail(System.String,System.String)">
+            <summary>
+            Returns image property or image category thumbnail
+            </summary>
+            <param name="guid">Guid of the image property</param>
+            <param name="isCategory">True if the property is an image category</param>
+            <returns>image property or image category thumbnail</returns>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetResizedImagePropertyThumbnail(System.String,System.String,System.String,System.String)">
+            <summary>
+            Returns resized image property or image category thumbnail
+            </summary>
+            <param name="guid">Guid of the image property</param>
+            <param name="isCategory">True if the property is an image category</param>
+            <param name="width">Image width</param>
+            <param name="height">Image height</param>
+            <returns>Resized image property or image category thumbnail</returns>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetCatalogItems(System.String,System.String)">
+            <summary>
+            Returns catalog items of image property guid. 
+            </summary>
+            <param name="orderDescending">Order catalog items descending</param>
+            <param name="propertyGuid">Image property guid</param>
+            <returns>Catalog items</returns>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetCatalogItemsByFilePath(System.String,System.String)">
+            <summary>
+            Returns catalog items of image file path. 
+            </summary>
+            <param name="orderDescending">Order catalog items descending</param>
+            <param name="filePathGuid">File path guid</param>
+            <returns>Catalog items</returns>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetImageThumbnail(System.String,System.String)">
+            <summary>
+            Returns image thumbnail for image guid.
+            </summary>
+            <param name="type">Thumbnail size</param>
+            <param name="imageGuid">Image guid</param>
+            <returns>Image thumbnail</returns>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetImage(System.String)">
+            <summary>
+            Retuns full size image by image guid and applies image recipies.
+            </summary>
+            <param name="imageGuid">Image guid</param>
+            <returns>Full size image</returns>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetResizedImage(System.String,System.String,System.String)">
+            <summary>
+            Returns resized image from original file and applies image recipies.
+            </summary>
+            <param name="width">Image width</param>
+            <param name="height">Image height</param>
+            <param name="imageGuid">Image guid</param>
+            <returns>Resized image</returns>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetImageInfo(System.String)">
+            <summary>
+            Returns image infos for image guid.
+            </summary>
+            <param name="imageGuid">Image guid</param>
+            <returns>Image infos</returns>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetRandomImageGuids(System.Collections.Generic.List{System.String})">
+            <summary>
+            Returns random image guids.
+            </summary>
+            <param name="imageFileExtensions">File extensions to include.</param>
+            <returns>Random image guids.</returns>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetFile(System.String)">
+            <summary>
+            Returns raw source file by image guid.
+            </summary>
+            <param name="imageGuid">Image guid</param>
+            <returns>Raw image file</returns>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.SearchImageProperties(System.String)">
+            <summary>
+            Search for image properties
+            </summary>
+            <param name="searchString">Search text</param>
+            <returns>Image properties</returns>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetCatalogItemImageProperties(System.String)">
+            <summary>
+            Returns image properties by catalog item guid.
+            </summary>
+            <param name="catalogItemGUID">Catalog item guid</param>
+            <returns>Image properties</returns>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.AddCatalogItemDefinition(System.String,System.String)">
+            <summary>
+            Adds an image property to a catalog item.
+            </summary>
+            <param name="propertyGuid">Image property to add</param>
+            <param name="catalogItemGUID">Catalog item to add the property to</param>
+            <returns>"OK" if property was added.</returns>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.DeleteCatalogItemDefinition(System.String,System.String)">
+            <summary>
+            Deletes an image propery of a catalog item.
+            </summary>
+            <param name="propertyGuid">Property guid to delete</param>
+            <param name="catalogItemGUID">Catalog item guid to remove the property from</param>
+            <returns>"OK" if property was added.</returns>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.AddImageProperty(System.String,System.String)">
+            <summary>
+            Adds an new image property.
+            </summary>
+            <param name="propertyName">Property name</param>
+            <param name="parentGUID">Parent image property or image category guid</param>
+            <returns>"OK" if property was added.</returns>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetFilePaths">
+            <summary>
+            Returns all file paths
+            </summary>
+            <returns>All file paths</returns>
+        </member>
+    </members>
+</doc>
