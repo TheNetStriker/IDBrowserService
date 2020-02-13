@@ -745,7 +745,7 @@ namespace IDBrowserServiceCore.Controllers
                     if (searchString is null) throw new ArgumentNullException(nameof(searchString));
 
                     var queryProperties = from tbl in db.idProp
-                                          where tbl.PropName.Contains(searchString)
+                                          where tbl.PropName.ToLower().Contains(searchString.ToLower())
                                           orderby tbl.PropName
                                           select tbl;
 
