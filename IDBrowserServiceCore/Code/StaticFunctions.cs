@@ -273,13 +273,13 @@ namespace IDBrowserServiceCore.Code
                 switch (videoSize)
                 {
                     case VideoSize.Hd480:
-                        targetWidth = 480;
+                        targetWidth = 852;
                         break;
                     case VideoSize.Hd720:
-                        targetWidth = 480;
+                        targetWidth = 1280;
                         break;
                     case VideoSize.Hd1080:
-                        targetWidth = 480;
+                        targetWidth = 1920;
                         break;
                     default:
                         throw new Exception(string.Format("Not supported transcode video size: {0}", transcodeVideoSize));
@@ -293,7 +293,7 @@ namespace IDBrowserServiceCore.Code
                     if (originalVideoHeight > targetWidth)
                     {
                         double dAspectRatio = (double)originalVideoHeight / (double)originalVideoWidth;
-                        width = (int)Math.Round(targetWidth / dAspectRatio);
+                        width = (int)Math.Ceiling(targetWidth / dAspectRatio);
                         height = targetWidth;
                     }
                     else
@@ -308,7 +308,7 @@ namespace IDBrowserServiceCore.Code
                     {
                         double dAspectRatio = (double)originalVideoWidth / (double)originalVideoHeight;
                         width = targetWidth;
-                        height = (int)Math.Round(targetWidth / dAspectRatio);
+                        height = (int)Math.Ceiling(targetWidth / dAspectRatio);
                     }
                     else
                     {
