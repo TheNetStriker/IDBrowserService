@@ -16,14 +16,9 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "IDBrowserServiceCore": {
+    "Console": {
       "commandName": "Project",
-      "launchBrowser": true,
-      "launchUrl": "mad/api/values/GetImageProperties",
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      },
-      "applicationUrl": "http://localhost:52064/"
+      "commandLineArgs": "TranscodeAllVideos mad Hd480"
     }
   }
 }
