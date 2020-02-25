@@ -268,18 +268,18 @@ namespace IDBrowserServiceCore.Code
 
             if (originalVideoWidth > 0 && originalVideoHeight > 0)
             {
-                int targetWidth;
+                int targetHeight;
 
                 switch (videoSize)
                 {
                     case VideoSize.Hd480:
-                        targetWidth = 852;
+                        targetHeight = 480;
                         break;
                     case VideoSize.Hd720:
-                        targetWidth = 1280;
+                        targetHeight = 720;
                         break;
                     case VideoSize.Hd1080:
-                        targetWidth = 1920;
+                        targetHeight = 1080;
                         break;
                     default:
                         throw new Exception(string.Format("Not supported transcode video size: {0}", transcodeVideoSize));
@@ -290,11 +290,11 @@ namespace IDBrowserServiceCore.Code
                 if (originalVideoWidth < originalVideoHeight)
                 {
                     // Vertical video, swap height and width
-                    if (originalVideoHeight > targetWidth)
+                    if (originalVideoWidth > targetHeight)
                     {
                         double dAspectRatio = (double)originalVideoHeight / (double)originalVideoWidth;
-                        width = (int)Math.Ceiling(targetWidth / dAspectRatio);
-                        height = targetWidth;
+                        width = targetHeight;
+                        height = (int)Math.Ceiling(targetHeight * dAspectRatio);
                     }
                     else
                     {
@@ -304,11 +304,11 @@ namespace IDBrowserServiceCore.Code
                 }
                 else
                 {
-                    if (originalVideoWidth > targetWidth)
+                    if (originalVideoHeight > targetHeight)
                     {
                         double dAspectRatio = (double)originalVideoWidth / (double)originalVideoHeight;
-                        width = targetWidth;
-                        height = (int)Math.Ceiling(targetWidth / dAspectRatio);
+                        width = (int)Math.Ceiling(targetHeight * dAspectRatio);
+                        height = targetHeight;
                     }
                     else
                     {
