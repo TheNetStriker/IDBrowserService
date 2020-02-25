@@ -82,8 +82,17 @@ namespace IDBrowserServiceCore.Controllers
 
                         catalogItem.GetHeightAndWidth(out int originalVideoWidth, out int originalVideoHeight);
 
-                        string strTranscodeFilePath = await StaticFunctions.TranscodeVideo(strFilePath, guid,
-                            serviceSettings.TranscodeDirectory, videosize, originalVideoWidth, originalVideoHeight);
+                        Engine ffmpegEngine = StaticFunctions.GetFFmpegEngine();
+
+                        ffmpegEngine.Error += (sender, eventArgs) =>
+                        {
+                            Log.Error(eventArgs.Exception.ToString());
+                        };
+
+                        string strTranscodeFilePath = StaticFunctions.GetTranscodeFilePath(guid, serviceSettings.TranscodeDirectory, videosize);
+
+                        await StaticFunctions.TranscodeVideo(ffmpegEngine, default, strFilePath, strTranscodeFilePath,
+                            videosize, originalVideoWidth, originalVideoHeight);
 
                         transcodeFileInfo = new FileInfo(strTranscodeFilePath);
 
@@ -94,7 +103,8 @@ namespace IDBrowserServiceCore.Controllers
                         else if (transcodeFileInfo.Length == 0)
                         {
                             transcodeFileInfo.Delete();
-                            throw new Exception("Transcoding failed, file size is zero.");
+                            throw new Exception(string.Format("Transcoding failed, file size is zero. Unfinished transcoded file \"{0}\" deleted.",
+                                strTranscodeFilePath));
                         }
 
                         strFilePath = strTranscodeFilePath;

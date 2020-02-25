@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using IDBrowserServiceCore.Settings;
 using Microsoft.Extensions.Configuration;
@@ -33,8 +34,16 @@ namespace IDBrowserServiceCore.Code
                     string strSiteName = args[1];
                     string strVideoSize = args[2];
 
+                    CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+
+                    Console.CancelKeyPress += (object sender, ConsoleCancelEventArgs e) =>
+                    {
+                        cancellationTokenSource.Cancel();
+                        e.Cancel = true;
+                    };
+
                     Console.WriteLine("Transcoding videos...");
-                    StaticFunctions.TranscodeAllVideos(configuration, strSiteName, strVideoSize);
+                    StaticFunctions.TranscodeAllVideos(configuration, cancellationTokenSource.Token, strSiteName, strVideoSize);
                 }
             }
             else if (args[0] == nameof(StaticFunctions.GenerateThumbnails))

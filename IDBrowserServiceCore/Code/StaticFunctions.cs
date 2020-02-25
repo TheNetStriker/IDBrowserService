@@ -18,6 +18,7 @@ using FFmpeg.NET.Enums;
 using System.Runtime.InteropServices;
 using Microsoft.EntityFrameworkCore.Storage;
 using IDBrowserServiceCore.Data.PostgresHelpers;
+using System.Threading;
 
 namespace IDBrowserServiceCore.Code
 {
@@ -195,50 +196,64 @@ namespace IDBrowserServiceCore.Code
         /// <summary>
         /// Transcodes video to different resolution and mp4
         /// </summary>
+        /// <param name="ffmpegEngine">FFmpeg engine</param>
+        /// <param name="cancellationToken">CancellationToken</param>
         /// <param name="filePath">Video file path</param>
-        /// <param name="guid">Photosupreme Guid of video</param>
-        /// <param name="transcodeDirectory">Directory to store transcoded video</param>
         /// <param name="transcodeVideoSize">Target video size</param>
         /// <param name="originalVideoWidth">Optional original video width</param>
         /// <param name="originalVideoHeight">Optional original video height</param>
         /// <returns>Transform task</returns>
-        public async static Task<string> TranscodeVideo(string filePath, string guid, string transcodeDirectory,
+        public async static Task TranscodeVideo(Engine ffmpegEngine, CancellationToken cancellationToken, string filePath, string transcodeFilePath,
             string transcodeVideoSize, int originalVideoWidth = 0, int originalVideoHeight = 0)
         {
             GetTranscodeVideoSize(transcodeVideoSize, originalVideoWidth, originalVideoHeight, out VideoSize targetVideoSize,
                 out int targetVideoWidth, out int targetVideoHeight);
             var conversionOptions = GetConversionOptions(targetVideoSize, targetVideoWidth, targetVideoHeight);
-            return await TranscodeVideo(filePath, guid, transcodeDirectory, transcodeVideoSize, conversionOptions);
+            await TranscodeVideo(ffmpegEngine, cancellationToken, filePath, transcodeFilePath, conversionOptions);
         }
 
         /// <summary>
         /// Transcodes video to different resolution and mp4
         /// </summary>
+        /// <param name="ffmpegEngine">FFmpeg engine</param>
+        /// <param name="cancellationToken">CancellationToken</param>
         /// <param name="filePath">Video file path</param>
+        /// <param name="transcodeFilePath">Transcoded video file path</param>
+        /// <param name="conversionOptions">ConversionOptions</param>
+        /// <returns>Transform task</returns>
+        public async static Task TranscodeVideo(Engine ffmpegEngine, CancellationToken cancellationToken, string filePath, string transcodeFilePath,
+            ConversionOptions conversionOptions)
+        {
+            if (!File.Exists(transcodeFilePath))
+            {
+                var inputFile = new MediaFile(filePath);
+                var outputFile = new MediaFile(transcodeFilePath);
+
+                FileInfo transcodeFileInfo = new FileInfo(transcodeFilePath);
+
+                if (!transcodeFileInfo.Directory.Exists)
+                    transcodeFileInfo.Directory.Create();
+
+                await ffmpegEngine.ConvertAsync(inputFile, outputFile, conversionOptions, cancellationToken);
+            }
+        }
+
+        /// <summary>
+        /// Returns transcode video file path
+        /// </summary>
         /// <param name="guid">Photosupreme Guid of video</param>
         /// <param name="transcodeDirectory">Directory to store transcoded video</param>
         /// <param name="transcodeVideoSize">Target video size</param>
-        /// <param name="conversionOptions">ConversionOptions</param>
-        /// <returns>Transform task</returns>
-        public async static Task<string> TranscodeVideo(string filePath, string guid, string transcodeDirectory,
-            string transcodeVideoSize, ConversionOptions conversionOptions)
+        /// <returns></returns>
+        public static string GetTranscodeFilePath(string guid, string transcodeDirectory, string transcodeVideoSize)
         {
             string strTranscodeDirectory = Path.Combine(transcodeDirectory, transcodeVideoSize, guid.Substring(0, 2));
-            string strTranscodeFilePath = Path.Combine(strTranscodeDirectory, guid + ".mp4");
+            return Path.Combine(strTranscodeDirectory, guid + ".mp4");
+        }
 
-            if (!File.Exists(strTranscodeFilePath))
-            {
-                var inputFile = new MediaFile(filePath);
-                var outputFile = new MediaFile(strTranscodeFilePath);
-
-                if (!Directory.Exists(strTranscodeDirectory))
-                    Directory.CreateDirectory(strTranscodeDirectory);
-
-                var ffmpeg = new Engine(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "ffmpeg.exe" : "ffmpeg");
-                await ffmpeg.ConvertAsync(inputFile, outputFile, conversionOptions);
-            }
-
-            return strTranscodeFilePath;
+        public static Engine GetFFmpegEngine()
+        {
+            return new Engine(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "ffmpeg.exe" : "ffmpeg");
         }
 
         private static ConversionOptions GetConversionOptions(VideoSize videoSize, int width, int height)
@@ -369,9 +384,10 @@ namespace IDBrowserServiceCore.Code
         /// Transcode's all videos of a site
         /// </summary>
         /// <param name="configuration">Json configuration of IDBrowserService as IDBrowserConfiguration class</param>
+        /// <param name="cancellationToken">CancellationToken</param>
         /// <param name="siteName">Site name to transcode</param>
         /// <param name="videoSize">Video size to transcode. (e.g. Hd480, Hd720, Hd1080)</param>
-        public static void TranscodeAllVideos(IDBrowserConfiguration configuration, string siteName, string videoSize)
+        public static void TranscodeAllVideos(IDBrowserConfiguration configuration, CancellationToken cancellationToken, string siteName, string videoSize)
         {
             SiteSettings siteSettings = configuration.Sites[siteName];
 
@@ -385,6 +401,21 @@ namespace IDBrowserServiceCore.Code
             int intTotalCount = query.Count();
             int intCounter = 1;
 
+            Engine ffmpegEngine = StaticFunctions.GetFFmpegEngine();
+            int intConsoleProgressPosition = 0;
+
+            ffmpegEngine.Error += (sender, eventArgs) =>
+            {
+                Console.WriteLine(eventArgs.Exception.ToString());
+            };
+
+            ffmpegEngine.Progress += (sender, eventArgs) =>
+            {
+                int intProgress = (int)Math.Abs(eventArgs.ProcessedDuration * 100 / eventArgs.TotalDuration);
+                Console.CursorLeft = intConsoleProgressPosition;
+                Console.Write(string.Format("{0}%", intProgress.ToString()));
+            };
+
             foreach (idCatalogItem catalogItem in query)
             {
                 catalogItem.GetHeightAndWidth(out int originalVideoWidth, out int originalVideoHeight);
@@ -394,48 +425,76 @@ namespace IDBrowserServiceCore.Code
 
                 var conversionOptions = GetConversionOptions(targetVideoSize, originalVideoWidth, originalVideoHeight);
 
-                string strFilePath = StaticFunctions.GetImageFilePath(catalogItem, siteSettings.ServiceSettings.FilePathReplace);
+                string strOriginalFilePath = StaticFunctions.GetImageFilePath(catalogItem, siteSettings.ServiceSettings.FilePathReplace);
 
-                Console.Write(string.Format("Transcoding file {0} of {1} with path \"{2}\" from resolution {3}x{4} to {5}x{6}.",
-                    intCounter, intTotalCount, strFilePath, originalVideoWidth, originalVideoHeight, targetVideoWidth, targetVideoHeight));
+                FileInfo originalFileInfo = new FileInfo(strOriginalFilePath);
 
-                FileInfo transcodeFileInfo = null;
+                Console.Write(string.Format("Transcoding file {0} of {1} with path \"{2}\" from resolution {3}x{4} to {5}x{6} ",
+                    intCounter, intTotalCount, strOriginalFilePath, originalVideoWidth, originalVideoHeight, targetVideoWidth, targetVideoHeight));
+                
+                intConsoleProgressPosition = Console.CursorLeft;
+                string strTranscodeFilePath = null;
 
                 try 
                 {
-                    Task<string> transcodeTask = TranscodeVideo(strFilePath, catalogItem.GUID,
-                        siteSettings.ServiceSettings.TranscodeDirectory, videoSize, originalVideoWidth, originalVideoHeight);
+                    strTranscodeFilePath = StaticFunctions.GetTranscodeFilePath(catalogItem.GUID, siteSettings.ServiceSettings.TranscodeDirectory, videoSize);
 
-                    while (!transcodeTask.Wait(1000))
-                        Console.Write(".");
+                    Task transcodeTask = TranscodeVideo(ffmpegEngine, cancellationToken, strOriginalFilePath, strTranscodeFilePath,
+                       videoSize, originalVideoWidth, originalVideoHeight);
 
-                    string strTranscodeFilePath = transcodeTask.Result;
+                    transcodeTask.Wait();
 
-                    transcodeFileInfo = new FileInfo(strTranscodeFilePath);
+                    FileInfo transcodeFileInfo = new FileInfo(strTranscodeFilePath);
 
                     if (!transcodeFileInfo.Exists)
                     {
-                        Console.Write(" transcoding failed, file does not exist.");
+                        Console.WriteLine(" transcoding failed, file does not exist.");
                     }
                     else if (transcodeFileInfo.Length == 0)
                     {
                         transcodeFileInfo.Delete();
-                        Console.Write(" transcoding failed, file size is zero.");
+                        Console.WriteLine(string.Format(" transcoding failed, file size is zero. Unfinished transcoded file \"{0}\" deleted.",
+                            strTranscodeFilePath));
                     }
                     else
                     {
-                        Console.WriteLine(" done");
+                        Console.CursorLeft = intConsoleProgressPosition;
+                        Console.WriteLine("100%");
                     }
+
+                    strTranscodeFilePath = null;
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex.ToString());
+                    Console.WriteLine("");
 
-                    if (transcodeFileInfo != null && transcodeFileInfo.Exists)
-                        transcodeFileInfo.Delete();
+                    if (!string.IsNullOrEmpty(strTranscodeFilePath))
+                    {
+                        // Wait for file to be unlocked
+                        Thread.Sleep(1000);
+                        FileInfo transcodeFileInfo = new FileInfo(strTranscodeFilePath);
+
+                        if (transcodeFileInfo != null && transcodeFileInfo.Exists)
+                        {
+                            transcodeFileInfo.Delete();
+                            Console.WriteLine(string.Format("Unfinished transcoded file \"{0}\" deleted.", strTranscodeFilePath));
+                        }
+                    }
+
+                    if (ex.GetType() == typeof(AggregateException)
+                        && ex.InnerException != null
+                        && ex.InnerException.GetType() == typeof(TaskCanceledException))
+                    {
+                        
+                        Console.WriteLine("Transcoding cancelled");
+                    }
+                    else
+                    {
+                        Console.WriteLine(ex.ToString());  
+                    }
 
                     return;
-                }              
+                }
 
                 intCounter++;
             }
