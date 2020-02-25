@@ -78,8 +78,18 @@ namespace IDBrowserServiceCore.Controllers
                         if (string.IsNullOrEmpty(serviceSettings.TranscodeDirectory))
                             return BadRequest("Missing TranscodeDirectory setting");
 
+                        catalogItem.GetHeightAndWidth(out int originalVideoWidth, out int originalVideoHeight);
+
                         string strTranscodeFilePath = await StaticFunctions.TranscodeVideo(strFilePath, guid,
-                            serviceSettings.TranscodeDirectory, videosize);
+                            serviceSettings.TranscodeDirectory, videosize, originalVideoWidth, originalVideoHeight);
+
+                        FileInfo transcodeFileInfo = new FileInfo(strTranscodeFilePath);
+
+                        if (!transcodeFileInfo.Exists)
+                            throw new Exception("Transcoding failed, file does not exist.");
+
+                        if (transcodeFileInfo.Length == 0)
+                            throw new Exception("Transcoding failed, file size is zero.");
 
                         strFilePath = strTranscodeFilePath;
                         mimeType = "video/mp4";
@@ -88,7 +98,8 @@ namespace IDBrowserServiceCore.Controllers
                     Stream inputStream = StaticFunctions.GetImageFileStream(strFilePath);
                     FileStreamResult fileStreamResult = new FileStreamResult(inputStream, mimeType)
                     {
-                        EnableRangeProcessing = true
+                        EnableRangeProcessing = true,
+                        
                     };
 
                     return fileStreamResult;

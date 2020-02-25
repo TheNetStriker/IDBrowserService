@@ -192,30 +192,151 @@ namespace IDBrowserServiceCore.Code
             }
         }
 
-        public async static Task<string> TranscodeVideo(string filePath, string guid, string transcodeDirectory, string videosize)
+        /// <summary>
+        /// Transcodes video to different resolution and mp4
+        /// </summary>
+        /// <param name="filePath">Video file path</param>
+        /// <param name="guid">Photosupreme Guid of video</param>
+        /// <param name="transcodeDirectory">Directory to store transcoded video</param>
+        /// <param name="transcodeVideoSize">Target video size</param>
+        /// <param name="originalVideoWidth">Optional original video width</param>
+        /// <param name="originalVideoHeight">Optional original video height</param>
+        /// <returns>Transform task</returns>
+        public async static Task<string> TranscodeVideo(string filePath, string guid, string transcodeDirectory,
+            string transcodeVideoSize, int originalVideoWidth = 0, int originalVideoHeight = 0)
         {
-            string strTranscodeDirectory = Path.Combine(transcodeDirectory, videosize, guid.Substring(0, 2));
+            GetTranscodeVideoSize(transcodeVideoSize, originalVideoWidth, originalVideoHeight, out VideoSize targetVideoSize,
+                out int targetVideoWidth, out int targetVideoHeight);
+            var conversionOptions = GetConversionOptions(targetVideoSize, targetVideoWidth, targetVideoHeight);
+            return await TranscodeVideo(filePath, guid, transcodeDirectory, transcodeVideoSize, conversionOptions);
+        }
+
+        /// <summary>
+        /// Transcodes video to different resolution and mp4
+        /// </summary>
+        /// <param name="filePath">Video file path</param>
+        /// <param name="guid">Photosupreme Guid of video</param>
+        /// <param name="transcodeDirectory">Directory to store transcoded video</param>
+        /// <param name="transcodeVideoSize">Target video size</param>
+        /// <param name="conversionOptions">ConversionOptions</param>
+        /// <returns>Transform task</returns>
+        public async static Task<string> TranscodeVideo(string filePath, string guid, string transcodeDirectory,
+            string transcodeVideoSize, ConversionOptions conversionOptions)
+        {
+            string strTranscodeDirectory = Path.Combine(transcodeDirectory, transcodeVideoSize, guid.Substring(0, 2));
             string strTranscodeFilePath = Path.Combine(strTranscodeDirectory, guid + ".mp4");
 
             if (!File.Exists(strTranscodeFilePath))
             {
                 var inputFile = new MediaFile(filePath);
                 var outputFile = new MediaFile(strTranscodeFilePath);
-                VideoSize videoSize = (VideoSize)Enum.Parse(typeof(VideoSize), videosize);
 
                 if (!Directory.Exists(strTranscodeDirectory))
                     Directory.CreateDirectory(strTranscodeDirectory);
-
-                var conversionOptions = new ConversionOptions
-                {
-                    VideoSize = videoSize
-                };
 
                 var ffmpeg = new Engine(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "ffmpeg.exe" : "ffmpeg");
                 await ffmpeg.ConvertAsync(inputFile, outputFile, conversionOptions);
             }
 
             return strTranscodeFilePath;
+        }
+
+        private static ConversionOptions GetConversionOptions(VideoSize videoSize, int width, int height)
+        {
+            if (videoSize == VideoSize.Custom)
+            {
+                return new ConversionOptions
+                {
+                    VideoSize = videoSize,
+                    CustomWidth = width,
+                    CustomHeight = height
+                };
+            }
+            else
+            {
+                return new ConversionOptions
+                {
+                    VideoSize = videoSize
+                };
+            }
+        }
+
+        private static void GetTranscodeVideoSize(string transcodeVideoSize, int originalVideoWidth, int originalVideoHeight,
+            out VideoSize videoSize, out int width, out int height)
+        {
+            videoSize = (VideoSize)Enum.Parse(typeof(VideoSize), transcodeVideoSize);
+
+            if (originalVideoWidth > 0 && originalVideoHeight > 0)
+            {
+                int targetWidth;
+
+                switch (videoSize)
+                {
+                    case VideoSize.Hd480:
+                        targetWidth = 480;
+                        break;
+                    case VideoSize.Hd720:
+                        targetWidth = 480;
+                        break;
+                    case VideoSize.Hd1080:
+                        targetWidth = 480;
+                        break;
+                    default:
+                        throw new Exception(string.Format("Not supported transcode video size: {0}", transcodeVideoSize));
+                }
+
+                videoSize = VideoSize.Custom;
+
+                if (originalVideoWidth < originalVideoHeight)
+                {
+                    // Vertical video, swap height and width
+                    if (originalVideoHeight > targetWidth)
+                    {
+                        double dAspectRatio = (double)originalVideoHeight / (double)originalVideoWidth;
+                        width = (int)Math.Round(targetWidth / dAspectRatio);
+                        height = targetWidth;
+                    }
+                    else
+                    {
+                        width = originalVideoHeight;
+                        height = originalVideoWidth;
+                    }
+                }
+                else
+                {
+                    if (originalVideoWidth > targetWidth)
+                    {
+                        double dAspectRatio = (double)originalVideoWidth / (double)originalVideoHeight;
+                        width = targetWidth;
+                        height = (int)Math.Round(targetWidth / dAspectRatio);
+                    }
+                    else
+                    {
+                        width = originalVideoWidth;
+                        height = originalVideoHeight;
+                    }
+                }
+            }
+            else
+            {
+                switch (videoSize)
+                {
+                    case VideoSize.Hd480:
+                        width = 852;
+                        height = 480;
+                        break;
+                    case VideoSize.Hd720:
+                        width = 1280;
+                        height = 720;
+                        break;
+                    case VideoSize.Hd1080:
+                        width = 1920;
+                        height = 1080;
+                        break;
+                    default:
+                        throw new Exception(string.Format("Not supported transcode video size: {0}", transcodeVideoSize));
+                }
+            }
         }
 
         public static void SetDbContextOptions(DbContextOptionsBuilder optionsBuilder, string dbType,
@@ -262,17 +383,31 @@ namespace IDBrowserServiceCore.Code
                 .Where(x => configuration.VideoFileExtensions.Contains(x.idFileType));
 
             int intTotalCount = query.Count();
-            int intCounter = 0;
+            int intCounter = 1;
 
             foreach (idCatalogItem catalogItem in query)
             {
+                catalogItem.GetHeightAndWidth(out int originalVideoWidth, out int originalVideoHeight);
+
+                GetTranscodeVideoSize(videoSize, originalVideoWidth, originalVideoHeight, out VideoSize targetVideoSize,
+                    out int targetVideoWidth, out int targetVideoHeight);
+
+                var conversionOptions = GetConversionOptions(targetVideoSize, originalVideoWidth, originalVideoHeight);
+
                 string strFilePath = StaticFunctions.GetImageFilePath(catalogItem, siteSettings.ServiceSettings.FilePathReplace);
-                string strTranscodedFile = StaticFunctions.TranscodeVideo(strFilePath, catalogItem.GUID,
-                    siteSettings.ServiceSettings.TranscodeDirectory, videoSize).Result;
+
+                Console.Write(string.Format("Transcoding file {0} of {1} with path \"{2}\" from resolution {3}x{4} to {5}x{6}.",
+                    intCounter, intTotalCount, strFilePath, originalVideoWidth, originalVideoHeight, targetVideoWidth, targetVideoHeight));
+
+                Task<string> transcodeTask = StaticFunctions.TranscodeVideo(strFilePath, catalogItem.GUID,
+                    siteSettings.ServiceSettings.TranscodeDirectory, videoSize, originalVideoWidth, originalVideoHeight);
+
+                while (!transcodeTask.Wait(1000))
+                    Console.Write(".");
+
+                Console.WriteLine(" done");
 
                 intCounter++;
-
-                Console.WriteLine(string.Format("{0}/{1}: {2}", intCounter, intTotalCount, strFilePath));
             }
         }
 

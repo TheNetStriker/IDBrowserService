@@ -115,5 +115,27 @@ namespace IDBrowserServiceCore.Data.IDImager
         //public virtual ICollection<idImageVersion> idImageVersion { get; set; }
 
         public virtual idFilePath idFilePath { get; set; }
+
+        /// <summary>
+        /// Returns height and width if specified in UDF2 column.
+        /// </summary>
+        /// <param name="width">Width or zero if not specified</param>
+        /// <param name="height">Height or zero if not specified</param>
+        public void GetHeightAndWidth(out int width, out int height)
+        {
+            width = 0;
+            height = 0;
+
+            if (!string.IsNullOrEmpty(UDF2))
+            {
+                string[] udf2Split = UDF2.Split("x");
+
+                if (udf2Split.Length == 2)
+                {
+                    width = int.Parse(udf2Split[0]);
+                    height = int.Parse(udf2Split[1]);
+                }
+            }
+        }
     }
 }

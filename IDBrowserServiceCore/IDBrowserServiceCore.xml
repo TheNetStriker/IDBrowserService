@@ -4,6 +4,29 @@
         <name>IDBrowserServiceCore</name>
     </assembly>
     <members>
+        <member name="M:IDBrowserServiceCore.Code.StaticFunctions.TranscodeVideo(System.String,System.String,System.String,System.String,System.Int32,System.Int32)">
+            <summary>
+            Transcodes video to different resolution and mp4
+            </summary>
+            <param name="filePath">Video file path</param>
+            <param name="guid">Photosupreme Guid of video</param>
+            <param name="transcodeDirectory">Directory to store transcoded video</param>
+            <param name="transcodeVideoSize">Target video size</param>
+            <param name="originalVideoWidth">Optional original video width</param>
+            <param name="originalVideoHeight">Optional original video height</param>
+            <returns>Transform task</returns>
+        </member>
+        <member name="M:IDBrowserServiceCore.Code.StaticFunctions.TranscodeVideo(System.String,System.String,System.String,System.String,FFmpeg.NET.ConversionOptions)">
+            <summary>
+            Transcodes video to different resolution and mp4
+            </summary>
+            <param name="filePath">Video file path</param>
+            <param name="guid">Photosupreme Guid of video</param>
+            <param name="transcodeDirectory">Directory to store transcoded video</param>
+            <param name="transcodeVideoSize">Target video size</param>
+            <param name="conversionOptions">ConversionOptions</param>
+            <returns>Transform task</returns>
+        </member>
         <member name="M:IDBrowserServiceCore.Code.StaticFunctions.TranscodeAllVideos(IDBrowserServiceCore.Settings.IDBrowserConfiguration,System.String,System.String)">
             <summary>
             Transcode's all videos of a site
@@ -196,6 +219,13 @@
             Returns all file paths
             </summary>
             <returns>All file paths</returns>
+        </member>
+        <member name="M:IDBrowserServiceCore.Data.IDImager.idCatalogItem.GetHeightAndWidth(System.Int32@,System.Int32@)">
+            <summary>
+            Returns height and width if specified in UDF2 column.
+            </summary>
+            <param name="width">Width or zero if not specified</param>
+            <param name="height">Height or zero if not specified</param>
         </member>
     </members>
 </doc>
