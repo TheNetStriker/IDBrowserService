@@ -399,13 +399,43 @@ namespace IDBrowserServiceCore.Code
                 Console.Write(string.Format("Transcoding file {0} of {1} with path \"{2}\" from resolution {3}x{4} to {5}x{6}.",
                     intCounter, intTotalCount, strFilePath, originalVideoWidth, originalVideoHeight, targetVideoWidth, targetVideoHeight));
 
-                Task<string> transcodeTask = StaticFunctions.TranscodeVideo(strFilePath, catalogItem.GUID,
-                    siteSettings.ServiceSettings.TranscodeDirectory, videoSize, originalVideoWidth, originalVideoHeight);
+                FileInfo transcodeFileInfo = null;
 
-                while (!transcodeTask.Wait(1000))
-                    Console.Write(".");
+                try 
+                {
+                    Task<string> transcodeTask = TranscodeVideo(strFilePath, catalogItem.GUID,
+                        siteSettings.ServiceSettings.TranscodeDirectory, videoSize, originalVideoWidth, originalVideoHeight);
 
-                Console.WriteLine(" done");
+                    while (!transcodeTask.Wait(1000))
+                        Console.Write(".");
+
+                    string strTranscodeFilePath = transcodeTask.Result;
+
+                    transcodeFileInfo = new FileInfo(strTranscodeFilePath);
+
+                    if (!transcodeFileInfo.Exists)
+                    {
+                        Console.Write(" transcoding failed, file does not exist.");
+                    }
+                    else if (transcodeFileInfo.Length == 0)
+                    {
+                        transcodeFileInfo.Delete();
+                        Console.Write(" transcoding failed, file size is zero.");
+                    }
+                    else
+                    {
+                        Console.WriteLine(" done");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+
+                    if (transcodeFileInfo != null && transcodeFileInfo.Exists)
+                        transcodeFileInfo.Delete();
+
+                    return;
+                }              
 
                 intCounter++;
             }

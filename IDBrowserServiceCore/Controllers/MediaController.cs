@@ -64,6 +64,8 @@ namespace IDBrowserServiceCore.Controllers
             using (LogContext.PushProperty(nameof(guid), guid))
             using (LogContext.PushProperty(nameof(videosize), videosize))
             {
+                FileInfo transcodeFileInfo = null;
+
                 try
                 {
                     if (string.IsNullOrEmpty(guid)) return BadRequest("Missing guid parameter");
@@ -83,13 +85,17 @@ namespace IDBrowserServiceCore.Controllers
                         string strTranscodeFilePath = await StaticFunctions.TranscodeVideo(strFilePath, guid,
                             serviceSettings.TranscodeDirectory, videosize, originalVideoWidth, originalVideoHeight);
 
-                        FileInfo transcodeFileInfo = new FileInfo(strTranscodeFilePath);
+                        transcodeFileInfo = new FileInfo(strTranscodeFilePath);
 
                         if (!transcodeFileInfo.Exists)
+                        {
                             throw new Exception("Transcoding failed, file does not exist.");
-
-                        if (transcodeFileInfo.Length == 0)
+                        }
+                        else if (transcodeFileInfo.Length == 0)
+                        {
+                            transcodeFileInfo.Delete();
                             throw new Exception("Transcoding failed, file size is zero.");
+                        }
 
                         strFilePath = strTranscodeFilePath;
                         mimeType = "video/mp4";
@@ -106,6 +112,9 @@ namespace IDBrowserServiceCore.Controllers
                 }
                 catch (Exception ex)
                 {
+                    if (transcodeFileInfo != null && transcodeFileInfo.Exists)
+                        transcodeFileInfo.Delete();
+
                     logger.LogError(ex.ToString());
                     return BadRequest(ex.ToString());
                 }
