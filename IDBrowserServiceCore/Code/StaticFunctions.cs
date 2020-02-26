@@ -280,7 +280,7 @@ namespace IDBrowserServiceCore.Code
         public static void GetTranscodeVideoSize(string transcodeVideoSize, int originalVideoWidth, int originalVideoHeight,
             out VideoSize videoSize, out int width, out int height)
         {
-            videoSize = (VideoSize)Enum.Parse(typeof(VideoSize), transcodeVideoSize);
+            videoSize = (VideoSize)Enum.Parse(typeof(VideoSize), transcodeVideoSize, true);
 
             if (originalVideoWidth > 0 && originalVideoHeight > 0)
             {

@@ -4,7 +4,7 @@
         <name>IDBrowserServiceCore</name>
     </assembly>
     <members>
-        <member name="M:IDBrowserServiceCore.Code.ConsoleFunctions.TranscodeAllVideos(IDBrowserServiceCore.Settings.IDBrowserConfiguration,System.Threading.CancellationToken,System.String,System.String,System.Int32)">
+        <member name="M:IDBrowserServiceCore.Code.ConsoleFunctions.TranscodeAllVideos(IDBrowserServiceCore.Settings.IDBrowserConfiguration,System.Threading.CancellationToken,System.String,System.String,Serilog.Events.LogEventLevel,System.Int32)">
             <summary>
             Transcode's all videos of a site
             </summary>
@@ -13,6 +13,7 @@
             <param name="siteName">Site name to transcode</param>
             <param name="videoSize">Video size to transcode. (e.g. Hd480, Hd720, Hd1080)</param>
             <param name="taskCount">FFmpeg task count (Default 2)</param>
+            <param name="logLevel">Serilog log level</param>
         </member>
         <member name="M:IDBrowserServiceCore.Code.ConsoleFunctions.TranscodeVideoProgressTask(IDBrowserServiceCore.Code.TranscodeVideoBatchInfo,System.String,System.Threading.CancellationToken,IDBrowserServiceCore.Code.ProgressTask,System.String)">
             <summary>
@@ -36,6 +37,20 @@
             <param name="imageGuid">Generate single image guid</param>
             <param name="overwrite">Overwrite existing thumbnails</param>
         </member>
+        <member name="M:IDBrowserServiceCore.Code.ProgressTask.RedrawProgressBar(Konsole.IConsole,System.Int32)">
+            <summary>
+            Forces a redraw of the progress bar (e.g. in case of console size changed)
+            </summary>
+            <param name="konsoleWindow">IConsole window</param>
+            <param name="maxProgress">Max progress</param>
+        </member>
+        <member name="M:IDBrowserServiceCore.Code.ProgressTask.RefreshProgressBar(System.Int32,System.String)">
+            <summary>
+            Updates progress bar
+            </summary>
+            <param name="current">Current percent</param>
+            <param name="text">Status text</param>
+        </member>
         <member name="M:IDBrowserServiceCore.Code.ProgressTaskFactory.GetIdleProgressTask">
             <summary>
             Returns the first idle ProgressTask
@@ -58,6 +73,20 @@
             <summary>
             Wait's until all tasks are completed.
             </summary>
+        </member>
+        <member name="M:IDBrowserServiceCore.Code.ProgressTaskFactory.RedrawConsoleWindows(System.Int32)">
+            <summary>
+            Forces a redraw on all console windows (e.g. in case of console size changed)
+            </summary>
+            <param name="maxProgress">Max progress for progress bar's</param>
+        </member>
+        <member name="M:IDBrowserServiceCore.Code.ProgressTaskFactory.WriteLog(System.String,System.Boolean,Serilog.Events.LogEventLevel)">
+            <summary>
+            Writes a log to the console window and to the supplied Serilog Logger
+            </summary>
+            <param name="text">Text to write</param>
+            <param name="writeToConsole">If true output will be written to console</param>
+            <param name="logLevel">Serilog log level</param>
         </member>
         <member name="M:IDBrowserServiceCore.Code.StaticFunctions.TranscodeVideo(FFmpeg.NET.Engine,System.Threading.CancellationToken,System.String,System.String,System.String,System.Int32,System.Int32)">
             <summary>

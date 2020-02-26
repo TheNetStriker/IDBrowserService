@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Serilog;
 using Serilog.Core;
+using Serilog.Events;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -20,21 +21,6 @@ namespace IDBrowserServiceCore.Code
 {
     public class ConsoleFunctions
     {
-        private static Logger logger;
-        public static Logger Logger
-        {
-            get
-            {
-                if (logger == null)
-                    logger = new LoggerConfiguration()
-                        .MinimumLevel.Debug()
-                        .WriteTo.File(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Log", "ConsoleFunctions.log"))
-                        .CreateLogger();
-
-                return logger;
-            }
-        }
-
         public static bool? isWindows;
         public static bool IsWindows
         {
@@ -55,10 +41,19 @@ namespace IDBrowserServiceCore.Code
         /// <param name="siteName">Site name to transcode</param>
         /// <param name="videoSize">Video size to transcode. (e.g. Hd480, Hd720, Hd1080)</param>
         /// <param name="taskCount">FFmpeg task count (Default 2)</param>
+        /// <param name="logLevel">Serilog log level</param>
         public static void TranscodeAllVideos(IDBrowserConfiguration configuration, CancellationToken cancellationToken,
-            string siteName, string videoSize, int taskCount = 2)
+            string siteName, string videoSize, Serilog.Events.LogEventLevel logLevel, int taskCount)
         {
-            Log.Logger = Logger;
+            LoggingLevelSwitch loggingLevelSwitch = new LoggingLevelSwitch
+            {
+                MinimumLevel = logLevel
+            };
+
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.ControlledBy(loggingLevelSwitch)
+                .WriteTo.File(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Log", "ConsoleFunctions.log"))
+                .CreateLogger();
 
             SiteSettings siteSettings = configuration.Sites[siteName];
             
@@ -69,7 +64,7 @@ namespace IDBrowserServiceCore.Code
                 .Include(x => x.idFilePath)
                 .Where(x => configuration.VideoFileExtensions.Contains(x.idFileType));
 
-            ProgressTaskFactory progressTaskFactory = new ProgressTaskFactory(taskCount, 100, Logger);
+            ProgressTaskFactory progressTaskFactory = new ProgressTaskFactory(taskCount, 100, Log.Logger);
 
             Task windowChangeListenerTask = new Task(() =>
             {
@@ -97,7 +92,7 @@ namespace IDBrowserServiceCore.Code
                 // Log output scrolling not supported at the moment because Console.MoveBufferArea is currently not supported under Linux and MacOs.
                 // But we can write a single infoline.
                 progressTaskFactory.WriteLog("Log output in console not supported under Linux at the moment. Please take a look at the ConsoleFunctions.log in Logs directory.",
-                    true);
+                    true, LogEventLevel.Information);
             }
 
             List<TranscodeVideoBatchInfo> listTranscodeVideoBatch = new List<TranscodeVideoBatchInfo>();
@@ -142,7 +137,7 @@ namespace IDBrowserServiceCore.Code
                 progressTaskFactory.WriteLog(string.Format("Transcoding file {0} of {1} with guid {2} and path \"{3}\" from resolution {4}x{5} to {6}x{7} ",
                         intCounter, intTotalCount, transcodeVideoBatchInfo.GUID, transcodeVideoBatchInfo.VideoFileInfo.FullName, transcodeVideoBatchInfo.VideoWidth,
                         transcodeVideoBatchInfo.VideoHeight, targetVideoWidth, targetVideoHeight),
-                    IsWindows);
+                    IsWindows, LogEventLevel.Information);
 
                 ProgressTask progressTask = progressTaskFactory.GetIdleProgressTask();
 
@@ -198,7 +193,7 @@ namespace IDBrowserServiceCore.Code
                 {
                     progressTask.ProgressTaskFactory.WriteLog(string.Format("FFmpeg error on file \"{0}\" => {1}",
                             transcodeVideoBatchInfo.VideoFileInfo.FullName, eventArgs.Exception.ToString()),
-                        IsWindows);
+                        IsWindows, LogEventLevel.Error);
                 };
 
                 ffmpegEngine.Progress += (sender, eventArgs) =>
@@ -220,7 +215,8 @@ namespace IDBrowserServiceCore.Code
                 if (!transcodeVideoBatchInfo.TranscodeFileInfo.Exists)
                 {
                     progressTask.ProgressTaskFactory.WriteLog(string.Format("Transcoding on file \"{0}\" failed, file does not exist.",
-                        transcodeVideoBatchInfo.VideoFileInfo.FullName), IsWindows);
+                            transcodeVideoBatchInfo.VideoFileInfo.FullName),
+                        IsWindows, LogEventLevel.Error);
                     progressTask.RefreshProgressBar(0, progressBarText + " (failed)");
                 }
                 else if (transcodeVideoBatchInfo.TranscodeFileInfo.Length == 0)
@@ -228,7 +224,7 @@ namespace IDBrowserServiceCore.Code
                     transcodeVideoBatchInfo.TranscodeFileInfo.Delete();
                     progressTask.ProgressTaskFactory.WriteLog(string.Format("Transcoding failed on file \"{0}\", file size is zero. Unfinished transcoded file \"{1}\" deleted.",
                             transcodeVideoBatchInfo.VideoFileInfo.FullName, transcodeVideoBatchInfo.TranscodeFileInfo.FullName),
-                        IsWindows);
+                        IsWindows, LogEventLevel.Error);
                     progressTask.RefreshProgressBar(0, progressBarText + " (failed)");
                 }
                 else
@@ -247,7 +243,7 @@ namespace IDBrowserServiceCore.Code
                     transcodeVideoBatchInfo.TranscodeFileInfo.Delete();
                     progressTask.ProgressTaskFactory.WriteLog(string.Format("Unfinished transcoded file \"{0}\" deleted.",
                             transcodeVideoBatchInfo.TranscodeFileInfo.FullName),
-                        IsWindows);
+                        IsWindows, LogEventLevel.Error);
                 }
 
                 if (ex.GetType() == typeof(AggregateException)
@@ -255,11 +251,11 @@ namespace IDBrowserServiceCore.Code
                     && ex.InnerException.GetType() == typeof(TaskCanceledException))
                 {
 
-                    progressTask.ProgressTaskFactory.WriteLog("Transcoding cancelled", IsWindows);
+                    progressTask.ProgressTaskFactory.WriteLog("Transcoding cancelled", IsWindows, Serilog.Events.LogEventLevel.Information);
                 }
                 else
                 {
-                    progressTask.ProgressTaskFactory.WriteLog(ex.ToString(), IsWindows);
+                    progressTask.ProgressTaskFactory.WriteLog(ex.ToString(), IsWindows, Serilog.Events.LogEventLevel.Information);
                 }
 
                 return;

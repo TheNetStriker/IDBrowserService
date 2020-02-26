@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using IDBrowserServiceCore.Settings;
 using Microsoft.Extensions.Configuration;
+using Serilog.Events;
 
 namespace IDBrowserServiceCore.Code
 {
@@ -27,17 +28,23 @@ namespace IDBrowserServiceCore.Code
             {
                 if (args.Count() < 3)
                 {
-                    Console.WriteLine("Please specify the site name and video size to transcode videos. (e.g. Hd480, Hd720, Hd1080)");
+                    Console.WriteLine("Please specify the site name, video size (e.g. Hd480, Hd720, Hd1080), number of FFmpeg instances (optional, default 2, max 12) and log level (optional, default Error, possible values Verbose, Debug, Information, Warning, Error and Fatal) to transcode videos.");
                 }
                 else
                 {
                     string strSiteName = args[1];
                     string strVideoSize = args[2];
                     int taskCount = 2;
+                    Serilog.Events.LogEventLevel logLevel = LogEventLevel.Error;
 
                     if (args.Count() > 3)
                     {
-                        taskCount = int.Parse(args[3]);
+                        taskCount = Math.Min(12, Math.Max(1, int.Parse(args[3])));
+                    }
+
+                    if (args.Count() > 4)
+                    {
+                        logLevel = (LogEventLevel)Enum.Parse(typeof(LogEventLevel), args[4], true);
                     }
 
                     CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
@@ -48,7 +55,8 @@ namespace IDBrowserServiceCore.Code
                         e.Cancel = true;
                     };
 
-                    ConsoleFunctions.TranscodeAllVideos(configuration, cancellationTokenSource.Token, strSiteName, strVideoSize, taskCount);
+                    ConsoleFunctions.TranscodeAllVideos(configuration, cancellationTokenSource.Token, strSiteName,
+                        strVideoSize, logLevel, taskCount);
                     Console.WriteLine("Transcoding complete");
                 }
             }

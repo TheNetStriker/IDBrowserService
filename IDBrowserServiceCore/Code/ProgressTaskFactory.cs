@@ -1,5 +1,7 @@
 ﻿using Konsole;
+using Serilog;
 using Serilog.Core;
+using Serilog.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,10 +17,10 @@ namespace IDBrowserServiceCore.Code
         private IConsole bottomWindow;
         private readonly List<string> logs;
         private object progressBarLock;
-        private Logger logger;
+        private ILogger logger;
         private int concurrentTasks;
 
-        public ProgressTaskFactory(int concurrentTasks, int maxProgress, Logger logger)
+        public ProgressTaskFactory(int concurrentTasks, int maxProgress, ILogger logger)
         {
             this.concurrentTasks = concurrentTasks;
             this.logger = logger;
@@ -130,9 +132,10 @@ namespace IDBrowserServiceCore.Code
         /// </summary>
         /// <param name="text">Text to write</param>
         /// <param name="writeToConsole">If true output will be written to console</param>
-        public void WriteLog(string text, bool writeToConsole)
+        /// <param name="logLevel">Serilog log level</param>
+        public void WriteLog(string text, bool writeToConsole, LogEventLevel logLevel)
         {
-            logger.Debug(text);
+            logger.Write(logLevel, text);
 
             if (writeToConsole)
             {
