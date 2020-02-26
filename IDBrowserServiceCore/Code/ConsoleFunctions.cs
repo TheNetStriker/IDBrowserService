@@ -118,7 +118,7 @@ namespace IDBrowserServiceCore.Code
 
             int intTotalCount = listTranscodeVideoBatch.Count();
             int intCounter = 1;
-            TranscodeVideoBatchInfo lastTranscodeVideoBatch = listTranscodeVideoBatch.Last();
+            TranscodeVideoBatchInfo lastTranscodeVideoBatch = listTranscodeVideoBatch.LastOrDefault();
 
             foreach (TranscodeVideoBatchInfo transcodeVideoBatchInfo in listTranscodeVideoBatch)
             {
