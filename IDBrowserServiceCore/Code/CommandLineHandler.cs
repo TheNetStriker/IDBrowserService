@@ -23,7 +23,7 @@ namespace IDBrowserServiceCore.Code
             IDBrowserConfiguration configuration = new IDBrowserConfiguration();
             Configuration.Bind(configuration);
 
-            if (args[0] == nameof(StaticFunctions.TranscodeAllVideos))
+            if (args[0] == nameof(ConsoleFunctions.TranscodeAllVideos))
             {
                 if (args.Count() < 3)
                 {
@@ -33,6 +33,12 @@ namespace IDBrowserServiceCore.Code
                 {
                     string strSiteName = args[1];
                     string strVideoSize = args[2];
+                    int taskCount = 2;
+
+                    if (args.Count() > 3)
+                    {
+                        taskCount = int.Parse(args[3]);
+                    }
 
                     CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
@@ -42,11 +48,11 @@ namespace IDBrowserServiceCore.Code
                         e.Cancel = true;
                     };
 
-                    Console.WriteLine("Transcoding videos...");
-                    StaticFunctions.TranscodeAllVideos(configuration, cancellationTokenSource.Token, strSiteName, strVideoSize);
+                    ConsoleFunctions.TranscodeAllVideos(configuration, cancellationTokenSource.Token, strSiteName, strVideoSize, taskCount);
+                    Console.WriteLine("Transcoding complete");
                 }
             }
-            else if (args[0] == nameof(StaticFunctions.GenerateThumbnails))
+            else if (args[0] == nameof(ConsoleFunctions.GenerateThumbnails))
             {
                 if (args.Count() < 2)
                 {
@@ -72,7 +78,7 @@ namespace IDBrowserServiceCore.Code
                     bool.TryParse(Console.ReadLine(), out bool overwrite);
 
                     Console.WriteLine("Generating thumbnails...");
-                    StaticFunctions.GenerateThumbnails(configuration, strSiteName, fromDateTime,
+                    ConsoleFunctions.GenerateThumbnails(configuration, strSiteName, fromDateTime,
                         toDateTime, strFileFilter, strImageGuid, overwrite);
                 }
             }
