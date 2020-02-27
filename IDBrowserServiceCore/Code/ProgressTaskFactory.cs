@@ -20,7 +20,7 @@ namespace IDBrowserServiceCore.Code
         private ILogger logger;
         private int concurrentTasks;
 
-        public ProgressTaskFactory(int concurrentTasks, int maxProgress, ILogger logger)
+        public ProgressTaskFactory(int concurrentTasks, int maxProgress, int progressBarTextWidth, ILogger logger)
         {
             this.concurrentTasks = concurrentTasks;
             this.logger = logger;
@@ -32,7 +32,7 @@ namespace IDBrowserServiceCore.Code
 
             for (int i = 0; i < concurrentTasks; i++)
             {
-                taskPool.Add(new ProgressTask(this, progressBarLock, topWindow, maxProgress));
+                taskPool.Add(new ProgressTask(this, progressBarLock, topWindow, maxProgress, progressBarTextWidth));
             }
         }
 
@@ -114,7 +114,8 @@ namespace IDBrowserServiceCore.Code
         /// Forces a redraw on all console windows (e.g. in case of console size changed)
         /// </summary>
         /// <param name="maxProgress">Max progress for progress bar's</param>
-        public void RedrawConsoleWindows(int maxProgress)
+        /// <param name="progressBarTextWidth">Progress bar text width</param>
+        public void RedrawConsoleWindows(int maxProgress, int progressBarTextWidth)
         {
             lock (progressBarLock)
             {
@@ -122,7 +123,7 @@ namespace IDBrowserServiceCore.Code
 
                 foreach (ProgressTask progressTask in taskPool)
                 {
-                    progressTask.RedrawProgressBar(topWindow, maxProgress);
+                    progressTask.RedrawProgressBar(topWindow, maxProgress, progressBarTextWidth);
                 }
             }
         }

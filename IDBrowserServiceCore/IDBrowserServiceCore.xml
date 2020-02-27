@@ -37,12 +37,13 @@
             <param name="imageGuid">Generate single image guid</param>
             <param name="overwrite">Overwrite existing thumbnails</param>
         </member>
-        <member name="M:IDBrowserServiceCore.Code.ProgressTask.RedrawProgressBar(Konsole.IConsole,System.Int32)">
+        <member name="M:IDBrowserServiceCore.Code.ProgressTask.RedrawProgressBar(Konsole.IConsole,System.Int32,System.Int32)">
             <summary>
             Forces a redraw of the progress bar (e.g. in case of console size changed)
             </summary>
             <param name="konsoleWindow">IConsole window</param>
             <param name="maxProgress">Max progress</param>
+            <param name="textWidth">Progress bar text width</param>
         </member>
         <member name="M:IDBrowserServiceCore.Code.ProgressTask.RefreshProgressBar(System.Int32,System.String)">
             <summary>
@@ -74,11 +75,12 @@
             Wait's until all tasks are completed.
             </summary>
         </member>
-        <member name="M:IDBrowserServiceCore.Code.ProgressTaskFactory.RedrawConsoleWindows(System.Int32)">
+        <member name="M:IDBrowserServiceCore.Code.ProgressTaskFactory.RedrawConsoleWindows(System.Int32,System.Int32)">
             <summary>
             Forces a redraw on all console windows (e.g. in case of console size changed)
             </summary>
             <param name="maxProgress">Max progress for progress bar's</param>
+            <param name="progressBarTextWidth">Progress bar text width</param>
         </member>
         <member name="M:IDBrowserServiceCore.Code.ProgressTaskFactory.WriteLog(System.String,System.Boolean,Serilog.Events.LogEventLevel)">
             <summary>

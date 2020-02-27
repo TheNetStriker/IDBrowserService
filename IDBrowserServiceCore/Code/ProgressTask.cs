@@ -16,7 +16,8 @@ namespace IDBrowserServiceCore.Code
         private int progressBarCurrent;
         private string progressBarText;
 
-        public ProgressTask(ProgressTaskFactory progressTaskFactory, object progressBarLock, IConsole konsoleWindow, int maxProgress)
+        public ProgressTask(ProgressTaskFactory progressTaskFactory, object progressBarLock, IConsole konsoleWindow,
+            int maxProgress, int textWidth)
         {
             this.progressBarLock = progressBarLock;
             ProgressTaskFactory = progressTaskFactory;
@@ -24,12 +25,12 @@ namespace IDBrowserServiceCore.Code
             progressBarCurrent = 0;
             progressBarText = "";
 
-            InitProgressBar(konsoleWindow, maxProgress);
+            InitProgressBar(konsoleWindow, maxProgress, textWidth);
         }
 
-        private void InitProgressBar(IConsole konsoleWindow, int maxProgress)
+        private void InitProgressBar(IConsole konsoleWindow, int maxProgress, int textWidth)
         {
-            progressBar = new ProgressBar(konsoleWindow, maxProgress);
+            progressBar = new ProgressBar(konsoleWindow, maxProgress, textWidth);
         }
 
         /// <summary>
@@ -37,11 +38,12 @@ namespace IDBrowserServiceCore.Code
         /// </summary>
         /// <param name="konsoleWindow">IConsole window</param>
         /// <param name="maxProgress">Max progress</param>
-        public void RedrawProgressBar(IConsole konsoleWindow, int maxProgress)
+        /// <param name="textWidth">Progress bar text width</param>
+        public void RedrawProgressBar(IConsole konsoleWindow, int maxProgress, int textWidth)
         {
             lock (progressBarLock)
             {
-                InitProgressBar(konsoleWindow, maxProgress);
+                InitProgressBar(konsoleWindow, maxProgress, textWidth);
                 progressBar.Refresh(progressBarCurrent, progressBarText);
             }
         }
