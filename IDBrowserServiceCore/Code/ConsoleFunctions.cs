@@ -64,7 +64,7 @@ namespace IDBrowserServiceCore.Code
                 .Include(x => x.idFilePath)
                 .Where(x => configuration.VideoFileExtensions.Contains(x.idFileType));
 
-            ProgressTaskFactory progressTaskFactory = new ProgressTaskFactory(taskCount, 100, 50, Log.Logger);
+            ProgressTaskFactory progressTaskFactory = new ProgressTaskFactory(taskCount, 100, 60, Log.Logger);
 
             Task windowChangeListenerTask = new Task(() =>
             {
@@ -78,7 +78,7 @@ namespace IDBrowserServiceCore.Code
                         width = Console.WindowWidth;
                         height = Console.WindowHeight;
 
-                        progressTaskFactory.RedrawConsoleWindows(100, 50);
+                        progressTaskFactory.RedrawConsoleWindows(100, 60);
                     }
 
                     cancellationToken.WaitHandle.WaitOne(100);
@@ -115,6 +115,8 @@ namespace IDBrowserServiceCore.Code
                     listTranscodeVideoBatch.Add(transcodeVideoBatchInfo);
                 }
             }
+
+            db.Dispose();
 
             int intTotalCount = listTranscodeVideoBatch.Count();
             int intCounter = 1;

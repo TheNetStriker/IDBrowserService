@@ -288,6 +288,9 @@ namespace IDBrowserServiceCore.Code
             }
         }
 
+        static double RoundToNearestEven(double value) =>
+            Math.Truncate(value) + Math.Truncate(value) % 2;
+
         /// <summary>
         /// Calculates the resolution of the transcoded video
         /// </summary>
@@ -328,9 +331,9 @@ namespace IDBrowserServiceCore.Code
                     // Vertical video, swap height and width
                     if (originalVideoWidth > targetHeight)
                     {
-                        decimal dAspectRatio = (decimal)originalVideoHeight / originalVideoWidth;
+                        double dAspectRatio = (double)originalVideoHeight / originalVideoWidth;
                         width = targetHeight;
-                        height = (int)Math.Round(targetHeight * dAspectRatio);
+                        height = (int)RoundToNearestEven(targetHeight * dAspectRatio);
                     }
                     else
                     {
@@ -342,8 +345,8 @@ namespace IDBrowserServiceCore.Code
                 {
                     if (originalVideoHeight > targetHeight)
                     {
-                        decimal dAspectRatio = (decimal)originalVideoWidth / originalVideoHeight;
-                        width = (int)Math.Round(targetHeight * dAspectRatio);
+                        double dAspectRatio = (double)originalVideoWidth / originalVideoHeight;
+                        width = (int)RoundToNearestEven(targetHeight * dAspectRatio);
                         height = targetHeight;
                     }
                     else

@@ -35,6 +35,9 @@ namespace IDBrowserServiceCore
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args)
         {
+            // BASEDIR variable for Serilog path
+            Environment.SetEnvironmentVariable("BASEDIR", AppDomain.CurrentDomain.BaseDirectory);
+
             return WebHost.CreateDefaultBuilder(args)
                 .ConfigureKestrel(serverOptions =>
                 {
