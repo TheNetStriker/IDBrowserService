@@ -14,7 +14,7 @@ namespace IDBrowserServiceCore.Code
         {
             this.GUID = guid;
             this.VideoWidth = videoWidth;
-            this.VideoHeight = VideoHeight;
+            this.VideoHeight = videoHeight;
             this.VideoFileInfo = new FileInfo(videoFilePath);
             this.TranscodeFileInfo = new FileInfo(transcodeFilePath);
         }

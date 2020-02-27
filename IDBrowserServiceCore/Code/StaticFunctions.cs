@@ -252,11 +252,22 @@ namespace IDBrowserServiceCore.Code
             return Path.Combine(strTranscodeDirectory, guid + ".mp4");
         }
 
+        /// <summary>
+        /// Returns FFmpeg Engine
+        /// </summary>
+        /// <returns>FFmpeg Engine</returns>
         public static Engine GetFFmpegEngine()
         {
             return new Engine(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "ffmpeg.exe" : "ffmpeg");
         }
 
+        /// <summary>
+        /// Returns FFmpeg conversion options
+        /// </summary>
+        /// <param name="videoSize">FFmpeg videosize</param>
+        /// <param name="width">Video width</param>
+        /// <param name="height">Vidoe height</param>
+        /// <returns></returns>
         public static ConversionOptions GetConversionOptions(VideoSize videoSize, int width, int height)
         {
             if (videoSize == VideoSize.Custom)
@@ -277,6 +288,15 @@ namespace IDBrowserServiceCore.Code
             }
         }
 
+        /// <summary>
+        /// Calculates the resolution of the transcoded video
+        /// </summary>
+        /// <param name="transcodeVideoSize">FFmpeg videosize</param>
+        /// <param name="originalVideoWidth">Original video width</param>
+        /// <param name="originalVideoHeight">Original video height</param>
+        /// <param name="videoSize">Returns used FFmpeg videosize</param>
+        /// <param name="width">Returns video width</param>
+        /// <param name="height">Returns video height</param>
         public static void GetTranscodeVideoSize(string transcodeVideoSize, int originalVideoWidth, int originalVideoHeight,
             out VideoSize videoSize, out int width, out int height)
         {
@@ -308,9 +328,9 @@ namespace IDBrowserServiceCore.Code
                     // Vertical video, swap height and width
                     if (originalVideoWidth > targetHeight)
                     {
-                        double dAspectRatio = (double)originalVideoHeight / (double)originalVideoWidth;
+                        decimal dAspectRatio = (decimal)originalVideoHeight / originalVideoWidth;
                         width = targetHeight;
-                        height = (int)Math.Ceiling(targetHeight * dAspectRatio);
+                        height = (int)Math.Round(targetHeight * dAspectRatio);
                     }
                     else
                     {
@@ -322,8 +342,8 @@ namespace IDBrowserServiceCore.Code
                 {
                     if (originalVideoHeight > targetHeight)
                     {
-                        double dAspectRatio = (double)originalVideoWidth / (double)originalVideoHeight;
-                        width = (int)Math.Ceiling(targetHeight * dAspectRatio);
+                        decimal dAspectRatio = (decimal)originalVideoWidth / originalVideoHeight;
+                        width = (int)Math.Round(targetHeight * dAspectRatio);
                         height = targetHeight;
                     }
                     else
@@ -355,6 +375,12 @@ namespace IDBrowserServiceCore.Code
             }
         }
 
+        /// <summary>
+        /// Sets db options on DbContextOptionsBuilder
+        /// </summary>
+        /// <param name="optionsBuilder">DbContextOptionsBuilder to set</param>
+        /// <param name="dbType">DBType as string</param>
+        /// <param name="connectionString">Connection string</param>
         public static void SetDbContextOptions(DbContextOptionsBuilder optionsBuilder, string dbType,
             string connectionString)
         {
