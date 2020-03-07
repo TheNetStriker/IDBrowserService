@@ -68,10 +68,9 @@ WantedBy=multi-user.target
 # Commandline commands
 The IDBrowserServiceCore.dll can also execute batch jobs from the commandline. At the moment there are the following commandline commands available:
 ## TranscodeAllVideos
-This command transcodes all videos to a specific resultion into the TranscodeDirectory. The command needs the name of the site and the resolution (Hd480, Hd720, Hd1018) as additional parameters. Here is an example:
-dotnet IDBrowserServiceCore.dll
+This command transcodes all videos to a specific resultion into the TranscodeDirectory. The command requires the name of the site and the resolution (Hd480, Hd720, Hd1018) as parameters and optionally the number of FFmpeg instances (default 2) and the log level (default Error, possible values Verbose, Debug, Information, Warning, Error and Fatal). Here is an example:
 ```
-dotnet IDBrowserServiceCore.dll TranscodeAllVideos MySite Hd480
+dotnet IDBrowserServiceCore.dll TranscodeAllVideos MySite Hd480 2 Error
 ```
 ## GenerateThumbnails
 This command generates all missing thumbnails in the database. The command needs the site name as additional parameter. Here is an example:
