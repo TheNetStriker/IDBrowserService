@@ -26,9 +26,11 @@ namespace IDBrowserServiceCoreTest
 {
     public class UnitTest1
     {
+        
         private const string ReceipeTestGuid = "675BB1838073452BA98DF29E0D5249DD"; // "607F77D8CE8048A798C68336051E5CFC";
         private const string DBType = "Postgres";
 
+        private static List<string> imageFileExtensions;
         private static List<String> ImagePropertyGuids;
         private static List<String> ImageGuids;
 
@@ -39,8 +41,8 @@ namespace IDBrowserServiceCoreTest
         public UnitTest1()
         {
             ImagePropertyGuids = new List<String>();
-            List<string> imageFileExtensions = new List<string>() { "JPG", "JPEG", "TIF", "PNG", "GIF", "BMP" };
-            ImageGuids = Task.Run(() => ValuesController.GetRandomImageGuids(imageFileExtensions)).Result.Value;
+            imageFileExtensions = new List<string>() { "JPG", "JPEG", "TIF", "PNG", "GIF", "BMP" };
+            ImageGuids = Task.Run(() => ValuesController.GetRandomImageGuids(imageFileExtensions, 500)).Result.Value;
 
             idCatalogItemFirstImage = Db.idCatalogItem
                 .Include(x => x.idFilePath)
@@ -71,7 +73,7 @@ namespace IDBrowserServiceCoreTest
                     configuration = new ConfigurationBuilder()
                         .SetBasePath(Directory.GetCurrentDirectory())
                         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                        .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
+                        .AddJsonFile("sites.json", optional: true, reloadOnChange: true)
                         .AddEnvironmentVariables()
                         .Build();
                 }
@@ -80,36 +82,26 @@ namespace IDBrowserServiceCoreTest
             }
         }
 
-        private IConfigurationSection settingsSection;
-        public IConfigurationSection SettingsSection
+        private IDBrowserConfiguration idBrowserConfiguration;
+        public IDBrowserConfiguration IDBrowserConfiguration
         {
             get
             {
-                if (settingsSection == null)
+                if (idBrowserConfiguration == null)
                 {
-                    settingsSection = Configuration
-                        .GetSection("Sites")
-                        .GetChildren()
-                        .First()
-                        .GetSection("ServiceSettings");
+                    idBrowserConfiguration = new IDBrowserConfiguration();
+                    Configuration.Bind(idBrowserConfiguration);
                 }
 
-                return settingsSection;
+                return idBrowserConfiguration;
             }
         }
 
-        private ServiceSettings settings;
         public ServiceSettings Settings
         {
             get
             {
-                if (settings == null)
-                {
-                    settings = new ServiceSettings();
-                    SettingsSection.Bind(settings);
-                }
-
-                return settings;
+                return IDBrowserConfiguration.Sites.First().Value.ServiceSettings;
             }
         }
 
@@ -117,7 +109,7 @@ namespace IDBrowserServiceCoreTest
         {
             get
             {
-                return "Host=172.17.2.17;Database=photosupreme_mad;Username=idimager_main;Password=idi_main_2606;";
+                return IDBrowserConfiguration.Sites.First().Value.ConnectionStrings.IDImager;
             }
         }
 
@@ -125,7 +117,7 @@ namespace IDBrowserServiceCoreTest
         {
             get
             {
-                return "Host=172.17.2.17;Database=photosupreme_mad_thumbs;Username=idimager_main;Password=idi_main_2606;";
+                return IDBrowserConfiguration.Sites.First().Value.ConnectionStrings.IDImagerThumbs;
             }
         }
 
@@ -315,15 +307,21 @@ namespace IDBrowserServiceCoreTest
         [Fact]
         public async void GetImageTest()
         {
-            ActionResult<Stream> result = await ValuesController.GetImage(ReceipeTestGuid);
-            result.Value.Close();
+            foreach (string guid in ImageGuids)
+            {
+                ActionResult<Stream> result = await ValuesController.GetImage(guid);
+                result.Value.Close();
+            }
         }
 
         [Fact]
         public async void GetResizedImageTest()
         {
-            ActionResult<Stream> result = await ValuesController.GetResizedImage("640", "480", GetNextImageGuid());
-            result.Value.Close();
+            foreach (string guid in ImageGuids)
+            {
+                ActionResult<Stream> result = await ValuesController.GetResizedImage("640", "480", guid);
+                result.Value.Close();
+            }
         }
 
         [Fact]

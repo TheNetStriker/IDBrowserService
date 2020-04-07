@@ -558,9 +558,11 @@ namespace IDBrowserServiceCore.Controllers
                     catalogItem.GUID, ex.ToString()));
             }
 
+            MagickImage image = new MagickImage(imageStream);
+
             if ((width != null && height != null) || (xmpRecipeContainer != null && xmpRecipeContainer.HasValues))
             {
-                MagickImage image = new MagickImage(imageStream);
+                image.AutoOrient();
 
                 if (xmpRecipeContainer != null && xmpRecipeContainer.HasValues)
                     XmpRecipeHelper.ApplyXmpRecipe(xmpRecipeContainer, image);
@@ -576,13 +578,26 @@ namespace IDBrowserServiceCore.Controllers
                     }
                 }
 
-                //ToDo: Herausfinden ob rotation noch nötig ist.
-                //Rotation rotation = StaticFunctions.Rotate(ref bitmapSource, ref transformGroup);
-
                 imageStream = new MemoryStream();
                 image.Write(imageStream);
 
                 imageStream.Position = 0;
+            }
+            else
+            {
+                // If we don't resize the image, check if it needs to be re-oriented.
+                ExifShort exifValue = (ExifShort)image
+                    .GetExifProfile()
+                    .GetValue(ExifTag.Orientation);
+
+                if (exifValue != null && exifValue.Value > 0)
+                {
+                    image.AutoOrient();
+
+                    imageStream = new MemoryStream();
+                    image.Write(imageStream);
+                    imageStream.Position = 0;
+                }
             }
 
             return imageStream;
@@ -647,9 +662,10 @@ namespace IDBrowserServiceCore.Controllers
         /// Returns random image guids.
         /// </summary>
         /// <param name="imageFileExtensions">File extensions to include.</param>
+        /// <param name="count">Count of images guid's to return.</param>
         /// <returns>Random image guids.</returns>
         [HttpGet()]
-        public async Task<ActionResult<List<String>>> GetRandomImageGuids([FromQuery] List<string> imageFileExtensions)
+        public async Task<ActionResult<List<String>>> GetRandomImageGuids([FromQuery] List<string> imageFileExtensions, int count)
         {
             using (LogContext.PushProperty(nameof(imageFileExtensions), imageFileExtensions))
             {
@@ -666,7 +682,7 @@ namespace IDBrowserServiceCore.Controllers
                                           where imageFileExtensions.Contains(x.idFileType)
                                           orderby Guid.NewGuid()
                                           select x.GUID;
-                        randomImageGuids = await queryRandom.Take(100).ToListAsync();
+                        randomImageGuids = await queryRandom.Take(count).ToListAsync();
                         scope.Complete();
                     }
 

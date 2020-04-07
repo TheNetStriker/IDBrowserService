@@ -271,11 +271,12 @@
             <param name="imageGuid">Image guid</param>
             <returns>Image infos</returns>
         </member>
-        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetRandomImageGuids(System.Collections.Generic.List{System.String})">
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetRandomImageGuids(System.Collections.Generic.List{System.String},System.Int32)">
             <summary>
             Returns random image guids.
             </summary>
             <param name="imageFileExtensions">File extensions to include.</param>
+            <param name="count">Count of images guid's to return.</param>
             <returns>Random image guids.</returns>
         </member>
         <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetFile(System.String)">
