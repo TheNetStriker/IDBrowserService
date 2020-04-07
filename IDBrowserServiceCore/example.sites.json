@@ -1,0 +1,23 @@
+﻿{
+  "Sites": {
+    "exampleSite": {
+      "ConnectionStrings": {
+        "DBType": "Postgres",
+        "IDImager": "Host=192.168.16.2;Database=photosupreme;Username=idimager_main;Password=idi_main_2606;",
+        "IDImagerThumbs": "Host=192.168.16.2;Database=photosupreme_thumbs;Username=idimager_main;Password=idi_main_2606;"
+      },
+      "ServiceSettings": {
+        "CreateThumbnails": true,
+        "MThumbmailWidth": 1680,
+        "MThumbnailHeight": 1260,
+        "FilePathReplace": [
+          {
+            "PathMatch": "\\\\Server\\Share",
+            "PathReplace": "/Server/Share"
+          }
+        ],
+        "TranscodeDirectory": "/Server/Share/VideoTranscode/exampleSite"
+      }
+    }
+  }
+}

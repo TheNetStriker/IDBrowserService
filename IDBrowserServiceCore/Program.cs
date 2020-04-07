@@ -3,13 +3,10 @@ using IDBrowserServiceCore.Settings;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace IDBrowserServiceCore
 {
@@ -18,6 +15,7 @@ namespace IDBrowserServiceCore
         public static IConfiguration Configuration { get; } = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddJsonFile("sites.json", optional: true, reloadOnChange: true)
             .AddEnvironmentVariables()
             .Build();
 
@@ -39,12 +37,9 @@ namespace IDBrowserServiceCore
             Environment.SetEnvironmentVariable("BASEDIR", AppDomain.CurrentDomain.BaseDirectory);
 
             return WebHost.CreateDefaultBuilder(args)
-                .ConfigureKestrel(serverOptions =>
-                {
-                    serverOptions.ListenAnyIP(5000);
-                })
+                .UseConfiguration(Configuration)
                 .UseIISIntegration()
-                .UseUrls(Configuration.GetValue<string>("Urls"))
+                .UseUrls(Configuration.GetValue<string>(nameof(IDBrowserConfiguration.Urls)))
                 .UseStartup<Startup>()
                 .UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
                     .ReadFrom.Configuration(Configuration));

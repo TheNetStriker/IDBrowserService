@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace IDBrowserServiceCore.Settings
 {
@@ -16,6 +13,11 @@ namespace IDBrowserServiceCore.Settings
         public ServiceSettings()
         {
             FilePathReplace = new List<FilePathReplaceSettings>();
+
+            // Default settings
+            CreateThumbnails = true;
+            MThumbmailWidth = 1680;
+            MThumbnailHeight = 1260;
         }
     }
 }

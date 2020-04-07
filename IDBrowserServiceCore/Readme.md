@@ -2,6 +2,38 @@
 
 Currently actively maintained .Net Core based webservice. Works under Mac, Linux and Windows with support for MSSQL and Postgresql Databases. It should also work on ARM based systems, with exception of the image transform functions. (The ImageMagick.Net project is not yes compatible with ARM processors)
 
+# Docker
+For easy installation under Linux a Docker container can be installed.
+
+Minimal start command:
+```
+docker run -t -i -d -p 5000:80 \
+--name idbrowserservicecore \
+--restart always \
+-v /mnt/myVolume:/mnt/myVolume \
+-e Sites__site1__ConnectionStrings__DBType="Postgres" \
+-e Sites__site1__ConnectionStrings__IDImager="Host=192.168.16.2;Database=photosupreme;Username=idimager_main;Password=idi_main_2606;" \
+-e Sites__site1__ConnectionStrings__IDImagerThumbs="Host=192.168.16.2;Database=photosupreme_thumbs;Username=idimager_main;Password=idi_main_2606;" \
+-e Sites__site1__ServiceSettings__FilePathReplace__0__PathMatch="\\MYSERVER\myVolume" \
+-e Sites__site1__ServiceSettings__FilePathReplace__0__PathReplace="/mnt/myVolume" \
+-e Sites__site1__ServiceSettings__TranscodeDirectory="/mnt/myVolume/VideoTranscode/site1" \
+thenetstriker/idbrowserservicecore:1.0.3
+```
+Additional application environment variables:
+```
+-e Urls="http://*:5000" \
+-e Serilog__MinimumLevel="Error" \
+-e UseResponseCompression="true" \
+-e UseSwagger="true" \
+```
+Additional site environment variables:
+```
+-e Sites__site1__ServiceSettings__CreateThumbnails="true" \
+-e Sites__site1__ServiceSettings__MThumbmailWidth="1680" \
+-e Sites__site1__ServiceSettings__MThumbnailHeight="1260" \
+```
+It is also possible to configure multiple sites. Just copy all -e environment variables and replace site1 with the second site name.
+
 # Prerequisites
 
 * Asp.Net Core 3.1 runtime
@@ -19,8 +51,9 @@ Currently actively maintained .Net Core based webservice. Works under Mac, Linux
 | VideoFileExtensions | List of file extensions for videos. (Used for batch thumbnail generation and video transformation) |
 | UseResponseCompression | Enables http response compression (gzip and brotli) |
 | UseSwagger | Enables webservice swagger documentation on /SitName/swagger. |
-| Sites | In this section is is possible to define multiple sites with different Photosupreme databases. This way a single service can provide access to multiple Photosupreme databases. The name of the site must then be used in the url. (e.g. http://192.168.1.1/SiteName/values/GetImageProperties) Please take a look at the Site Settings section how to configure a new site. |
 | Serilog | Logging configuration |
+## sites.json
+In this file is is possible to define multiple sites with different Photosupreme databases. This way a single service can provide access to multiple Photosupreme databases. The name of the site must then be used in the url. (e.g. http://192.168.1.1/SiteName/values/GetImageProperties) Please take a look at the Site Settings section and the example.sites.json how to configure a new site.
 ### Site settings
 | Settings | Description |
 | --- | --- |
@@ -72,9 +105,17 @@ This command transcodes all videos to a specific resultion into the TranscodeDir
 ```
 dotnet IDBrowserServiceCore.dll TranscodeAllVideos MySite Hd480 2 Error
 ```
+When using the Docker container use the following command:
+```
+docker exec -it idbrowserservicecore dotnet IDBrowserServiceCore.dll TranscodeAllVideos MySite Hd480 2 Error
+```
 ## GenerateThumbnails
 This command generates all missing thumbnails in the database. The command needs the site name as additional parameter. Here is an example:
 ```
 dotnet IDBrowserServiceCore.dll GenerateThumbnails MySite
+```
+When using the Docker container use the following command:
+```
+docker exec -it idbrowserservicecore dotnet IDBrowserServiceCore.dll GenerateThumbnails MySite
 ```
 After that several optional Parameters can be specified to reduce the amount of images to be checked. There is also an option to overwrite existing thumnnails. This command uses the ImageFileExtensions and the VideoFileExtensions settings from the appsettings.json file to get a list of images and videos to process.
