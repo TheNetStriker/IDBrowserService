@@ -1107,27 +1107,44 @@ namespace IDBrowserServiceCore.Controllers
         /// </summary>
         /// <returns>Time limited token</returns>
         [HttpGet]
-        public string GetMediaToken(string guid)
+        public async Task<string> GetMediaToken(string guid)
         {
-            var now = DateTime.UtcNow;
-            var signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(serviceSettings.TokenSecretKey));
-
-            var claims = new Claim[]
+            try
             {
-                new Claim("MediaGuid", guid),
-                new Claim(JwtRegisteredClaimNames.Iat, new DateTimeOffset(now).ToUniversalTime().ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
-            };
+                if (guid == null)
+                    throw new ArgumentNullException(nameof(guid));
 
-            var jwt = new JwtSecurityToken(
-                issuer: serviceSettings.TokenIssuer,
-                audience: serviceSettings.TokenAudience,
-                claims: claims,
-                notBefore: now,
-                expires: now.Add(serviceSettings.TokenExpiration),
-                signingCredentials: new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256));
-            var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
+                idCatalogItem catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleOrDefaultAsync(x => x.GUID.Equals(guid));
 
-            return encodedJwt;
+                if (catalogItem == null)
+                    throw new Exception("Media guid not found!");
+
+                var now = DateTime.UtcNow;
+                var signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(serviceSettings.TokenSecretKey));
+
+                var claims = new Claim[]
+                {
+                    new Claim("MediaGuid", guid),
+                    new Claim(JwtRegisteredClaimNames.Iat, new DateTimeOffset(now).ToUniversalTime().ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
+                };
+
+                var jwt = new JwtSecurityToken(
+                    issuer: serviceSettings.TokenIssuer,
+                    audience: serviceSettings.TokenAudience,
+                    claims: claims,
+                    notBefore: now,
+                    expires: now.Add(serviceSettings.TokenExpiration),
+                    signingCredentials: new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256));
+                var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
+
+                LogHttpConnection(string.Format("GetMediaToken with guid: {0}", guid));
+                return encodedJwt;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex.ToString());
+                throw ex;
+            }
         }
 
         private void LogHttpConnection(string callingMethod)
