@@ -36,7 +36,7 @@ Additional site environment variables:
 -e Sites__site1__ServiceSettings__CreateThumbnails="true" \
 -e Sites__site1__ServiceSettings__MThumbmailWidth="1680" \
 -e Sites__site1__ServiceSettings__MThumbnailHeight="1260" \
--e Sites__site1__ServiceSettings__DisableInsecureMediaPlayApi": "true" \
+-e Sites__site1__ServiceSettings__DisableInsecureMediaPlayApi="true" \
 ```
 It is also possible to configure multiple sites. Just copy all -e environment variables and replace site1 with the second site name.
 
