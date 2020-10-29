@@ -114,4 +114,17 @@ namespace IDBrowserServiceCore.Data
         [DataMember]
         public int ImageCount { get; set; }
     }
+
+    [DataContract]
+    public class MediaToken
+    {
+        [DataMember]
+        public string Token { get; set; }
+
+        [DataMember]
+        public DateTime ValidFrom { get; set; }
+
+        [DataMember]
+        public DateTime ValidTo { get; set; }
+    }
 }

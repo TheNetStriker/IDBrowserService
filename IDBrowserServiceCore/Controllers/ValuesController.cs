@@ -1107,7 +1107,7 @@ namespace IDBrowserServiceCore.Controllers
         /// </summary>
         /// <returns>Time limited token</returns>
         [HttpGet]
-        public async Task<string> GetMediaToken(string guid)
+        public async Task<MediaToken> GetMediaToken(string guid)
         {
             try
             {
@@ -1128,17 +1128,23 @@ namespace IDBrowserServiceCore.Controllers
                     new Claim(JwtRegisteredClaimNames.Iat, new DateTimeOffset(now).ToUniversalTime().ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
                 };
 
-                var jwt = new JwtSecurityToken(
+                var jwtSecurityToken = new JwtSecurityToken(
                     issuer: serviceSettings.TokenIssuer,
                     audience: serviceSettings.TokenAudience,
                     claims: claims,
                     notBefore: now,
                     expires: now.Add(serviceSettings.TokenExpiration),
                     signingCredentials: new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256));
-                var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
+                var encodedJwtSecurityToken = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
 
                 LogHttpConnection(string.Format("GetMediaToken with guid: {0}", guid));
-                return encodedJwt;
+
+                return new MediaToken()
+                {
+                    Token = encodedJwtSecurityToken,
+                    ValidFrom = jwtSecurityToken.ValidFrom,
+                    ValidTo = jwtSecurityToken.ValidTo
+                };
             }
             catch (Exception ex)
             {
