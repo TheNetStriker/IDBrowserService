@@ -18,7 +18,11 @@ docker run -t -i -d -p 5000:80 \
 -e Sites__site1__ServiceSettings__FilePathReplace__0__PathMatch="\\MYSERVER\myVolume" \
 -e Sites__site1__ServiceSettings__FilePathReplace__0__PathReplace="/mnt/myVolume" \
 -e Sites__site1__ServiceSettings__TranscodeDirectory="/mnt/myVolume/VideoTranscode/site1" \
-thenetstriker/idbrowserservicecore:1.0.3
+-e Sites__site1__ServiceSettings__TokenSecretKey="ThisIsUnsecurePleaseChangeMeAsSoonAsPossible" \
+-e Sites__site1__ServiceSettings__TokenIssuer="IDBrowserServiceCore_Site_site1" \
+-e Sites__site1__ServiceSettings__TokenAudience="IDBrowserUser" \
+-e Sites__site1__ServiceSettings__TokenExpiration="01:00:00" \
+thenetstriker/idbrowserservicecore:1.0.4
 ```
 Additional application environment variables:
 ```
@@ -32,6 +36,7 @@ Additional site environment variables:
 -e Sites__site1__ServiceSettings__CreateThumbnails="true" \
 -e Sites__site1__ServiceSettings__MThumbmailWidth="1680" \
 -e Sites__site1__ServiceSettings__MThumbnailHeight="1260" \
+-e Sites__site1__ServiceSettings__DisableInsecureMediaPlayApi": "true" \
 ```
 It is also possible to configure multiple sites. Just copy all -e environment variables and replace site1 with the second site name.
 
