@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace IDBrowserServiceCore.Settings
 {
@@ -9,6 +10,11 @@ namespace IDBrowserServiceCore.Settings
         public int MThumbnailHeight { get; set; }
         public List<FilePathReplaceSettings> FilePathReplace { get; set; }
         public string TranscodeDirectory { get; set; }
+        public string TokenSecretKey { get; set; }
+        public string TokenIssuer { get; set; }
+        public string TokenAudience { get; set; }
+        public TimeSpan TokenExpiration { get; set; }
+        public bool DisableInsecureMediaPlayApi { get; set; }
 
         public ServiceSettings()
         {
@@ -18,6 +24,11 @@ namespace IDBrowserServiceCore.Settings
             CreateThumbnails = true;
             MThumbmailWidth = 1680;
             MThumbnailHeight = 1260;
+
+            TokenSecretKey = "ThisIsUnsecurePleaseChangeMeAsSoonAsPossible";
+            TokenIssuer = "IDBrowserServiceCore";
+            TokenAudience = "IDBrowserUser";
+            TokenExpiration = new TimeSpan(1, 0, 0);
         }
     }
 }

@@ -11,12 +11,16 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Context;
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
+using System.Security.Claims;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
@@ -1096,6 +1100,34 @@ namespace IDBrowserServiceCore.Controllers
                 logger.LogError(ex.ToString());
                 throw ex;
             }
+        }
+
+        /// <summary>
+        /// Generates token for secured media api
+        /// </summary>
+        /// <returns>Time limited token</returns>
+        [HttpGet]
+        public string GetMediaToken(string guid)
+        {
+            var now = DateTime.UtcNow;
+            var signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(serviceSettings.TokenSecretKey));
+
+            var claims = new Claim[]
+            {
+                new Claim("MediaGuid", guid),
+                new Claim(JwtRegisteredClaimNames.Iat, new DateTimeOffset(now).ToUniversalTime().ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
+            };
+
+            var jwt = new JwtSecurityToken(
+                issuer: serviceSettings.TokenIssuer,
+                audience: serviceSettings.TokenAudience,
+                claims: claims,
+                notBefore: now,
+                expires: now.Add(serviceSettings.TokenExpiration),
+                signingCredentials: new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256));
+            var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
+
+            return encodedJwt;
         }
 
         private void LogHttpConnection(string callingMethod)

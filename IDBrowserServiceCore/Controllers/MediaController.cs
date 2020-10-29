@@ -16,10 +16,12 @@ using Serilog.Context;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Net.Mime;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace IDBrowserServiceCore.Controllers
@@ -60,6 +62,45 @@ namespace IDBrowserServiceCore.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Play(string guid, string videosize)
+        {
+            if (serviceSettings.DisableInsecureMediaPlayApi)
+                return BadRequest("Insecure media api disabled!");
+
+            return await PlayInternal(guid, videosize);
+        }
+
+        /// <summary>
+        /// Returns an http video stream secured by a time limited token
+        /// </summary>
+        /// <param name="token">Authentification token (contains media guid)</param>
+        /// <param name="videosize">Optional videosize parameter for video transcoding</param>
+        /// <returns>Http video stream</returns>
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> PlaySecure(string token, string videosize)
+        {
+            var now = DateTime.UtcNow;
+            JwtSecurityToken jwtSecurityToken = new JwtSecurityTokenHandler().ReadJwtToken(token);
+
+            if (jwtSecurityToken.ValidFrom < now && jwtSecurityToken.ValidTo > now)
+            {
+                Claim mediaGuidClaim = jwtSecurityToken.Claims.SingleOrDefault(x => x.Type == "MediaGuid");
+
+                if (mediaGuidClaim == null) {
+                    return BadRequest("Claim missing!");
+                }
+
+                string mediaGuid = mediaGuidClaim.Value;
+
+                return await PlayInternal(mediaGuid, videosize);
+            }
+            else
+            {
+                return BadRequest("Token exired!");
+            }
+        }
+
+        private async Task<IActionResult> PlayInternal(string guid, string videosize)
         {
             using (LogContext.PushProperty(nameof(guid), guid))
             using (LogContext.PushProperty(nameof(videosize), videosize))
@@ -116,7 +157,7 @@ namespace IDBrowserServiceCore.Controllers
                     FileStreamResult fileStreamResult = new FileStreamResult(inputStream, mimeType)
                     {
                         EnableRangeProcessing = true,
-                        
+
                     };
 
                     return fileStreamResult;
@@ -129,7 +170,7 @@ namespace IDBrowserServiceCore.Controllers
                     logger.LogError(ex.ToString());
                     return BadRequest(ex.ToString());
                 }
-            }  
+            }
         }
 
         private string GetMimeNameFromExt(string fileName)

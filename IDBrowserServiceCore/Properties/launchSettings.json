@@ -21,7 +21,12 @@
         "Sites__mad__ConnectionStrings__IDImager": "Host=172.17.2.17;Database=photosupreme_mad;Username=idimager_main;Password=idi_main_2606;",
         "Sites__maw__ConnectionStrings__IDImagerThumbs": "Host=172.17.2.17;Database=photosupreme_maw_thumbs;Username=idimager_main;Password=idi_main_2606;",
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "Sites__mad__ConnectionStrings__DBType": "Postgres"
+        "Sites__mad__ConnectionStrings__DBType": "Postgres",
+        "Sites__mad__ServiceSettings__TokenSecretKey": "W}+$T9#]Lm^92)5Do6MR9777$W8d969",
+        "Sites__mad__ServiceSettings__TokenIssuer": "IDBrowserServiceCore_Site_mad",
+        "Sites__mad__ServiceSettings__TokenAudience": "David",
+        "Sites__mad__ServiceSettings__TokenExpiration": "01:00:00",
+        "Sites__mad__ServiceSettings__DisableInsecureMediaPlayApi": "true"
       }
     },
     "Console": {
@@ -35,7 +40,12 @@
         "Sites__mad__ConnectionStrings__IDImager": "Host=172.17.2.17;Database=photosupreme_mad;Username=idimager_main;Password=idi_main_2606;",
         "Sites__maw__ConnectionStrings__IDImagerThumbs": "Host=172.17.2.17;Database=photosupreme_maw_thumbs;Username=idimager_main;Password=idi_main_2606;",
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "Sites__mad__ConnectionStrings__DBType": "Postgres"
+        "Sites__mad__ConnectionStrings__DBType": "Postgres",
+        "Sites__mad__ServiceSettings__TokenSecretKey": "W}+$T9#]Lm^92)5Do6MR9777$W8d969",
+        "Sites__mad__ServiceSettings__TokenIssuer": "IDBrowserServiceCore_Site_mad",
+        "Sites__mad__ServiceSettings__TokenAudience": "David",
+        "Sites__mad__ServiceSettings__TokenExpiration": "01:00:00",
+        "Sites__mad__ServiceSettings__DisableInsecureMediaPlayApi": "true"
       }
     },
     "Docker": {
@@ -54,7 +64,17 @@
         "Sites__maw__ServiceSettings__FilePathReplace__0__PathReplace": "/Volumes/Qmultimedia",
         "Sites__mad__ConnectionStrings__IDImager": "Host=172.17.2.17;Database=photosupreme_mad;Username=idimager_main;Password=idi_main_2606;",
         "Sites__maw__ConnectionStrings__IDImagerThumbs": "Host=172.17.2.17;Database=photosupreme_maw_thumbs;Username=idimager_main;Password=idi_main_2606;",
-        "Sites__mad__ConnectionStrings__DBType": "Postgres"
+        "Sites__mad__ConnectionStrings__DBType": "Postgres",
+        "Sites__mad__ServiceSettings__TokenSecretKey": "W}+$T9#]Lm^92)5Do6MR9777$W8d969",
+        "Sites__maw__ServiceSettings__TokenSecretKey": "W}+$T9#]Lm^92)5Do6MR9777$W8d969",
+        "Sites__mad__ServiceSettings__TokenIssuer": "IDBrowserServiceCore_Site_mad",
+        "Sites__maw__ServiceSettings__TokenIssuer": "IDBrowserServiceCore_Site_maw",
+        "Sites__mad__ServiceSettings__TokenAudience": "David",
+        "Sites__mad__ServiceSettings__TokenExpiration": "01:00:00",
+        "Sites__maw__ServiceSettings__TokenAudience": "Willi",
+        "Sites__maw__ServiceSettings__TokenExpiration": "01:00:00",
+        "Sites__mad__ServiceSettings__DisableInsecureMediaPlayApi": "true",
+        "Sites__maw__ServiceSettings__DisableInsecureMediaPlayApi": "true"
       },
       "publishAllPorts": true
     }

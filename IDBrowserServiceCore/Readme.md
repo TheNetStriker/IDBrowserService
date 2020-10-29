@@ -1,3 +1,4 @@
+
 # IDBrowserServiceCore
 
 Currently actively maintained .Net Core based webservice. Works under Mac, Linux and Windows with support for MSSQL and Postgresql Databases. It should also work on ARM based systems, with exception of the image transform functions. (The ImageMagick.Net project is not yes compatible with ARM processors)
@@ -65,12 +66,17 @@ In this file is is possible to define multiple sites with different Photosupreme
 | ServiceSettings.MThumbnailHeight | Thumbnail height for thumbnail generation. |
 | ServiceSettings.FilePathReplace | Using this settings the file paths in the database can be adapted to the local path where the service is running. (e.g. if the database was created under windows and the service runs under Linux) |
 | ServiceSettings.TranscodeDirectory | Directory to put transcoded video files for this site. |
+| ServiceSettings.TokenSecretKey| Secret key for token generation for the secure media play api. (min 256 bytes) |
+| ServiceSettings.TokenIssuer | Token issuer name for token generation. |
+| ServiceSettings.TokenAudience | Token audience name for token generation. |
+| ServiceSettings.TokenExpiration | Time until token expires. (Format Hour:Minute:Second) |
+| ServiceSettings.DisableInsecureMediaPlayApi| If set to true the unsecure media play api will be disabled. |
 
 # Security
 
 If the service should be accessable from the web, it should at least be secured with https. Better would be to also secure the service using a client certificate authentification. This can be done by using a reverse proxy like HAProxy. The client certificate can then be added to the Android client to ensure that only the clients with the certificate can connect.
 
-Authentification using client certificates only works vor the values api at the moment. For the media streaming api the connection can be https but without a client certificate authentification. The reason for this is that the vlc media player currently does not support authentification using client certificates.
+Authentification using client certificates only works vor the values api. For the media streaming api the connection can be https but without client certificate authentification. The reason for this is that the vlc media player currently does not support authentification using client certificates. For this reason I've implemented a token based authentification in the media service. Tokens can be requested in the secure values service and then used in the media service to play videos. The tokens are only valid for limited time. (see setting **ServiceSettings.TokenExpiration**) For backwards compatibility the usecure play function is still enabled and can be disabled using the **ServiceSettings.DisableInsecureMediaPlayApi** setting.
 
 # Starting the service
 

@@ -178,6 +178,14 @@
             <param name="videosize">Optional videosize parameter for video transcoding</param>
             <returns>Http video stream</returns>
         </member>
+        <member name="M:IDBrowserServiceCore.Controllers.MediaController.PlaySecure(System.String,System.String)">
+            <summary>
+            Returns an http video stream secured by a time limited token
+            </summary>
+            <param name="token">Authentification token (contains media guid)</param>
+            <param name="videosize">Optional videosize parameter for video transcoding</param>
+            <returns>Http video stream</returns>
+        </member>
         <member name="T:IDBrowserServiceCore.Controllers.ValuesController">
             <summary>
             Controller for Photosupreme values
@@ -329,6 +337,12 @@
             Returns all file paths
             </summary>
             <returns>All file paths</returns>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetMediaToken(System.String)">
+            <summary>
+            Generates token for secured media api
+            </summary>
+            <returns>Time limited token</returns>
         </member>
         <member name="M:IDBrowserServiceCore.Data.IDImager.idCatalogItem.GetHeightAndWidth(System.Int32@,System.Int32@)">
             <summary>
