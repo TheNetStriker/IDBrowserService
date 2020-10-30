@@ -16,6 +16,7 @@ using Serilog;
 using Serilog.Context;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
@@ -148,8 +149,8 @@ namespace IDBrowserServiceCore.Controllers
             {
                 try
                 {
-                    if (guid is null) throw new ArgumentNullException(nameof(guid));
-                    if (isCategory is null) throw new ArgumentNullException(nameof(isCategory));
+                    if (guid is null) return StaticFunctions.BadRequestArgumentNull(nameof(guid));
+                    if (isCategory is null) return StaticFunctions.BadRequestArgumentNull(nameof(isCategory));
 
                     return await GetImagePropertyThumbnailStream(guid, isCategory);
                 }
@@ -241,8 +242,8 @@ namespace IDBrowserServiceCore.Controllers
             {
                 try
                 {
-                    if (orderDescending is null) throw new ArgumentNullException(nameof(orderDescending));
-                    if (propertyGuid is null) throw new ArgumentNullException(nameof(propertyGuid));
+                    if (orderDescending is null) return StaticFunctions.BadRequestArgumentNull(nameof(orderDescending));
+                    if (propertyGuid is null) return StaticFunctions.BadRequestArgumentNull(nameof(propertyGuid));
 
                     List<CatalogItem> catalogItems = null;
 
@@ -301,8 +302,8 @@ namespace IDBrowserServiceCore.Controllers
             {
                 try
                 {
-                    if (orderDescending is null) throw new ArgumentNullException(nameof(orderDescending));
-                    if (filePathGuid is null) throw new ArgumentNullException(nameof(filePathGuid));
+                    if (orderDescending is null) return StaticFunctions.BadRequestArgumentNull(nameof(orderDescending));
+                    if (filePathGuid is null) return StaticFunctions.BadRequestArgumentNull(nameof(filePathGuid));
 
                     List<CatalogItem> catalogItems = null;
 
@@ -360,8 +361,8 @@ namespace IDBrowserServiceCore.Controllers
             {
                 try
                 {
-                    if (type is null) throw new ArgumentNullException(nameof(type));
-                    if (imageGuid is null) throw new ArgumentNullException(nameof(imageGuid));
+                    if (type is null) return StaticFunctions.BadRequestArgumentNull(nameof(type));
+                    if (imageGuid is null) return StaticFunctions.BadRequestArgumentNull(nameof(imageGuid));
 
                     return await GetImageThumbnailStream(type, imageGuid);
                 }
@@ -376,7 +377,7 @@ namespace IDBrowserServiceCore.Controllers
         private async Task<ActionResult<Stream>> GetImageThumbnailStream(string type, string imageGuid)
         {
             if (type != "T" && type != "R" && type != "M")
-                throw new Exception("Unsupported image type");
+                return BadRequest("Unsupported image type");
 
             idCatalogItem catalogItem = null;
             Stream imageStream = null;
@@ -387,10 +388,10 @@ namespace IDBrowserServiceCore.Controllers
                 catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleAsync(x => x.GUID == imageGuid);
 
                 if (catalogItem == null)
-                    throw new Exception("CatalogItem not found");
+                    return BadRequest("CatalogItem not found");
 
                 if (type == "R" && catalogItem.idHasRecipe == 0)
-                    throw new Exception("Image has no recipe");
+                    return BadRequest("Image has no recipe");
 
                 //Check if CatalogItem has a recipe, if yes try to get the recipe image
                 if (type == "M" && catalogItem.idHasRecipe > 0)
@@ -468,26 +469,26 @@ namespace IDBrowserServiceCore.Controllers
         {
             using (LogContext.PushProperty(nameof(imageGuid), imageGuid))
             {
-                Stream imageStream = null;
+                ActionResult<Stream> getImageStreamResult = null;
                 try
                 {
-                    if (imageGuid is null) throw new ArgumentNullException(nameof(imageGuid));
+                    if (imageGuid is null) return StaticFunctions.BadRequestArgumentNull(nameof(imageGuid));
 
                     LogHttpConnection(string.Format("GetImage with imageGuid: {0}", imageGuid));
 
-                    imageStream = await GetImageStream(imageGuid);
+                    getImageStreamResult = await GetImageStream(imageGuid);
 
-                    if (HttpContext != null)
+                    if (HttpContext != null && getImageStreamResult.Value != null)
                     {
                         HttpContext.Response.ContentType = "image/jpeg";
-                        HttpContext.Response.Headers.Add("Content-Size", imageStream.Length.ToString());
+                        HttpContext.Response.Headers.Add("Content-Size", getImageStreamResult.Value.Length.ToString());
                     }
 
-                    return imageStream;
+                    return getImageStreamResult;
                 }
                 catch (Exception ex)
                 {
-                    if (imageStream != null) { imageStream.Close(); }
+                    if (getImageStreamResult != null && getImageStreamResult.Value != null) { getImageStreamResult.Value.Close(); }
                     logger.LogError(ex.ToString());
                     throw ex;
                 }
@@ -508,44 +509,43 @@ namespace IDBrowserServiceCore.Controllers
             using (LogContext.PushProperty(nameof(height), height))
             using (LogContext.PushProperty(nameof(imageGuid), imageGuid))
             {
-                Stream imageStream = null;
+                ActionResult<Stream> getImageStreamResult = null;
                 try
                 {
-                    if (width is null) throw new ArgumentNullException(nameof(width));
-                    if (height is null) throw new ArgumentNullException(nameof(height));
-                    if (imageGuid is null) throw new ArgumentNullException(nameof(imageGuid));
+                    if (width is null) return StaticFunctions.BadRequestArgumentNull(nameof(width));
+                    if (height is null) return StaticFunctions.BadRequestArgumentNull(nameof(height));
+                    if (imageGuid is null) return StaticFunctions.BadRequestArgumentNull(nameof(imageGuid));
 
                     LogHttpConnection(string.Format("GetResizedImage with width: {0} height {1} imageGuid: {2}",
                         width, height, imageGuid));
 
-                    imageStream = await GetImageStream(imageGuid, width, height);
+                    getImageStreamResult = await GetImageStream(imageGuid, width, height);
 
-                    if (HttpContext != null)
+                    if (HttpContext != null && getImageStreamResult.Value != null)
                     {
                         HttpContext.Response.ContentType = "image/jpeg";
-                        HttpContext.Response.Headers.Add("Content-Size", imageStream.Length.ToString());
+                        HttpContext.Response.Headers.Add("Content-Size", getImageStreamResult.Value.Length.ToString());
                     }
 
-                    return imageStream;
+                    return getImageStreamResult;
                 }
                 catch (Exception ex)
                 {
-                    if (imageStream != null) { imageStream.Close(); }
+                    if (getImageStreamResult != null && getImageStreamResult.Value != null) { getImageStreamResult.Value.Close(); }
                     logger.LogError(ex.ToString());
                     throw ex;
                 }
             }
         }
 
-        private async Task<Stream> GetImageStream(string imageGuid, string width = null, string height = null)
+        private async Task<ActionResult<Stream>> GetImageStream(string imageGuid, string width = null, string height = null)
         {
-            if (imageGuid is null) throw new ArgumentNullException(nameof(imageGuid));
-
             idCatalogItem catalogItem = null;
 
-            catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleAsync(x => x.GUID == imageGuid);
+            catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleOrDefaultAsync(x => x.GUID == imageGuid);
+
             if (catalogItem == null)
-                throw new Exception("CatalogItem not found");
+                return BadRequest("CatalogItem not found");
 
             string strImageFilePath = StaticFunctions.GetImageFilePath(catalogItem, serviceSettings.FilePathReplace);
             Stream imageStream = StaticFunctions.GetImageFileStream(strImageFilePath);
@@ -619,7 +619,7 @@ namespace IDBrowserServiceCore.Controllers
             {
                 try
                 {
-                    if (imageGuid is null) throw new ArgumentNullException(nameof(imageGuid));
+                    if (imageGuid is null) return StaticFunctions.BadRequestArgumentNull(nameof(imageGuid));
 
                     var queryXMP = from tbl in db.idSearchData
                                    where tbl.RelatedGUID == imageGuid
@@ -675,7 +675,7 @@ namespace IDBrowserServiceCore.Controllers
             {
                 try
                 {
-                    if (imageFileExtensions is null) throw new ArgumentNullException(nameof(imageFileExtensions));
+                    if (imageFileExtensions is null) return StaticFunctions.BadRequestArgumentNull(nameof(imageFileExtensions));
 
                     List<String> randomImageGuids;
 
@@ -714,7 +714,7 @@ namespace IDBrowserServiceCore.Controllers
                 Stream fileStream = null;
                 try
                 {
-                    if (imageGuid is null) throw new ArgumentNullException(nameof(imageGuid));
+                    if (imageGuid is null) return StaticFunctions.BadRequestArgumentNull(nameof(imageGuid));
 
                     LogHttpConnection(string.Format("GetFile with imageGuid: {0}", imageGuid));
 
@@ -728,7 +728,7 @@ namespace IDBrowserServiceCore.Controllers
                     }
 
                     if (catalogItem == null)
-                        throw new Exception("CatalogItem not found");
+                        return BadRequest("CatalogItem not found");
 
                     string strImageFilePath = StaticFunctions.GetImageFilePath(catalogItem, serviceSettings.FilePathReplace);
                     fileStream = StaticFunctions.GetImageFileStream(strImageFilePath);
@@ -762,7 +762,7 @@ namespace IDBrowserServiceCore.Controllers
             {
                 try
                 {
-                    if (searchString is null) throw new ArgumentNullException(nameof(searchString));
+                    if (searchString is null) return StaticFunctions.BadRequestArgumentNull(nameof(searchString));
 
                     var queryProperties = from tbl in db.idProp
                                           where tbl.PropName.ToLower().Contains(searchString.ToLower())
@@ -794,7 +794,7 @@ namespace IDBrowserServiceCore.Controllers
             {
                 try
                 {
-                    if (catalogItemGUID is null) throw new ArgumentNullException(nameof(catalogItemGUID));
+                    if (catalogItemGUID is null) return StaticFunctions.BadRequestArgumentNull(nameof(catalogItemGUID));
 
                     var queryCatalogItemDefinition = from tbl in db.idCatalogItemDefinition
                                                      where tbl.CatalogItemGUID == catalogItemGUID
@@ -877,18 +877,18 @@ namespace IDBrowserServiceCore.Controllers
             {
                 try
                 {
-                    if (propertyGuid is null) throw new ArgumentNullException(nameof(propertyGuid));
-                    if (catalogItemGUID is null) throw new ArgumentNullException(nameof(catalogItemGUID));
+                    if (propertyGuid is null) return StaticFunctions.BadRequestArgumentNull(nameof(propertyGuid));
+                    if (catalogItemGUID is null) return StaticFunctions.BadRequestArgumentNull(nameof(catalogItemGUID));
 
                     if (await db.idProp.Where(x => x.GUID == propertyGuid).CountAsync() == 0)
-                        throw new Exception("Image property does not exist");
+                        return BadRequest("Image property does not exist");
 
                     var query = from tbl in db.idCatalogItemDefinition
                                 where tbl.GUID == propertyGuid & tbl.CatalogItemGUID == catalogItemGUID
                                 select tbl;
 
                     if (await query.CountAsync() > 0)
-                        throw new Exception("CatalogItemDefinition already exists");
+                        return BadRequest("CatalogItemDefinition already exists");
 
                     idCatalogItem currentIdCatalogItem = await db.idCatalogItem.SingleAsync(x => x.GUID == catalogItemGUID);
                     idImageVersion currentIdImageVersion = await db.idImageVersion.SingleOrDefaultAsync(x => x.MainImageGUID == catalogItemGUID);
@@ -934,8 +934,8 @@ namespace IDBrowserServiceCore.Controllers
             {
                 try
                 {
-                    if (propertyGuid is null) throw new ArgumentNullException(nameof(propertyGuid));
-                    if (catalogItemGUID is null) throw new ArgumentNullException(nameof(catalogItemGUID));
+                    if (propertyGuid is null) return StaticFunctions.BadRequestArgumentNull(nameof(propertyGuid));
+                    if (catalogItemGUID is null) return StaticFunctions.BadRequestArgumentNull(nameof(catalogItemGUID));
 
                     idCatalogItemDefinition currentIdCatalogItemDefinition = await db.idCatalogItemDefinition
                         .SingleAsync(x => x.GUID == propertyGuid && x.CatalogItemGUID == catalogItemGUID);
@@ -978,8 +978,8 @@ namespace IDBrowserServiceCore.Controllers
             {
                 try
                 {
-                    if (propertyName is null) throw new ArgumentNullException(nameof(propertyName));
-                    if (parentGUID is null) throw new ArgumentNullException(nameof(parentGUID));
+                    if (propertyName is null) return StaticFunctions.BadRequestArgumentNull(nameof(propertyName));
+                    if (parentGUID is null) return StaticFunctions.BadRequestArgumentNull(nameof(parentGUID));
 
                     idProp parentIdProp = await db.idProp.SingleOrDefaultAsync(x => x.GUID.Equals(parentGUID));
                     int? parentRgt;
@@ -1107,17 +1107,17 @@ namespace IDBrowserServiceCore.Controllers
         /// </summary>
         /// <returns>Time limited token</returns>
         [HttpGet]
-        public async Task<MediaToken> GetMediaToken(string guid)
+        public async Task<ActionResult<MediaToken>> GetMediaToken([Required] string guid)
         {
             try
             {
                 if (guid == null)
-                    throw new ArgumentNullException(nameof(guid));
+                    return StaticFunctions.BadRequestArgumentNull(nameof(guid));
 
                 idCatalogItem catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleOrDefaultAsync(x => x.GUID.Equals(guid));
 
                 if (catalogItem == null)
-                    throw new Exception("Media guid not found!");
+                    return BadRequest("Media guid not found!");
 
                 var now = DateTime.UtcNow;
                 var signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(serviceSettings.TokenSecretKey));

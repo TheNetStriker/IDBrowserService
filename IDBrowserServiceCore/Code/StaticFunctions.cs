@@ -9,6 +9,8 @@ using IDBrowserServiceCore.Data.PostgresHelpers;
 using IDBrowserServiceCore.Settings;
 using ImageMagick;
 using Konsole;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
@@ -400,6 +402,16 @@ namespace IDBrowserServiceCore.Code
             {
                 throw new Exception("DBType not supported, supported type are 'MsSql' and 'Postgres'.");
             }
+        }
+
+        /// <summary>
+        /// Returns a BadRequestObjectResult for missing arguments.
+        /// </summary>
+        /// <param name="argumentName">Missing argument name</param>
+        /// <returns>BadRequestObjectResult</returns>
+        public static BadRequestObjectResult BadRequestArgumentNull([ActionResultObjectValue] object argumentName)
+        {
+            return new BadRequestObjectResult(string.Format("Missing argument: {0}", argumentName));
         }
     }
 }

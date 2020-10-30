@@ -66,6 +66,8 @@ namespace IDBrowserServiceCore.Controllers
             if (serviceSettings.DisableInsecureMediaPlayApi)
                 return BadRequest("Insecure media api disabled!");
 
+            if (guid is null) return StaticFunctions.BadRequestArgumentNull(nameof(guid));
+
             return await PlayInternal(guid, videosize);
         }
 
@@ -79,6 +81,8 @@ namespace IDBrowserServiceCore.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> PlaySecure(string token, string videosize)
         {
+            if (token is null) return StaticFunctions.BadRequestArgumentNull(nameof(token));
+
             var now = DateTime.UtcNow;
             JwtSecurityToken jwtSecurityToken = new JwtSecurityTokenHandler().ReadJwtToken(token);
 
@@ -140,12 +144,12 @@ namespace IDBrowserServiceCore.Controllers
 
                         if (!transcodeFileInfo.Exists)
                         {
-                            throw new Exception("Transcoding failed, file does not exist.");
+                            return BadRequest("Transcoding failed, file does not exist.");
                         }
                         else if (transcodeFileInfo.Length == 0)
                         {
                             transcodeFileInfo.Delete();
-                            throw new Exception(string.Format("Transcoding failed on file \"{0}\", file size is zero. Unfinished transcoded file \"{1}\" deleted.",
+                            return BadRequest(string.Format("Transcoding failed on file \"{0}\", file size is zero. Unfinished transcoded file \"{1}\" deleted.",
                                 strFilePath, strTranscodeFilePath));
                         }
 

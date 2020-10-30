@@ -156,6 +156,13 @@
             <param name="dbType">DBType as string</param>
             <param name="connectionString">Connection string</param>
         </member>
+        <member name="M:IDBrowserServiceCore.Code.StaticFunctions.BadRequestArgumentNull(System.Object)">
+            <summary>
+            Returns a BadRequestObjectResult for missing arguments.
+            </summary>
+            <param name="argumentName">Missing argument name</param>
+            <returns>BadRequestObjectResult</returns>
+        </member>
         <member name="T:IDBrowserServiceCore.Controllers.MediaController">
             <summary>
             Controller for video streaming
