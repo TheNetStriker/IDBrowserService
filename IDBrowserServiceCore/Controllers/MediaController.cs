@@ -162,7 +162,6 @@ namespace IDBrowserServiceCore.Controllers
                     FileStreamResult fileStreamResult = new FileStreamResult(inputStream, mimeType)
                     {
                         EnableRangeProcessing = true,
-
                     };
 
                     return fileStreamResult;

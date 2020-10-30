@@ -220,18 +220,22 @@ namespace IDBrowserServiceCore.Controllers
             {
                 LogHttpConnection(string.Format("GetImagePropertyThumbnail with guid: {0} isCategory: {1} (returned null)",
                     guid, isCategory));
+
+                return BadRequest("Image not found.");
             }
             else
-            {
-                if (HttpContext != null)
-                    HttpContext.Response.ContentType = "image/jpeg";
-                
+            {               
                 imageStream = new MemoryStream(idImage);
                 LogHttpConnection(string.Format("GetImagePropertyThumbnail with guid: {0} isCategory: {1}",
                     guid, isCategory));
             }
 
-            return imageStream;
+            FileStreamResult imageStreamResult = new FileStreamResult(imageStream, "image/jpeg")
+            {
+                EnableRangeProcessing = true,
+            };
+
+            return imageStreamResult;
         }
 
         /// <summary>
@@ -394,7 +398,7 @@ namespace IDBrowserServiceCore.Controllers
             using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
                 readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
             {
-                catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleAsync(x => x.GUID == imageGuid);
+                catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleOrDefaultAsync(x => x.GUID == imageGuid);
 
                 if (catalogItem == null)
                     return BadRequest("CatalogItem not found");
@@ -436,9 +440,6 @@ namespace IDBrowserServiceCore.Controllers
                         {
                             imageStream = result.ImageStreams.First();
 
-                            if (HttpContext != null)
-                                HttpContext.Response.ContentType = "image/jpeg";
-
                             LogHttpConnection(string.Format("GetImageThumbnail with type: {0} imageGuid: {1} (returned resizedImageStream)",
                                 type, imageGuid));
                         }
@@ -446,14 +447,13 @@ namespace IDBrowserServiceCore.Controllers
                         {
                             LogHttpConnection(string.Format("GetImageThumbnail with type: {0} imageGuid: {1} (returned null)",
                                 type, imageGuid));
+
+                            return BadRequest("Thumbnail generation failed.");
                         }
                     }
                     else
                     {
                         imageStream = new MemoryStream(thumb.idThumb);
-
-                        if (HttpContext != null)
-                            HttpContext.Response.ContentType = "image/jpeg";
 
                         LogHttpConnection(string.Format("GetImageThumbnail with type: {0} imageGuid: {1} (returned imageStream)",
                             type, imageGuid));
@@ -465,7 +465,12 @@ namespace IDBrowserServiceCore.Controllers
                 scope.Complete();
             }
 
-            return imageStream;
+            FileStreamResult imageStreamResult = new FileStreamResult(imageStream, "image/jpeg")
+            {
+                EnableRangeProcessing = true,
+            };
+
+            return imageStreamResult;
         }
 
         /// <summary>
@@ -485,15 +490,7 @@ namespace IDBrowserServiceCore.Controllers
 
                     LogHttpConnection(string.Format("GetImage with imageGuid: {0}", imageGuid));
 
-                    getImageStreamResult = await GetImageStream(imageGuid);
-
-                    if (HttpContext != null && getImageStreamResult.Value != null)
-                    {
-                        HttpContext.Response.ContentType = "image/jpeg";
-                        HttpContext.Response.Headers.Add("Content-Size", getImageStreamResult.Value.Length.ToString());
-                    }
-
-                    return getImageStreamResult;
+                    return await GetImageStream(imageGuid, "image/jpeg");
                 }
                 catch (Exception ex)
                 {
@@ -528,15 +525,7 @@ namespace IDBrowserServiceCore.Controllers
                     LogHttpConnection(string.Format("GetResizedImage with width: {0} height {1} imageGuid: {2}",
                         width, height, imageGuid));
 
-                    getImageStreamResult = await GetImageStream(imageGuid, width, height);
-
-                    if (HttpContext != null && getImageStreamResult.Value != null)
-                    {
-                        HttpContext.Response.ContentType = "image/jpeg";
-                        HttpContext.Response.Headers.Add("Content-Size", getImageStreamResult.Value.Length.ToString());
-                    }
-
-                    return getImageStreamResult;
+                    return await GetImageStream(imageGuid, "image/jpeg", width, height);
                 }
                 catch (Exception ex)
                 {
@@ -547,7 +536,7 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
-        private async Task<ActionResult<Stream>> GetImageStream([Required] string imageGuid, string width = null, string height = null)
+        private async Task<ActionResult<Stream>> GetImageStream([Required] string imageGuid, string mimeType, string width = null, string height = null)
         {
             if (imageGuid is null) return StaticFunctions.BadRequestArgumentNull(nameof(imageGuid));
 
@@ -615,7 +604,12 @@ namespace IDBrowserServiceCore.Controllers
                 }
             }
 
-            return imageStream;
+            FileStreamResult imageStreamResult = new FileStreamResult(imageStream, mimeType)
+            {
+                EnableRangeProcessing = true,
+            };
+
+            return imageStreamResult;
         }
 
         /// <summary>
@@ -734,7 +728,7 @@ namespace IDBrowserServiceCore.Controllers
                     using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
                         readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
                     {
-                        catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleAsync(x => x.GUID == imageGuid);
+                        catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleOrDefaultAsync(x => x.GUID == imageGuid);
                         scope.Complete();
                     }
 
@@ -744,13 +738,13 @@ namespace IDBrowserServiceCore.Controllers
                     string strImageFilePath = StaticFunctions.GetImageFilePath(catalogItem, serviceSettings.FilePathReplace);
                     fileStream = StaticFunctions.GetImageFileStream(strImageFilePath);
 
-                    if (HttpContext != null)
+                    FileStreamResult fileStreamResult = new FileStreamResult(fileStream, "application/octet-stream")
                     {
-                        HttpContext.Response.ContentType = "application/octet-stream";
-                        HttpContext.Response.Headers.Add("Content-Size", fileStream.Length.ToString());
-                    }
+                        EnableRangeProcessing = true,
+                        FileDownloadName = catalogItem.FileName
+                    };
 
-                    return fileStream;
+                    return fileStreamResult;
                 }
                 catch (Exception ex)
                 {
