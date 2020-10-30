@@ -142,7 +142,7 @@ namespace IDBrowserServiceCore.Controllers
         /// <param name="isCategory">True if the property is an image category</param>
         /// <returns>image property or image category thumbnail</returns>
         [HttpGet("{guid}/{isCategory}")]
-        public async Task<ActionResult<Stream>> GetImagePropertyThumbnail(string guid, string isCategory)
+        public async Task<ActionResult<Stream>> GetImagePropertyThumbnail([Required] string guid, [Required] string isCategory)
         {
             using (LogContext.PushProperty(nameof(guid), guid))
             using (LogContext.PushProperty(nameof(isCategory), isCategory))
@@ -171,7 +171,7 @@ namespace IDBrowserServiceCore.Controllers
         /// <param name="height">Image height</param>
         /// <returns>Resized image property or image category thumbnail</returns>
         [HttpGet("{guid}/{isCategory}/{width}/{height}")]
-        public async Task<ActionResult<Stream>> GetResizedImagePropertyThumbnail(string guid, string isCategory, string width, string height)
+        public async Task<ActionResult<Stream>> GetResizedImagePropertyThumbnail([Required] string guid, [Required] string isCategory, string width, string height)
         {
             using (LogContext.PushProperty(nameof(guid), guid))
             using (LogContext.PushProperty(nameof(isCategory), isCategory))
@@ -180,6 +180,9 @@ namespace IDBrowserServiceCore.Controllers
             {
                 try
                 {
+                    if (guid is null) return StaticFunctions.BadRequestArgumentNull(nameof(guid));
+                    if (isCategory is null) return StaticFunctions.BadRequestArgumentNull(nameof(isCategory));
+
                     return await GetImagePropertyThumbnailStream(guid, isCategory, width, height);
                 }
                 catch (Exception ex)
@@ -193,6 +196,9 @@ namespace IDBrowserServiceCore.Controllers
         private async Task<ActionResult<Stream>> GetImagePropertyThumbnailStream(string guid, string isCategory, string width = null, string height = null)
         {
             byte[] idImage;
+
+            if (guid is null) return StaticFunctions.BadRequestArgumentNull(nameof(guid));
+            if (isCategory is null) return StaticFunctions.BadRequestArgumentNull(nameof(isCategory));
 
             using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
                 readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
@@ -235,7 +241,7 @@ namespace IDBrowserServiceCore.Controllers
         /// <param name="propertyGuid">Image property guid</param>
         /// <returns>Catalog items</returns>
         [HttpGet("{orderDescending}/{propertyGuid}")]
-        public async Task<ActionResult<List<CatalogItem>>> GetCatalogItems(string orderDescending, string propertyGuid)
+        public async Task<ActionResult<List<CatalogItem>>> GetCatalogItems([Required] string orderDescending, [Required] string propertyGuid)
         {
             using (LogContext.PushProperty(nameof(orderDescending), orderDescending))
             using (LogContext.PushProperty(nameof(propertyGuid), propertyGuid))
@@ -295,7 +301,7 @@ namespace IDBrowserServiceCore.Controllers
         /// <param name="filePathGuid">File path guid</param>
         /// <returns>Catalog items</returns>
         [HttpGet("{orderDescending}/{filePathGuid}")]
-        public async Task<ActionResult<List<CatalogItem>>> GetCatalogItemsByFilePath(string orderDescending, string filePathGuid)
+        public async Task<ActionResult<List<CatalogItem>>> GetCatalogItemsByFilePath([Required] string orderDescending, [Required] string filePathGuid)
         {
             using (LogContext.PushProperty(nameof(orderDescending), orderDescending))
             using (LogContext.PushProperty(nameof(filePathGuid), filePathGuid))
@@ -354,7 +360,7 @@ namespace IDBrowserServiceCore.Controllers
         /// <param name="imageGuid">Image guid</param>
         /// <returns>Image thumbnail</returns>
         [HttpGet("{type}/{imageGuid}")]
-        public async Task<ActionResult<Stream>> GetImageThumbnail(string type, string imageGuid)
+        public async Task<ActionResult<Stream>> GetImageThumbnail([Required] string type, [Required] string imageGuid)
         {
             using (LogContext.PushProperty(nameof(type), type))
             using (LogContext.PushProperty(nameof(imageGuid), imageGuid))
@@ -376,6 +382,9 @@ namespace IDBrowserServiceCore.Controllers
 
         private async Task<ActionResult<Stream>> GetImageThumbnailStream(string type, string imageGuid)
         {
+            if (type is null) return StaticFunctions.BadRequestArgumentNull(nameof(type));
+            if (imageGuid is null) return StaticFunctions.BadRequestArgumentNull(nameof(imageGuid));
+
             if (type != "T" && type != "R" && type != "M")
                 return BadRequest("Unsupported image type");
 
@@ -465,7 +474,7 @@ namespace IDBrowserServiceCore.Controllers
         /// <param name="imageGuid">Image guid</param>
         /// <returns>Full size image</returns>
         [HttpGet("{imageGuid}")]
-        public async Task<ActionResult<Stream>> GetImage(string imageGuid)
+        public async Task<ActionResult<Stream>> GetImage([Required] string imageGuid)
         {
             using (LogContext.PushProperty(nameof(imageGuid), imageGuid))
             {
@@ -503,7 +512,7 @@ namespace IDBrowserServiceCore.Controllers
         /// <param name="imageGuid">Image guid</param>
         /// <returns>Resized image</returns>
         [HttpGet("{width}/{height}/{imageGuid}")]
-        public async Task<ActionResult<Stream>> GetResizedImage(string width, string height, string imageGuid)
+        public async Task<ActionResult<Stream>> GetResizedImage([Required] string width, [Required] string height, [Required] string imageGuid)
         {
             using (LogContext.PushProperty(nameof(width), width))
             using (LogContext.PushProperty(nameof(height), height))
@@ -538,8 +547,10 @@ namespace IDBrowserServiceCore.Controllers
             }
         }
 
-        private async Task<ActionResult<Stream>> GetImageStream(string imageGuid, string width = null, string height = null)
+        private async Task<ActionResult<Stream>> GetImageStream([Required] string imageGuid, string width = null, string height = null)
         {
+            if (imageGuid is null) return StaticFunctions.BadRequestArgumentNull(nameof(imageGuid));
+
             idCatalogItem catalogItem = null;
 
             catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleOrDefaultAsync(x => x.GUID == imageGuid);
@@ -613,7 +624,7 @@ namespace IDBrowserServiceCore.Controllers
         /// <param name="imageGuid">Image guid</param>
         /// <returns>Image infos</returns>
         [HttpGet("{imageGuid}")]
-        public async Task<ActionResult<ImageInfo>> GetImageInfo(string imageGuid)
+        public async Task<ActionResult<ImageInfo>> GetImageInfo([Required] string imageGuid)
         {
             using (LogContext.PushProperty(nameof(imageGuid), imageGuid))
             {
@@ -669,7 +680,7 @@ namespace IDBrowserServiceCore.Controllers
         /// <param name="count">Count of images guid's to return.</param>
         /// <returns>Random image guids.</returns>
         [HttpGet()]
-        public async Task<ActionResult<List<String>>> GetRandomImageGuids([FromQuery] List<string> imageFileExtensions, int count)
+        public async Task<ActionResult<List<String>>> GetRandomImageGuids([Required] List<string> imageFileExtensions, int count = 5)
         {
             using (LogContext.PushProperty(nameof(imageFileExtensions), imageFileExtensions))
             {

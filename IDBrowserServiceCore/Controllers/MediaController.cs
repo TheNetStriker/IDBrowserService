@@ -16,6 +16,7 @@ using Serilog.Context;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
@@ -61,7 +62,7 @@ namespace IDBrowserServiceCore.Controllers
         /// <returns>Http video stream</returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> Play(string guid, string videosize)
+        public async Task<IActionResult> Play([Required] string guid, string videosize)
         {
             if (serviceSettings.DisableInsecureMediaPlayApi)
                 return BadRequest("Insecure media api disabled!");
@@ -79,7 +80,7 @@ namespace IDBrowserServiceCore.Controllers
         /// <returns>Http video stream</returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> PlaySecure(string token, string videosize)
+        public async Task<IActionResult> PlaySecure([Required] string token, string videosize)
         {
             if (token is null) return StaticFunctions.BadRequestArgumentNull(nameof(token));
 
