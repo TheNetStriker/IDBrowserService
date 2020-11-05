@@ -33,6 +33,7 @@ namespace IDBrowserServiceCore.Controllers
     /// Controller for Photosupreme values
     /// </summary>
     [Route("api/[controller]/[action]")]
+    [Route("Service.svc/[action]")] //Compatibility to old service
     public class ValuesController : Controller
     {
         private readonly ILogger<ValuesController> logger;

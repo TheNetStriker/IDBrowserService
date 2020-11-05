@@ -168,7 +168,7 @@
             Controller for video streaming
             </summary>
         </member>
-        <member name="M:IDBrowserServiceCore.Controllers.MediaController.#ctor(IDBrowserServiceCore.Data.IDImager.IDImagerDB,IDBrowserServiceCore.Settings.ServiceSettings,Microsoft.Extensions.Logging.ILogger{IDBrowserServiceCore.Controllers.ValuesController},Serilog.IDiagnosticContext)">
+        <member name="M:IDBrowserServiceCore.Controllers.MediaController.#ctor(IDBrowserServiceCore.Data.IDImager.IDImagerDB,IDBrowserServiceCore.Settings.ServiceSettings,Microsoft.Extensions.Logging.ILogger{IDBrowserServiceCore.Controllers.MediaController},Serilog.IDiagnosticContext)">
             <summary>
             Controller constructor
             </summary>
@@ -350,6 +350,12 @@
             Generates token for secured media api
             </summary>
             <returns>Time limited token</returns>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetVersion">
+            <summary>
+            Returns the version of web service
+            </summary>
+            <returns>Version</returns>
         </member>
         <member name="M:IDBrowserServiceCore.Data.IDImager.idCatalogItem.GetHeightAndWidth(System.Int32@,System.Int32@)">
             <summary>
