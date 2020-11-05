@@ -32,7 +32,6 @@ namespace IDBrowserServiceCore.Controllers
     /// Controller for Photosupreme values
     /// </summary>
     [Route("api/[controller]/[action]")]
-    [Route("Service.svc/[action]")] //Compatibility to old service
     public class ValuesController : Controller
     {
         private readonly ILogger<ValuesController> logger;
@@ -1111,8 +1110,8 @@ namespace IDBrowserServiceCore.Controllers
         /// Generates token for secured media api
         /// </summary>
         /// <returns>Time limited token</returns>
-        [HttpGet]
-        public async Task<ActionResult<MediaToken>> GetMediaToken([Required] string guid)
+        [HttpGet("{guid}")]
+        public async Task<ActionResult<MediaToken>> GetMediaToken(string guid)
         {
             try
             {
