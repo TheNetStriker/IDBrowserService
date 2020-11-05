@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Context;
@@ -1155,6 +1156,16 @@ namespace IDBrowserServiceCore.Controllers
                 logger.LogError(ex.ToString());
                 throw ex;
             }
+        }
+
+        /// <summary>
+        /// Returns the version of web service
+        /// </summary>
+        /// <returns>Version</returns>
+        [HttpGet]
+        public string GetVersion()
+        {
+            return PlatformServices.Default.Application.ApplicationVersion;
         }
 
         private void LogHttpConnection(string callingMethod)
