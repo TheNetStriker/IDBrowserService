@@ -34,7 +34,7 @@ namespace IDBrowserServiceCore.Controllers
     public class MediaController : Controller
     {
         private readonly IDImagerDB db;
-        private readonly ILogger<ValuesController> logger;
+        private readonly ILogger<MediaController> logger;
         private readonly IDiagnosticContext diagnosticContext;
         private readonly ServiceSettings serviceSettings;
 
@@ -46,7 +46,7 @@ namespace IDBrowserServiceCore.Controllers
         /// <param name="logger">Logger</param>
         /// <param name="diagnosticContext">Logger diagnostic context</param>
         public MediaController(IDImagerDB db, ServiceSettings serviceSettings,
-            ILogger<ValuesController> logger, IDiagnosticContext diagnosticContext)
+            ILogger<MediaController> logger, IDiagnosticContext diagnosticContext)
         {
             this.db = db ?? throw new ArgumentNullException(nameof(logger));
             this.serviceSettings = serviceSettings ?? throw new ArgumentNullException(nameof(serviceSettings));

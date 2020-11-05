@@ -64,8 +64,8 @@ namespace IDBrowserServiceCore
 
                                 if (configuration.UseSwagger)
                                 {
-                                //Register the Swagger generator, defining 1 or more Swagger documents
-                                services.AddSwaggerGen(c =>
+                                    //Register the Swagger generator, defining 1 or more Swagger documents
+                                    services.AddSwaggerGen(c =>
                                     {
                                         c.SwaggerDoc("v1", new OpenApiInfo
                                         {
@@ -105,12 +105,12 @@ namespace IDBrowserServiceCore
 
                                 if (configuration.UseSwagger)
                                 {
-                                // Enable middleware to serve generated Swagger as a JSON endpoint.
-                                appBuilder.UseSwagger();
+                                    // Enable middleware to serve generated Swagger as a JSON endpoint.
+                                    appBuilder.UseSwagger();
 
-                                // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
-                                // specifying the Swagger JSON endpoint.
-                                appBuilder.UseSwaggerUI(c =>
+                                    // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
+                                    // specifying the Swagger JSON endpoint.
+                                    appBuilder.UseSwaggerUI(c =>
                                     {
                                         c.SwaggerEndpoint($"/{strSiteName}/swagger/v1/swagger.json", "IDBrowserServiceCore V1");
                                     });
