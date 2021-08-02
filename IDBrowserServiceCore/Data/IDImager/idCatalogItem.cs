@@ -116,6 +116,8 @@ namespace IDBrowserServiceCore.Data.IDImager
 
         public virtual idFilePath idFilePath { get; set; }
 
+        public virtual idCache_FilePath idCache_FilePath { get; set; }
+
         /// <summary>
         /// Returns height and width if specified in UDF2 column.
         /// </summary>

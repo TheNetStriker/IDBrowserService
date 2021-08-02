@@ -116,7 +116,11 @@ namespace IDBrowserServiceCore.Controllers
                 {
                     if (string.IsNullOrEmpty(guid)) return BadRequest("Missing guid parameter");
 
-                    idCatalogItem catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleAsync(x => x.GUID.Equals(guid));
+                    idCatalogItem catalogItem = await db.idCatalogItem
+                        .Include(x => x.idFilePath)
+                        .Include(x => x.idCache_FilePath)
+                        .SingleAsync(x => x.GUID.Equals(guid));
+
                     string strFilePath = StaticFunctions.GetImageFilePath(catalogItem, serviceSettings.FilePathReplace);
 
                     string mimeType = GetMimeNameFromExt(catalogItem.FileName);

@@ -22,7 +22,7 @@ docker run -t -i -d -p 5000:80 \
 -e Sites__site1__ServiceSettings__TokenIssuer="IDBrowserServiceCore_Site_site1" \
 -e Sites__site1__ServiceSettings__TokenAudience="IDBrowserUser" \
 -e Sites__site1__ServiceSettings__TokenExpiration="01:00:00" \
-thenetstriker/idbrowserservicecore:1.0.4
+thenetstriker/idbrowserservicecore:1.0.6
 ```
 Additional application environment variables:
 ```

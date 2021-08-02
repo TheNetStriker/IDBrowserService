@@ -279,7 +279,7 @@ namespace IDBrowserServiceCore.Controllers
                             GUID = x.CatalogItemGUID,
                             FileName = x.idCatalogItem.FileName,
                             FileType = x.idCatalogItem.idFileType,
-                            FilePath = x.idCatalogItem.idFilePath.FilePath,
+                            FilePath = x.idCatalogItem.idCache_FilePath.FilePath,
                             HasRecipe = x.idCatalogItem.idHasRecipe
                         }).ToListAsync();
 
@@ -339,7 +339,7 @@ namespace IDBrowserServiceCore.Controllers
                             GUID = x.GUID,
                             FileName = x.FileName,
                             FileType = x.idFileType,
-                            FilePath = x.idFilePath.FilePath,
+                            FilePath = x.idCache_FilePath.FilePath,
                             HasRecipe = x.idHasRecipe
                         }).ToListAsync();
 
@@ -543,7 +543,10 @@ namespace IDBrowserServiceCore.Controllers
 
             idCatalogItem catalogItem = null;
 
-            catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleOrDefaultAsync(x => x.GUID == imageGuid);
+            catalogItem = await db.idCatalogItem
+                .Include(x => x.idFilePath)
+                .Include(x => x.idCache_FilePath)
+                .SingleOrDefaultAsync(x => x.GUID == imageGuid);
 
             if (catalogItem == null)
                 return BadRequest("CatalogItem not found");
@@ -1085,13 +1088,14 @@ namespace IDBrowserServiceCore.Controllers
                     readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
                 {
                     var query = from tbl in db.idFilePath
-                                orderby tbl.FilePath
+                                where !string.IsNullOrEmpty(tbl.idCache_FilePath.RootGUID)
+                                orderby tbl.idCache_FilePath.FilePath
                                 select new FilePath
                                 {
                                     GUID = tbl.guid,
-                                    MediumName = tbl.MediumName,
-                                    Path = tbl.FilePath,
-                                    RootName = tbl.RootName,
+                                    MediumName = tbl.idMediumInfo.MediumName,
+                                    Path = tbl.idCache_FilePath.FilePath,
+                                    RootName = tbl.idCache_FilePath.root_idCache_FilePath.FilePath,
                                     ImageCount = tbl.idCatalogItem.Count()
                                 };
 

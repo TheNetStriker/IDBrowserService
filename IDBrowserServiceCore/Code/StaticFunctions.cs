@@ -35,7 +35,7 @@ namespace IDBrowserServiceCore.Code
 
         public static String GetImageFilePath(idCatalogItem catalogItem, List<FilePathReplaceSettings> filePathReplaceSettings)
         {
-            string strFilePath = catalogItem.idFilePath.FilePath;
+            string strFilePath = catalogItem.idCache_FilePath.FilePath;
 
             if (filePathReplaceSettings != null)
             {

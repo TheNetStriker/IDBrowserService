@@ -18,19 +18,22 @@ namespace IDBrowserServiceCore.Data.IDImager
         [StringLength(50)]
         public string guid { get; set; }
 
+        [StringLength(50)]
+        public string MediumGUID { get; set; }
+
         //[StringLength(2)]
         //public string MediumType { get; set; }
 
-        [StringLength(255)]
-        public string MediumName { get; set; }
+        //[StringLength(255)]
+        //public string MediumName { get; set; }
 
         //public double? MediumSerial { get; set; }
 
-        [StringLength(1024)]
-        public string FilePath { get; set; }
+        //[StringLength(1024)]
+        //public string FilePath { get; set; }
 
-        [StringLength(512)]
-        public string RootName { get; set; }
+        //[StringLength(512)]
+        //public string RootName { get; set; }
 
         //public int? PathState { get; set; }
 
@@ -43,5 +46,11 @@ namespace IDBrowserServiceCore.Data.IDImager
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<idCatalogItem> idCatalogItem { get; set; }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual idMediumInfo idMediumInfo { get; set; }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual idCache_FilePath idCache_FilePath { get; set; }
     }
 }

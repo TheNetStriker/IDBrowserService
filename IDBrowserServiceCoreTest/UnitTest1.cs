@@ -42,15 +42,17 @@ namespace IDBrowserServiceCoreTest
         {
             ImagePropertyGuids = new List<String>();
             imageFileExtensions = new List<string>() { "JPG", "JPEG", "TIF", "PNG", "GIF", "BMP" };
-            ImageGuids = Task.Run(() => ValuesController.GetRandomImageGuids(imageFileExtensions, 500)).Result.Value;
+            ImageGuids = Task.Run(() => ValuesController.GetRandomImageGuids(imageFileExtensions, 20)).Result.Value;
 
             idCatalogItemFirstImage = Db.idCatalogItem
                 .Include(x => x.idFilePath)
+                .Include(x => x.idCache_FilePath)
                 .Where(x => x.FileName.EndsWith(".JPG"))
                 .OrderBy(x => x.DateTimeStamp)
                 .First();
             idCatalogItemFirstVideo = Db.idCatalogItem
                 .Include(x => x.idFilePath)
+                .Include(x => x.idCache_FilePath)
                 .Where(x => x.FileName.EndsWith(".MP4"))
                 .OrderBy(x => x.DateTimeStamp)
                 .First();
@@ -299,9 +301,15 @@ namespace IDBrowserServiceCoreTest
         public async void GetImageThumbnailTest()
         {
             ActionResult<Stream> result = await ValuesController.GetImageThumbnail("T", GetNextImageGuid());
-            result.Value.Close();
+            if (!(result.Result is FileStreamResult stream1))
+                throw new Exception("No stream received");
+            else
+                stream1.FileStream.Close();
             result = await ValuesController.GetImageThumbnail("M", GetNextImageGuid());
-            result.Value.Close();
+            if (!(result.Result is FileStreamResult stream2))
+                throw new Exception("No stream received");
+            else
+                stream2.FileStream.Close();
         }
 
         [Fact]
@@ -310,7 +318,10 @@ namespace IDBrowserServiceCoreTest
             foreach (string guid in ImageGuids)
             {
                 ActionResult<Stream> result = await ValuesController.GetImage(guid);
-                result.Value.Close();
+                if (!(result.Result is FileStreamResult stream))
+                    throw new Exception("No stream received");
+                else
+                    stream.FileStream.Close();
             }
         }
 
@@ -320,7 +331,10 @@ namespace IDBrowserServiceCoreTest
             foreach (string guid in ImageGuids)
             {
                 ActionResult<Stream> result = await ValuesController.GetResizedImage("640", "480", guid);
-                result.Value.Close();
+                if (!(result.Result is FileStreamResult stream))
+                    throw new Exception("No stream received");
+                else
+                    stream.FileStream.Close();
             }
         }
 

@@ -1,8 +1,5 @@
 namespace IDBrowserServiceCore.Data.IDImager
 {
-    using System;
-    using System.ComponentModel.DataAnnotations.Schema;
-    using System.Linq;
     using Microsoft.EntityFrameworkCore;
 
     public partial class IDImagerDB : DbContext
@@ -14,6 +11,8 @@ namespace IDBrowserServiceCore.Data.IDImager
         public virtual DbSet<idCatalogItem> idCatalogItem { get; set; }
         public virtual DbSet<idCatalogItemDefinition> idCatalogItemDefinition { get; set; }
         public virtual DbSet<idFilePath> idFilePath { get; set; }
+        public virtual DbSet<idCache_FilePath> idCache_FilePath { get; set; }
+        public virtual DbSet<idMediumInfo> idMediumInfo { get; set; }
         public virtual DbSet<idImageData> idImageData { get; set; }
         public virtual DbSet<idImageVersion> idImageVersion { get; set; }
         public virtual DbSet<idProp> idProp { get; set; }
@@ -40,6 +39,26 @@ namespace IDBrowserServiceCore.Data.IDImager
                 .HasMany(e => e.idCatalogItem)
                 .WithOne(e => e.idFilePath)
                 .HasForeignKey(e => e.PathGUID);
+
+            modelBuilder.Entity<idMediumInfo>()
+                .HasMany(e => e.idFilePath)
+                .WithOne(e => e.idMediumInfo)
+                .HasForeignKey(e => e.MediumGUID);
+
+            modelBuilder.Entity<idCache_FilePath>()
+                .HasMany(e => e.idCatalogItem)
+                .WithOne(e => e.idCache_FilePath)
+                .HasForeignKey(e => e.PathGUID);
+
+            modelBuilder.Entity<idFilePath>()
+                .HasOne(e => e.idCache_FilePath)
+                .WithOne(e => e.idFilePath)
+                .HasForeignKey<idFilePath>(e => e.guid);
+
+            modelBuilder.Entity<idCache_FilePath>()
+                .HasOne(e => e.root_idCache_FilePath)
+                .WithMany()
+                .HasForeignKey(e => e.RootGUID);
 
             modelBuilder.Entity<idProp>()
                 .HasMany(e => e.idCatalogItemDefinition)
