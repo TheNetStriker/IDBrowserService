@@ -74,8 +74,8 @@ namespace IDBrowserServiceCore
                                             Description = "Webservice for IDBrowser Android app."
                                         });
 
-                                    // Set the comments path for the Swagger JSON and UI.
-                                    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                                        // Set the comments path for the Swagger JSON and UI.
+                                        var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
                                         var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
 
                                         if (File.Exists(xmlPath))
