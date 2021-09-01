@@ -6,7 +6,9 @@ namespace IDBrowserServiceCore.Data.IDImager
     {
         public IDImagerDB(DbContextOptions<IDImagerDB> options)
             : base(options)
-        { }
+        {
+            this.ChangeTracker.AutoDetectChangesEnabled = false;
+        }
 
         public virtual DbSet<idCatalogItem> idCatalogItem { get; set; }
         public virtual DbSet<idCatalogItemDefinition> idCatalogItemDefinition { get; set; }
