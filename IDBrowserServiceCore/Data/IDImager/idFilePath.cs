@@ -21,6 +21,9 @@ namespace IDBrowserServiceCore.Data.IDImager
         [StringLength(50)]
         public string MediumGUID { get; set; }
 
+        [StringLength(50)]
+        public string ParentGUID { get; set; }
+
         //[StringLength(2)]
         //public string MediumType { get; set; }
 

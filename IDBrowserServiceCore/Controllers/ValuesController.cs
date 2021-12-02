@@ -8,9 +8,7 @@ using ImageMagick;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
@@ -131,7 +129,7 @@ namespace IDBrowserServiceCore.Controllers
                 catch (Exception ex)
                 {
                     logger.LogError(ex.ToString());
-                    throw ex;
+                    throw;
                 }
             }
         }
@@ -244,9 +242,11 @@ namespace IDBrowserServiceCore.Controllers
         /// </summary>
         /// <param name="orderDescending">Order catalog items descending</param>
         /// <param name="propertyGuid">Image property guid</param>
+        /// <param name="includeSubproperties">Include catalog items from sub properties</param>
         /// <returns>Catalog items</returns>
         [HttpGet("{orderDescending}/{propertyGuid}")]
-        public async Task<ActionResult<List<CatalogItem>>> GetCatalogItems([Required] string orderDescending, [Required] string propertyGuid)
+        public async Task<ActionResult<List<CatalogItem>>> GetCatalogItems([Required] string orderDescending, [Required] string propertyGuid,
+            bool includeSubproperties = false)
         {
             using (LogContext.PushProperty(nameof(orderDescending), orderDescending))
             using (LogContext.PushProperty(nameof(propertyGuid), propertyGuid))
@@ -258,8 +258,17 @@ namespace IDBrowserServiceCore.Controllers
 
                     List<CatalogItem> catalogItems = null;
 
+                    List<string> propertyGuids = new();
+
+                    propertyGuids.Add(propertyGuid);
+
+                    if (includeSubproperties)
+                    {
+                        await AddSubpropertyGuids(propertyGuid, propertyGuids);
+                    }
+
                     var query = from tbl in db.idCatalogItemDefinition
-                                where tbl.GUID == propertyGuid
+                                where propertyGuids.Contains(tbl.GUID)
                                 select tbl;
 
                     using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
@@ -294,7 +303,28 @@ namespace IDBrowserServiceCore.Controllers
                 catch (Exception ex)
                 {
                     logger.LogError(ex.ToString());
-                    throw ex;
+                    throw;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Add subfolder file path guids to supplied list.
+        /// </summary>
+        /// <param name="propertyGuid">File path guid to query recursive.</param>
+        /// <param name="propertyGuids">List to add the guids.</param>
+        public async Task AddSubpropertyGuids(string propertyGuid, List<string> propertyGuids)
+        {
+            var subfolderQuery = from tbl in db.idProp
+                                 where tbl.ParentGUID == propertyGuid
+                                 select tbl;
+
+            foreach (var prop in await subfolderQuery.ToListAsync())
+            {
+                if (!propertyGuids.Contains(prop.GUID))
+                {
+                    propertyGuids.Add(prop.GUID);
+                    await AddSubpropertyGuids(prop.GUID, propertyGuids);
                 }
             }
         }
@@ -304,9 +334,11 @@ namespace IDBrowserServiceCore.Controllers
         /// </summary>
         /// <param name="orderDescending">Order catalog items descending</param>
         /// <param name="filePathGuid">File path guid</param>
+        /// <param name="includeSubfolders">Include items in subfolders</param>
         /// <returns>Catalog items</returns>
         [HttpGet("{orderDescending}/{filePathGuid}")]
-        public async Task<ActionResult<List<CatalogItem>>> GetCatalogItemsByFilePath([Required] string orderDescending, [Required] string filePathGuid)
+        public async Task<ActionResult<List<CatalogItem>>> GetCatalogItemsByFilePath([Required] string orderDescending, [Required] string filePathGuid,
+            bool includeSubfolders = false)
         {
             using (LogContext.PushProperty(nameof(orderDescending), orderDescending))
             using (LogContext.PushProperty(nameof(filePathGuid), filePathGuid))
@@ -318,8 +350,17 @@ namespace IDBrowserServiceCore.Controllers
 
                     List<CatalogItem> catalogItems = null;
 
+                    List<string> filePathGuids = new();
+
+                    filePathGuids.Add(filePathGuid);
+
+                    if (includeSubfolders)
+                    {
+                        await AddSubfolderFilePathGuids(filePathGuid, filePathGuids);
+                    }
+
                     var query = from tbl in db.idCatalogItem
-                                where tbl.PathGUID == filePathGuid
+                                where filePathGuids.Contains(tbl.PathGUID)
                                 select tbl;
 
                     using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
@@ -353,7 +394,28 @@ namespace IDBrowserServiceCore.Controllers
                 catch (Exception ex)
                 {
                     logger.LogError(ex.ToString());
-                    throw ex;
+                    throw;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Add subfolder file path guids to supplied list.
+        /// </summary>
+        /// <param name="filePathGuid">File path guid to query recursive.</param>
+        /// <param name="filePathGuids">List to add the guids.</param>
+        public async Task AddSubfolderFilePathGuids(string filePathGuid, List<string> filePathGuids)
+        {
+            var subfolderQuery = from tbl in db.idFilePath
+                                 where tbl.ParentGUID == filePathGuid
+                                 select tbl;
+
+            foreach (var filePath in await subfolderQuery.ToListAsync())
+            {
+                if (!filePathGuids.Contains(filePath.guid))
+                {
+                    filePathGuids.Add(filePath.guid);
+                    await AddSubfolderFilePathGuids(filePath.guid, filePathGuids);
                 }
             }
         }
@@ -380,7 +442,7 @@ namespace IDBrowserServiceCore.Controllers
                 catch (Exception ex)
                 {
                     logger.LogError(ex.ToString());
-                    throw ex;
+                    throw;
                 }
             }
         }
@@ -497,7 +559,7 @@ namespace IDBrowserServiceCore.Controllers
                 {
                     if (getImageStreamResult != null && getImageStreamResult.Value != null) { getImageStreamResult.Value.Close(); }
                     logger.LogError(ex.ToString());
-                    throw ex;
+                    throw;
                 }
             }  
         }
@@ -532,7 +594,7 @@ namespace IDBrowserServiceCore.Controllers
                 {
                     if (getImageStreamResult != null && getImageStreamResult.Value != null) { getImageStreamResult.Value.Close(); }
                     logger.LogError(ex.ToString());
-                    throw ex;
+                    throw;
                 }
             }
         }
@@ -666,7 +728,7 @@ namespace IDBrowserServiceCore.Controllers
                 catch (Exception ex)
                 {
                     logger.LogError(ex.ToString());
-                    throw ex;
+                    throw;
                 }
             }
         }
@@ -705,7 +767,7 @@ namespace IDBrowserServiceCore.Controllers
                 catch (Exception ex)
                 {
                     logger.LogError(ex.ToString());
-                    throw ex;
+                    throw;
                 }
             } 
         }
@@ -754,7 +816,7 @@ namespace IDBrowserServiceCore.Controllers
                 {
                     if (fileStream != null) { fileStream.Close(); }
                     logger.LogError(ex.ToString());
-                    throw ex;
+                    throw;
                 }
             }
         }
@@ -786,7 +848,7 @@ namespace IDBrowserServiceCore.Controllers
                 catch (Exception ex)
                 {
                     logger.LogError(ex.ToString());
-                    throw ex;
+                    throw;
                 }
             } 
         }
@@ -828,18 +890,18 @@ namespace IDBrowserServiceCore.Controllers
                 catch (Exception ex)
                 {
                     logger.LogError(ex.ToString());
-                    throw ex;
+                    throw;
                 }
             } 
         }
 
         private async Task<List<ImagePropertyRecursive>> GetImagePropertyRecursive(IQueryable<idProp> query)
         {
-            List<ImagePropertyRecursive> listImagePropertyRecursive = new List<ImagePropertyRecursive>();
+            List<ImagePropertyRecursive> listImagePropertyRecursive = new();
             foreach (idProp row in query.ToList())
             {
                 String parentGuid = row.ParentGUID;
-                List<String> parentProperties = new List<string>();
+                List<String> parentProperties = new();
 
                 while (parentGuid != null)
                 {
@@ -924,7 +986,7 @@ namespace IDBrowserServiceCore.Controllers
                 catch (Exception ex)
                 {
                     logger.LogError(ex.ToString());
-                    throw ex;
+                    throw;
                 }
             }
         }
@@ -968,7 +1030,7 @@ namespace IDBrowserServiceCore.Controllers
                 catch (Exception ex)
                 {
                     logger.LogError(ex.ToString());
-                    throw ex;
+                    throw;
                 }
             }
         }
@@ -1068,7 +1130,7 @@ namespace IDBrowserServiceCore.Controllers
                 catch (Exception ex)
                 {
                     logger.LogError(ex.ToString());
-                    throw ex;
+                    throw;
                 }
             }
         }
@@ -1108,7 +1170,7 @@ namespace IDBrowserServiceCore.Controllers
             catch (Exception ex)
             {
                 logger.LogError(ex.ToString());
-                throw ex;
+                throw;
             }
         }
 
@@ -1159,7 +1221,7 @@ namespace IDBrowserServiceCore.Controllers
             catch (Exception ex)
             {
                 logger.LogError(ex.ToString());
-                throw ex;
+                throw;
             }
         }
 

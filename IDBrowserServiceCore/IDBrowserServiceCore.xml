@@ -239,21 +239,37 @@
             <param name="height">Image height</param>
             <returns>Resized image property or image category thumbnail</returns>
         </member>
-        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetCatalogItems(System.String,System.String)">
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetCatalogItems(System.String,System.String,System.Boolean)">
             <summary>
             Returns catalog items of image property guid. 
             </summary>
             <param name="orderDescending">Order catalog items descending</param>
             <param name="propertyGuid">Image property guid</param>
+            <param name="includeSubproperties">Include catalog items from sub properties</param>
             <returns>Catalog items</returns>
         </member>
-        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetCatalogItemsByFilePath(System.String,System.String)">
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.AddSubpropertyGuids(System.String,System.Collections.Generic.List{System.String})">
+            <summary>
+            Add subfolder file path guids to supplied list.
+            </summary>
+            <param name="propertyGuid">File path guid to query recursive.</param>
+            <param name="propertyGuids">List to add the guids.</param>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetCatalogItemsByFilePath(System.String,System.String,System.Boolean)">
             <summary>
             Returns catalog items of image file path. 
             </summary>
             <param name="orderDescending">Order catalog items descending</param>
             <param name="filePathGuid">File path guid</param>
+            <param name="includeSubfolders">Include items in subfolders</param>
             <returns>Catalog items</returns>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.AddSubfolderFilePathGuids(System.String,System.Collections.Generic.List{System.String})">
+            <summary>
+            Add subfolder file path guids to supplied list.
+            </summary>
+            <param name="filePathGuid">File path guid to query recursive.</param>
+            <param name="filePathGuids">List to add the guids.</param>
         </member>
         <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetImageThumbnail(System.String,System.String)">
             <summary>
