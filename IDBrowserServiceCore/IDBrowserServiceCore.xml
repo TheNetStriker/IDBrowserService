@@ -245,7 +245,7 @@
             </summary>
             <param name="orderDescending">Order catalog items descending</param>
             <param name="propertyGuid">Image property guid</param>
-            <param name="includeSubproperties">Include catalog items from sub properties</param>
+            <param name="includeSubitems">Include catalog items from sub properties</param>
             <returns>Catalog items</returns>
         </member>
         <member name="M:IDBrowserServiceCore.Controllers.ValuesController.AddSubpropertyGuids(System.String,System.Collections.Generic.List{System.String})">
@@ -261,7 +261,7 @@
             </summary>
             <param name="orderDescending">Order catalog items descending</param>
             <param name="filePathGuid">File path guid</param>
-            <param name="includeSubfolders">Include items in subfolders</param>
+            <param name="includeSubitems">Include items in subfolders</param>
             <returns>Catalog items</returns>
         </member>
         <member name="M:IDBrowserServiceCore.Controllers.ValuesController.AddSubfolderFilePathGuids(System.String,System.Collections.Generic.List{System.String})">

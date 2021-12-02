@@ -242,11 +242,11 @@ namespace IDBrowserServiceCore.Controllers
         /// </summary>
         /// <param name="orderDescending">Order catalog items descending</param>
         /// <param name="propertyGuid">Image property guid</param>
-        /// <param name="includeSubproperties">Include catalog items from sub properties</param>
+        /// <param name="includeSubitems">Include catalog items from sub properties</param>
         /// <returns>Catalog items</returns>
         [HttpGet("{orderDescending}/{propertyGuid}")]
         public async Task<ActionResult<List<CatalogItem>>> GetCatalogItems([Required] string orderDescending, [Required] string propertyGuid,
-            bool includeSubproperties = false)
+            bool includeSubitems = false)
         {
             using (LogContext.PushProperty(nameof(orderDescending), orderDescending))
             using (LogContext.PushProperty(nameof(propertyGuid), propertyGuid))
@@ -262,7 +262,7 @@ namespace IDBrowserServiceCore.Controllers
 
                     propertyGuids.Add(propertyGuid);
 
-                    if (includeSubproperties)
+                    if (includeSubitems)
                     {
                         await AddSubpropertyGuids(propertyGuid, propertyGuids);
                     }
@@ -334,11 +334,11 @@ namespace IDBrowserServiceCore.Controllers
         /// </summary>
         /// <param name="orderDescending">Order catalog items descending</param>
         /// <param name="filePathGuid">File path guid</param>
-        /// <param name="includeSubfolders">Include items in subfolders</param>
+        /// <param name="includeSubitems">Include items in subfolders</param>
         /// <returns>Catalog items</returns>
         [HttpGet("{orderDescending}/{filePathGuid}")]
         public async Task<ActionResult<List<CatalogItem>>> GetCatalogItemsByFilePath([Required] string orderDescending, [Required] string filePathGuid,
-            bool includeSubfolders = false)
+            bool includeSubitems = false)
         {
             using (LogContext.PushProperty(nameof(orderDescending), orderDescending))
             using (LogContext.PushProperty(nameof(filePathGuid), filePathGuid))
@@ -354,7 +354,7 @@ namespace IDBrowserServiceCore.Controllers
 
                     filePathGuids.Add(filePathGuid);
 
-                    if (includeSubfolders)
+                    if (includeSubitems)
                     {
                         await AddSubfolderFilePathGuids(filePathGuid, filePathGuids);
                     }
