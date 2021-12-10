@@ -48,6 +48,26 @@
         "Sites__mad__ServiceSettings__DisableInsecureMediaPlayApi": "true"
       }
     },
+    "VideoTranscode": {
+      "commandName": "Project",
+      "commandLineArgs": "TranscodeAllVideos mad Hd480 2 Error",
+      "environmentVariables": {
+        "Sites__maw__ServiceSettings__TranscodeDirectory": "D:\\Temp\\Transcode\\maw",
+        "Sites__maw__ConnectionStrings__IDImager": "Host=172.17.2.17;Database=photosupreme_maw;Username=idimager_main;Password=idi_main_2606;",
+        "Sites__maw__ConnectionStrings__DBType": "Postgres",
+        "Sites__mad__ServiceSettings__TranscodeDirectory": "D:\\Temp\\Transcode\\mad",
+        "Sites__mad__ConnectionStrings__IDImagerThumbs": "Host=172.17.2.17;Database=photosupreme_mad_thumbs;Username=idimager_main;Password=idi_main_2606;",
+        "Sites__mad__ConnectionStrings__IDImager": "Host=172.17.2.17;Database=photosupreme_mad;Username=idimager_main;Password=idi_main_2606;",
+        "Sites__maw__ConnectionStrings__IDImagerThumbs": "Host=172.17.2.17;Database=photosupreme_maw_thumbs;Username=idimager_main;Password=idi_main_2606;",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "Sites__mad__ConnectionStrings__DBType": "Postgres",
+        "Sites__mad__ServiceSettings__TokenSecretKey": "W}+$T9#]Lm^92)5Do6MR9777$W8d969",
+        "Sites__mad__ServiceSettings__TokenIssuer": "IDBrowserServiceCore_Site_mad",
+        "Sites__mad__ServiceSettings__TokenAudience": "David",
+        "Sites__mad__ServiceSettings__TokenExpiration": "01:00:00",
+        "Sites__mad__ServiceSettings__DisableInsecureMediaPlayApi": "true"
+      }
+    },
     "Docker": {
       "commandName": "Docker",
       "launchBrowser": true,

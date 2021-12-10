@@ -61,7 +61,7 @@ namespace IDBrowserServiceCore.Code
                 siteSettings.ConnectionStrings.IDImager).Options);
 
             var query = db.idCatalogItem
-                .Include(x => x.idFilePath)
+                .Include(x => x.idCache_FilePath)
                 .Where(x => configuration.VideoFileExtensions.Contains(x.idFileType));
 
             ProgressTaskFactory progressTaskFactory = new ProgressTaskFactory(taskCount, 100, 60, Log.Logger);
