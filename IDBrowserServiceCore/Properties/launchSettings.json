@@ -74,11 +74,11 @@
       "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/mad/api/values/GetImageProperties",
       "environmentVariables": {
         "Sites__maw__ServiceSettings__TranscodeDirectory": "/Volumes/Qmultimedia/VideoTranscode/maw",
-        "Sites__mad__ServiceSettings__FilePathReplace__0__PathMatch": "\\\\QNAPNAS01\\Multimedia",
+        "Sites__mad__ServiceSettings__FilePathReplace__0__PathMatch": "\\\\storage01\\Multimedia",
         "Sites__maw__ConnectionStrings__IDImager": "Host=172.17.2.17;Database=photosupreme_maw;Username=idimager_main;Password=idi_main_2606;",
         "Sites__maw__ConnectionStrings__DBType": "Postgres",
         "Sites__mad__ServiceSettings__FilePathReplace__0__PathReplace": "/Volumes/Qmultimedia",
-        "Sites__maw__ServiceSettings__FilePathReplace__0__PathMatch": "\\\\QNAPNAS01\\Multimedia",
+        "Sites__maw__ServiceSettings__FilePathReplace__0__PathMatch": "\\\\storage01\\Multimedia",
         "Sites__mad__ServiceSettings__TranscodeDirectory": "/Volumes/Qmultimedia/VideoTranscode/mad",
         "Sites__mad__ConnectionStrings__IDImagerThumbs": "Host=172.17.2.17;Database=photosupreme_mad_thumbs;Username=idimager_main;Password=idi_main_2606;",
         "Sites__maw__ServiceSettings__FilePathReplace__0__PathReplace": "/Volumes/Qmultimedia",
