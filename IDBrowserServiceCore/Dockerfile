@@ -27,4 +27,9 @@ COPY --from=publish /app/publish/IDBrowserServiceCore.runtimeconfig.json .
 COPY --from=publish /app/publish/*.dll ./
 COPY --from=publish /app/publish/web.config .
 COPY --from=publish /app/publish/runtimes/ runtimes/
+
+RUN apt-get update && apt-get install -y curl
+
+HEALTHCHECK --interval=1m --timeout=3s CMD curl --fail http://localhost:80 || exit 1 
+
 ENTRYPOINT ["dotnet", "IDBrowserServiceCore.dll"]
