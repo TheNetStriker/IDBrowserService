@@ -695,6 +695,7 @@ namespace IDBrowserServiceCore.Controllers
                     var queryXMP = from tbl in db.idSearchData
                                    where tbl.RelatedGUID == imageGuid
                                    && tbl.ContentType.Equals("XMP")
+                                   orderby tbl.ContentGroup
                                    select new XmpProperty { Name = tbl.ContentGroup, Value = tbl.ContentValue };
 
                     ImageInfo imageInfo = null;
