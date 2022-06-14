@@ -55,11 +55,13 @@ namespace IDBrowserServiceCore.Data
     [DataContract]
     public class ImageInfo
     {
-        [DataMember]
-        public String ImageName { get; set; }
+        //This is now included in idsearchdata
+        //[DataMember]
+        //public String ImageName { get; set; }
 
-        [DataMember]
-        public String ImageDescription { get; set; }
+        //This is now included in idsearchdata
+        //[DataMember]
+        //public String ImageDescription { get; set; }
 
         [DataMember]
         public String ImageResolution { get; set; }

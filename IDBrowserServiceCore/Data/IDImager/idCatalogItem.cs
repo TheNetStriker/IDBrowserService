@@ -30,11 +30,13 @@ namespace IDBrowserServiceCore.Data.IDImager
 
         public int? Rating { get; set; }
 
-        [StringLength(1024)]
-        public string ImageName { get; set; }
+        //This is now included in idsearchdata
+        //[StringLength(1024)]
+        //public string ImageName { get; set; }
 
-        [Column(TypeName = "ntext")]
-        public string ImageDescription { get; set; }
+        //This is now included in idsearchdata
+        //[Column(TypeName = "ntext")]
+        //public string ImageDescription { get; set; }
 
         //[StringLength(255)]
         //public string UDF1 { get; set; }

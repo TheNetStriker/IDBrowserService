@@ -708,8 +708,6 @@ namespace IDBrowserServiceCore.Controllers
                                            {
                                                FileSize = tbl.FileSize,
                                                FileType = tbl.idFileType,
-                                               ImageDescription = tbl.ImageDescription,
-                                               ImageName = tbl.ImageName,
                                                ImageResolution = tbl.UDF2,
                                                Rating = tbl.Rating,
                                                Timestamp = tbl.DateTimeStamp,
