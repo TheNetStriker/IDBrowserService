@@ -16,7 +16,8 @@
             "PathReplace": null
           }
         ],
-        "TranscodeDirectory": "D:\\Temp\\Transcode\\mad"
+        "TranscodeDirectory": "D:\\Temp\\Transcode\\mad",
+        "EnableDatabaseCache": "true"
       }
     }
   }

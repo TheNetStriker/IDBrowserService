@@ -4,6 +4,7 @@ using IDBrowserServiceCore.Data;
 using IDBrowserServiceCore.Data.IDImager;
 using IDBrowserServiceCore.Data.IDImagerThumbs;
 using IDBrowserServiceCore.Data.PostgresHelpers;
+using IDBrowserServiceCore.Services;
 using IDBrowserServiceCore.Settings;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -225,7 +226,8 @@ namespace IDBrowserServiceCoreTest
                        .AddSingleton(diagnosticContext)
                        .AddSingleton<IDiagnosticContext>(diagnosticContext)
                        .AddTransient<ValuesController, ValuesController>()
-                       .AddTransient<MediaController, MediaController>();
+                       .AddTransient<MediaController, MediaController>()
+                       .AddSingleton<IDatabaseCache, DatabaseCache>();
 
                     serviceProvider = serviceCollection.BuildServiceProvider();
                 }
@@ -255,6 +257,18 @@ namespace IDBrowserServiceCoreTest
                     mediaController = ServiceProvider.GetService<MediaController>();
 
                 return mediaController;
+            }
+        }
+
+        private IDatabaseCache databaseCache;
+        public IDatabaseCache DatabaseCache
+        {
+            get
+            {
+                if (databaseCache == null)
+                    databaseCache = ServiceProvider.GetService<IDatabaseCache>();
+
+                return databaseCache;
             }
         }
 
@@ -420,6 +434,12 @@ namespace IDBrowserServiceCoreTest
                 throw new Exception("No stream received");
             else
                 stream.FileStream.Close();
+        }
+
+        [Fact]
+        public async void DatabaseCacheTest()
+        {
+            await DatabaseCache.CheckAndUpdateCacheAsync();
         }
     }
 }
