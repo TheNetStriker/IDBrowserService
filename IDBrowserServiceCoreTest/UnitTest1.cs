@@ -153,7 +153,7 @@ namespace IDBrowserServiceCoreTest
                     }
                     else if (DBType.Equals("Postgres"))
                     {
-                        var options = NpgsqlDbContextOptionsExtensions
+                        var options = NpgsqlDbContextOptionsBuilderExtensions
                             .UseNpgsql(new DbContextOptionsBuilder<IDImagerDB>(), DbConnectionString)
                             .ReplaceService<ISqlGenerationHelper, PostgresSqlGenerationHelper>()
                             .Options;
@@ -183,7 +183,7 @@ namespace IDBrowserServiceCoreTest
                 }
                 else if (DBType.Equals("Postgres"))
                 {
-                    var options = NpgsqlDbContextOptionsExtensions
+                    var options = NpgsqlDbContextOptionsBuilderExtensions
                         .UseNpgsql(new DbContextOptionsBuilder<IDImagerThumbsDB>(), DbThumbsConnectionString)
                         .ReplaceService<ISqlGenerationHelper, PostgresSqlGenerationHelper>()
                         .Options;

@@ -229,10 +229,10 @@ namespace IDBrowserServiceCore.Code
         {
             if (!File.Exists(transcodeFilePath))
             {
-                var inputFile = new MediaFile(filePath);
-                var outputFile = new MediaFile(transcodeFilePath);
+                var inputFile = new InputFile(filePath);
+                var outputFile = new OutputFile(transcodeFilePath);
 
-                FileInfo transcodeFileInfo = new FileInfo(transcodeFilePath);
+                FileInfo transcodeFileInfo = new(transcodeFilePath);
 
                 if (!transcodeFileInfo.Directory.Exists)
                     transcodeFileInfo.Directory.Create();

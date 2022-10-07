@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Context;
@@ -676,7 +675,7 @@ namespace IDBrowserServiceCore.Controllers
             else
             {
                 // If we don't resize the image, check if it needs to be re-oriented.
-                ExifShort exifValue = (ExifShort)image
+                var exifValue = image
                     .GetExifProfile()
                     .GetValue(ExifTag.Orientation);
 
@@ -1251,7 +1250,7 @@ namespace IDBrowserServiceCore.Controllers
         [HttpGet]
         public string GetVersion()
         {
-            return PlatformServices.Default.Application.ApplicationVersion;
+            return System.Reflection.Assembly.GetEntryAssembly().GetName().Version.ToString();
         }
 
         private void LogHttpConnection(string callingMethod)

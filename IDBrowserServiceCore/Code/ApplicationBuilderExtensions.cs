@@ -85,7 +85,7 @@ namespace IDBrowserServiceCore.Code
             {
                 app.Map(path, builder =>
                 {
-                    builder.Use(async (context, next) =>
+                    builder.Run(async (context) =>
                     {
                         await branchDelegate(context);
                     });

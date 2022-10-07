@@ -9,7 +9,12 @@ namespace IDBrowserServiceCore.Data.IDImagerThumbs
     {
         public IDImagerThumbsDB(DbContextOptions<IDImagerThumbsDB> options)
             : base(options)
-        { }
+        {
+            if (Database.ProviderName.Equals("Npgsql.EntityFrameworkCore.PostgreSQL"))
+            {
+                AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+            }
+        }
 
         public virtual DbSet<idThumbs> idThumbs { get; set; }
 

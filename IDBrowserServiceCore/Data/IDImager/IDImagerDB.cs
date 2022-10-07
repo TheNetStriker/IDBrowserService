@@ -1,6 +1,7 @@
 namespace IDBrowserServiceCore.Data.IDImager
 {
     using Microsoft.EntityFrameworkCore;
+    using System;
 
     public partial class IDImagerDB : DbContext
     {
@@ -8,6 +9,11 @@ namespace IDBrowserServiceCore.Data.IDImager
             : base(options)
         {
             this.ChangeTracker.AutoDetectChangesEnabled = false;
+            
+            if (Database.ProviderName.Equals("Npgsql.EntityFrameworkCore.PostgreSQL"))
+            {
+                AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+            }
         }
 
         public virtual DbSet<idCatalogItem> idCatalogItem { get; set; }
