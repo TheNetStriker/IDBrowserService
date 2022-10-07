@@ -3,6 +3,7 @@ using IDBrowserServiceCore.Code.XmpRecipe;
 using IDBrowserServiceCore.Data;
 using IDBrowserServiceCore.Data.IDImager;
 using IDBrowserServiceCore.Data.IDImagerThumbs;
+using IDBrowserServiceCore.Services;
 using IDBrowserServiceCore.Settings;
 using ImageMagick;
 using Microsoft.AspNetCore.Http;
@@ -40,6 +41,7 @@ namespace IDBrowserServiceCore.Controllers
         private TransactionOptions readUncommittedTransactionOptions;
         private readonly IDImagerDB db;
         private readonly IDImagerThumbsDB dbThumbs;
+        private readonly IDatabaseCache databaseCache;
 
         /// <summary>
         /// Controller constructor
@@ -49,14 +51,16 @@ namespace IDBrowserServiceCore.Controllers
         /// <param name="serviceSettings">ServiceSettings</param>
         /// <param name="logger">Logger</param>
         /// <param name="diagnosticContext">Logger diagnostic context</param>
+        /// <param name="databaseCache">Database cache</param>
         public ValuesController(IDImagerDB db, IDImagerThumbsDB dbThumbs, ServiceSettings serviceSettings,
-            ILogger<ValuesController> logger, IDiagnosticContext diagnosticContext)
+            ILogger<ValuesController> logger, IDiagnosticContext diagnosticContext, IDatabaseCache databaseCache)
         {
             this.db = db ?? throw new ArgumentNullException(nameof(db));
             this.dbThumbs = dbThumbs ?? throw new ArgumentNullException(nameof(dbThumbs));
             this.serviceSettings = serviceSettings ?? throw new ArgumentNullException(nameof(serviceSettings));
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.diagnosticContext = diagnosticContext ?? throw new ArgumentNullException(nameof(diagnosticContext));
+            this.databaseCache = databaseCache ?? throw new ArgumentNullException(nameof(databaseCache));
 
             readUncommittedTransactionOptions = new TransactionOptions
             {
@@ -95,33 +99,49 @@ namespace IDBrowserServiceCore.Controllers
 
                     if (guid == null)
                     {
-                        var query = from tbl in db.v_PropCategory
-                                    where !tbl.CategoryName.Equals("Internal")
-                                    orderby tbl.CategoryName
-                                    select new ImageProperty
-                                    {
-                                        GUID = tbl.GUID,
-                                        Name = tbl.CategoryName,
-                                        ImageCount = tbl.idPhotoCount,
-                                        SubPropertyCount = db.idProp.Where(x => x.ParentGUID == tbl.GUID).Count()
-                                    };
+                        if (databaseCache.VPropCategoryCache != null && serviceSettings.EnableDatabaseCache)
+                        {
+                            listImageProperty = databaseCache.VPropCategoryCache;
+                        }
+                        else
+                        {
+                            var query = from tbl in db.v_PropCategory
+                                        where !tbl.CategoryName.Equals("Internal")
+                                        orderby tbl.CategoryName
+                                        select new ImageProperty
+                                        {
+                                            GUID = tbl.GUID,
+                                            Name = tbl.CategoryName,
+                                            ImageCount = tbl.idPhotoCount,
+                                            SubPropertyCount = db.idProp.Where(x => x.ParentGUID == tbl.GUID).Count()
+                                        };
 
-                        listImageProperty = await query.ToListAsync();
+                            listImageProperty = await query.ToListAsync();
+                        }
                     }
                     else
                     {
-                        var query = from tbl in db.v_prop
-                                    where tbl.ParentGUID == guid
-                                    orderby tbl.PropName
-                                    select new ImageProperty
-                                    {
-                                        GUID = tbl.GUID,
-                                        Name = tbl.PropName,
-                                        ImageCount = tbl.idPhotoCount,
-                                        SubPropertyCount = db.idProp.Where(x => x.ParentGUID == tbl.GUID).Count()
-                                    };
+                        if (databaseCache.VPropCache != null && serviceSettings.EnableDatabaseCache)
+                        {
+                            listImageProperty = databaseCache.VPropCache
+                                .Where(x => x.ParentGUID.Equals(guid))
+                                .ToList();
+                        }
+                        else
+                        {
+                            var query = from tbl in db.v_prop
+                                        where tbl.ParentGUID == guid
+                                        orderby tbl.PropName
+                                        select new ImageProperty
+                                        {
+                                            GUID = tbl.GUID,
+                                            Name = tbl.PropName,
+                                            ImageCount = tbl.idPhotoCount,
+                                            SubPropertyCount = db.idProp.Where(x => x.ParentGUID == tbl.GUID).Count()
+                                        };
 
-                        listImageProperty = await query.ToListAsync();
+                            listImageProperty = await query.ToListAsync();
+                        }
                     }
 
                     return listImageProperty;

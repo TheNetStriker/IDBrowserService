@@ -4,6 +4,29 @@
         <name>IDBrowserServiceCore</name>
     </assembly>
     <members>
+        <member name="T:IDBrowserServiceCore.Code.ApplicationBuilderExtensions">
+            <summary>
+            Helper to enable multiple asp.net pipelines
+            </summary>
+        </member>
+        <member name="M:IDBrowserServiceCore.Code.ApplicationBuilderExtensions.UseBranchWithServices(Microsoft.AspNetCore.Builder.IApplicationBuilder,Microsoft.AspNetCore.Http.PathString,System.Action{Microsoft.Extensions.DependencyInjection.IServiceCollection},System.Action{Microsoft.AspNetCore.Builder.IApplicationBuilder})">
+            <summary>
+            Sets up an application branch with an isolated DI container
+            </summary>
+            <param name="app">Application builder</param>
+            <param name="path">Relative path for the application branch</param>
+            <param name="servicesConfiguration">DI container configuration</param>
+            <param name="appBuilderConfiguration">Application pipeline configuration for the created branch</param>
+        </member>
+        <member name="M:IDBrowserServiceCore.Code.ApplicationBuilderExtensions.UseBranchWithServices(Microsoft.AspNetCore.Builder.IApplicationBuilder,System.Collections.Generic.IEnumerable{Microsoft.AspNetCore.Http.PathString},System.Action{Microsoft.Extensions.DependencyInjection.IServiceCollection},System.Action{Microsoft.AspNetCore.Builder.IApplicationBuilder})">
+            <summary>
+            Sets up an application branch with an isolated DI container with several routes (entry points)
+            </summary>
+            <param name="app">Application builder</param>
+            <param name="paths">Relative paths for the application branch</param>
+            <param name="servicesConfiguration">DI container configuration</param>
+            <param name="appBuilderConfiguration">Application pipeline configuration for the created branch</param>
+        </member>
         <member name="M:IDBrowserServiceCore.Code.ConsoleFunctions.TranscodeAllVideos(IDBrowserServiceCore.Settings.IDBrowserConfiguration,System.Threading.CancellationToken,System.String,System.String,Serilog.Events.LogEventLevel,System.Int32)">
             <summary>
             Transcode's all videos of a site
@@ -198,7 +221,7 @@
             Controller for Photosupreme values
             </summary>
         </member>
-        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.#ctor(IDBrowserServiceCore.Data.IDImager.IDImagerDB,IDBrowserServiceCore.Data.IDImagerThumbs.IDImagerThumbsDB,IDBrowserServiceCore.Settings.ServiceSettings,Microsoft.Extensions.Logging.ILogger{IDBrowserServiceCore.Controllers.ValuesController},Serilog.IDiagnosticContext)">
+        <member name="M:IDBrowserServiceCore.Controllers.ValuesController.#ctor(IDBrowserServiceCore.Data.IDImager.IDImagerDB,IDBrowserServiceCore.Data.IDImagerThumbs.IDImagerThumbsDB,IDBrowserServiceCore.Settings.ServiceSettings,Microsoft.Extensions.Logging.ILogger{IDBrowserServiceCore.Controllers.ValuesController},Serilog.IDiagnosticContext,IDBrowserServiceCore.Services.IDatabaseCache)">
             <summary>
             Controller constructor
             </summary>
@@ -207,6 +230,7 @@
             <param name="serviceSettings">ServiceSettings</param>
             <param name="logger">Logger</param>
             <param name="diagnosticContext">Logger diagnostic context</param>
+            <param name="databaseCache">Database cache</param>
         </member>
         <member name="M:IDBrowserServiceCore.Controllers.ValuesController.GetImageProperties">
             <summary>
@@ -379,6 +403,109 @@
             </summary>
             <param name="width">Width or zero if not specified</param>
             <param name="height">Height or zero if not specified</param>
+        </member>
+        <member name="T:IDBrowserServiceCore.Installers.CronSchedulerInstaller">
+            <summary>
+            Installer for cron scheduler.
+            </summary>
+        </member>
+        <member name="M:IDBrowserServiceCore.Installers.CronSchedulerInstaller.AddCronSchedulerServices(Microsoft.Extensions.DependencyInjection.IServiceCollection,IDBrowserServiceCore.Settings.ServiceSettings,System.String)">
+            <summary>
+            Add's cron scheduler services.
+            </summary>
+            <param name="services">IServiceCollection</param>
+            <param name="serviceSettings">ServiceSettings</param>
+            <returns>IServiceCollection</returns>
+        </member>
+        <member name="M:IDBrowserServiceCore.Installers.CronSchedulerInstaller.AddJobAndTrigger``1(Quartz.IServiceCollectionQuartzConfigurator,System.String,System.String)">
+            <summary>
+            Add's a cron job.
+            </summary>
+            <typeparam name="T">IJob</typeparam>
+            <param name="quartz">IServiceCollectionQuartzConfigurator</param>
+            <param name="cronSchedule">Cron schedule</param>
+            <exception cref="T:System.Exception"></exception>
+        </member>
+        <member name="T:IDBrowserServiceCore.Jobs.UpdateDatabaseCacheJob">
+            <summary>
+            Update database cache job
+            </summary>
+        </member>
+        <member name="M:IDBrowserServiceCore.Jobs.UpdateDatabaseCacheJob.#ctor(Microsoft.Extensions.Logging.ILogger{IDBrowserServiceCore.Jobs.UpdateDatabaseCacheJob},IDBrowserServiceCore.Services.IDatabaseCache)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="logger">Logger</param>
+            <param name="databaseCache">Database cache</param>
+        </member>
+        <member name="M:IDBrowserServiceCore.Jobs.UpdateDatabaseCacheJob.Execute(Quartz.IJobExecutionContext)">
+            <summary>
+            Job execution
+            </summary>
+            <param name="context">IJobExecutionContext</param>
+            <returns>Task</returns>
+        </member>
+        <member name="T:IDBrowserServiceCore.Services.DatabaseCache">
+            <summary>
+            Database cache service
+            </summary>
+        </member>
+        <member name="P:IDBrowserServiceCore.Services.DatabaseCache.VPropCategoryCache">
+            <summary>
+            v_PropCategory Cache
+            </summary>
+        </member>
+        <member name="P:IDBrowserServiceCore.Services.DatabaseCache.VPropCache">
+            <summary>
+            v_prop Cache
+            </summary>
+        </member>
+        <member name="M:IDBrowserServiceCore.Services.DatabaseCache.#ctor(IDBrowserServiceCore.Data.IDImager.IDImagerDB)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="db">IDImagerDB</param>
+        </member>
+        <member name="M:IDBrowserServiceCore.Services.DatabaseCache.CheckAndUpdateCacheAsync">
+            <summary>
+            Checks if the cache needs updating.
+            </summary>
+        </member>
+        <member name="T:IDBrowserServiceCore.Services.IDatabaseCache">
+            <summary>
+            Database cache service interface
+            </summary>
+        </member>
+        <member name="P:IDBrowserServiceCore.Services.IDatabaseCache.VPropCategoryCache">
+            <summary>
+            v_PropCategory Cache
+            </summary>
+        </member>
+        <member name="P:IDBrowserServiceCore.Services.IDatabaseCache.VPropCache">
+            <summary>
+            v_prop Cache
+            </summary>
+        </member>
+        <member name="M:IDBrowserServiceCore.Services.IDatabaseCache.CheckAndUpdateCacheAsync">
+            <summary>
+            Checks if the cache needs updating.
+            </summary>
+        </member>
+        <member name="T:IDBrowserServiceCore.Settings.CronJobs">
+            <summary>
+            Cron job settings
+            </summary>
+        </member>
+        <member name="P:IDBrowserServiceCore.Settings.CronJobs.UpdateDatabaseCacheJob">
+            <summary>
+            Cron expression to update database cache. (Default is every 15 Minutes "0 */15 * * * ?")
+            Cache is only updated if new image properties are added/deleted or images get a new image property assigned or removed.
+            </summary>
+        </member>
+        <member name="M:IDBrowserServiceCore.Settings.CronJobs.#ctor">
+            <summary>
+            Set's default settings.
+            </summary>
         </member>
     </members>
 </doc>

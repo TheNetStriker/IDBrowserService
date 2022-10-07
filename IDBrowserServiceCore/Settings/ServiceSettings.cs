@@ -15,6 +15,8 @@ namespace IDBrowserServiceCore.Settings
         public string TokenAudience { get; set; }
         public TimeSpan TokenExpiration { get; set; }
         public bool DisableInsecureMediaPlayApi { get; set; }
+        public bool EnableDatabaseCache { get; set; }
+        public CronJobs CronJobs { get; set; }
 
         public ServiceSettings()
         {
@@ -29,6 +31,7 @@ namespace IDBrowserServiceCore.Settings
             TokenIssuer = "IDBrowserServiceCore";
             TokenAudience = "IDBrowserUser";
             TokenExpiration = new TimeSpan(1, 0, 0);
+            CronJobs = new CronJobs();
         }
     }
 }

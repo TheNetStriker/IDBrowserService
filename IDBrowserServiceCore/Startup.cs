@@ -1,6 +1,8 @@
 ﻿using IDBrowserServiceCore.Code;
 using IDBrowserServiceCore.Data.IDImager;
 using IDBrowserServiceCore.Data.IDImagerThumbs;
+using IDBrowserServiceCore.Installers;
+using IDBrowserServiceCore.Services;
 using IDBrowserServiceCore.Settings;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -60,6 +62,7 @@ namespace IDBrowserServiceCore
                                     .AddMvc(option => option.EnableEndpointRouting = false)
                                     .AddXmlSerializerFormatters();
 
+                                services.AddSingleton<IDatabaseCache, DatabaseCache>();
                                 services.AddSingleton<ServiceSettings>(serviceSettings);
 
                                 if (configuration.UseSwagger)
@@ -95,6 +98,8 @@ namespace IDBrowserServiceCore
                                     .SetDbContextOptions(options, connectionStringSettings.DBType, connectionStringSettings.IDImager));
                                 services.AddDbContextPool<IDImagerThumbsDB>(options => StaticFunctions
                                     .SetDbContextOptions(options, connectionStringSettings.DBType, connectionStringSettings.IDImagerThumbs));
+
+                                services.AddCronSchedulerServices(serviceSettings, strSiteName);
                             },
                             appBuilder =>
                             {

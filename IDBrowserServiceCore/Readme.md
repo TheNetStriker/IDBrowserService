@@ -37,12 +37,14 @@ Additional site environment variables:
 -e Sites__site1__ServiceSettings__MThumbmailWidth="1680" \
 -e Sites__site1__ServiceSettings__MThumbnailHeight="1260" \
 -e Sites__site1__ServiceSettings__DisableInsecureMediaPlayApi="true" \
+-e Sites__site1__ServiceSettings__EnableDatabaseCache="true" \
+-e Sites__site1__ServiceSettings__CronJobs__UpdateDatabaseCacheJob="0 */15 * * * ?" \
 ```
 It is also possible to configure multiple sites. Just copy all -e environment variables and replace site1 with the second site name.
 
 # Prerequisites
 
-* Asp.Net Core 3.1 runtime
+* Asp.Net 5.0 runtime
 
 * FFMpeg for Video transformation and video thumbnails (Must also be added to the PATH environment variable)
 
@@ -76,6 +78,8 @@ In this file is is possible to define multiple sites with different Photosupreme
 | ServiceSettings.TokenAudience | Token audience name for token generation. |
 | ServiceSettings.TokenExpiration | Time until token expires. (Format Hour:Minute:Second) |
 | ServiceSettings.DisableInsecureMediaPlayApi| If set to true the unsecure media play api will be disabled. |
+| ServiceSettings.EnableDatabaseCache| Added in version 1.9. Enables database cache if set to true. This only caches the most expensive queries for the image properties with photo count. Cache is updated with the UpdateDatabaseCacheJob cron job. |
+| ServiceSettings.CronJobs.UpdateDatabaseCacheJob| Added in version 1.9. Cron expression to update database cache. (Default is every 15 Minutes "0 */15 * * * ?") Cache is only updated if new image properties are added/deleted or images get a new image property assigned or removed. |
 
 # Security
 

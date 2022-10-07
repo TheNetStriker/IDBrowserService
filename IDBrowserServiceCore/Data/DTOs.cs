@@ -1,132 +1,96 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 
 namespace IDBrowserServiceCore.Data
 {
-    [DataContract]
     public class ImageProperty
     {
-        [DataMember]
         public string GUID { get; set; }
 
-        [DataMember]
+        [JsonIgnore]
+        public string ParentGUID { get; set; }
+
         public string Name { get; set; }
 
-        [DataMember]
         public int? ImageCount { get; set; }
 
-        [DataMember]
         public int SubPropertyCount { get; set; }
     }
 
-    [DataContract]
     public class ImagePropertyRecursive
     {
-        [DataMember]
         public string GUID { get; set; }
 
-        [DataMember]
         public string Name { get; set; }
 
-        [DataMember]
         public string FullRecursivePath { get; set; }
     }
 
-    [DataContract]
     public class CatalogItem
     {
-        [DataMember]
         public string GUID { get; set; }
 
-        [DataMember]
         public string FileName { get; set; }
 
-        [DataMember]
         public string FileType { get; set; }
 
-        [DataMember]
         public string FilePath { get; set; }
 
-        [DataMember]
         public int? HasRecipe { get; set; }
     }
 
-    [DataContract]
     public class ImageInfo
     {
         //This is now included in idsearchdata
-        //[DataMember]
         //public String ImageName { get; set; }
 
         //This is now included in idsearchdata
-        //[DataMember]
         //public String ImageDescription { get; set; }
 
-        [DataMember]
         public String ImageResolution { get; set; }
 
-        [DataMember]
         public String FileType { get; set; }
 
-        [DataMember]
         public DateTime? Timestamp { get; set; }
 
-        [DataMember]
         public int? FileSize { get; set; }
 
-        [DataMember]
         public int? Rating { get; set; }
 
-        [DataMember]
         public Nullable<double> GPSLat { get; set; }
 
-        [DataMember]
         public Nullable<double> GPSLon { get; set; }
 
-        [DataMember]
         public List<XmpProperty> XmpProperties { get; set; }
     }
 
-    [DataContract]
     public class XmpProperty
     {
-        [DataMember]
         public string Name { get; set; }
 
-        [DataMember]
         public string Value { get; set; }
     }
-
-    [DataContract]
     public class FilePath
     {
-        [DataMember]
         public string GUID { get; set; }
 
-        [DataMember]
         public string MediumName { get; set; }
 
-        [DataMember]
         public string Path { get; set; }
 
-        [DataMember]
         public string RootName { get; set; }
 
-        [DataMember]
         public int ImageCount { get; set; }
     }
 
-    [DataContract]
     public class MediaToken
     {
-        [DataMember]
         public string Token { get; set; }
 
-        [DataMember]
         public DateTime ValidFrom { get; set; }
 
-        [DataMember]
         public DateTime ValidTo { get; set; }
     }
 }
