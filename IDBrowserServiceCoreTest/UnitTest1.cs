@@ -1,3 +1,5 @@
+using FFmpeg.NET;
+using FFmpeg.NET.Enums;
 using IDBrowserServiceCore.Code;
 using IDBrowserServiceCore.Controllers;
 using IDBrowserServiceCore.Data;
@@ -14,12 +16,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Core;
+using Serilog.Events;
 using Serilog.Extensions.Hosting;
 using Serilog.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -440,6 +444,43 @@ namespace IDBrowserServiceCoreTest
         public async void DatabaseCacheTest()
         {
             await DatabaseCache.CheckAndUpdateCacheAsync();
+        }
+
+        [Fact]
+        public async void VideoTranscodeTest()
+        {
+            string videoSize = "Hd480";
+
+            idCatalogItemFirstVideo.GetHeightAndWidth(out int originalVideoWidth, out int originalVideoHeight);
+
+            Engine ffmpegEngine = StaticFunctions.GetFFmpegEngine();
+
+            ffmpegEngine.Error += (sender, eventArgs) =>
+            {
+                Assert.Fail(eventArgs.Exception.ToString());
+            };
+
+            string strTranscodeFilePath = StaticFunctions.GetTranscodeFilePath(idCatalogItemFirstVideo.GUID,
+                Settings.TranscodeDirectory, videoSize);
+
+            FileInfo transcodeFileInfo = new FileInfo(strTranscodeFilePath);
+
+            if (transcodeFileInfo.Exists)
+            {
+                transcodeFileInfo.Delete();
+            }
+
+            string strFilePath = StaticFunctions.GetImageFilePath(idCatalogItemFirstVideo, Settings.FilePathReplace);
+
+            await StaticFunctions.TranscodeVideo(ffmpegEngine, default, strFilePath, strTranscodeFilePath,
+                videoSize, originalVideoWidth, originalVideoHeight);
+
+            transcodeFileInfo.Refresh();
+
+            if (!transcodeFileInfo.Exists)
+            {
+                Assert.Fail("Transcoding failed, file does not exist.");
+            }
         }
     }
 }
