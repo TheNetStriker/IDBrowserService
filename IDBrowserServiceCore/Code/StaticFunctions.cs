@@ -202,6 +202,7 @@ namespace IDBrowserServiceCore.Code
         /// <param name="ffmpegEngine">FFmpeg engine</param>
         /// <param name="cancellationToken">CancellationToken</param>
         /// <param name="filePath">Video file path</param>
+        /// <param name="transcodeFilePath">Transcode file path</param>
         /// <param name="transcodeVideoSize">Target video size</param>
         /// <param name="originalVideoWidth">Optional original video width</param>
         /// <param name="originalVideoHeight">Optional original video height</param>
