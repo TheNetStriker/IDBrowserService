@@ -76,10 +76,12 @@ namespace IDBrowserServiceCore.Data
     {
         public string GUID { get; set; }
 
+        [Obsolete]
         public string MediumName { get; set; }
 
         public string Path { get; set; }
 
+        [Obsolete]
         public string RootName { get; set; }
 
         public int ImageCount { get; set; }
