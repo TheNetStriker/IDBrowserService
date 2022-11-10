@@ -432,6 +432,17 @@ namespace IDBrowserServiceCoreTest
         }
 
         [Fact]
+        public async void MediaControllerPlaySecureTest()
+        {
+            var token = await ValuesController.GetMediaToken(idCatalogItemFirstVideo.GUID);
+
+            if (!(await MediaController.PlaySecure(token.Value.Token, null) is FileStreamResult stream))
+                throw new Exception("No stream received");
+            else
+                stream.FileStream.Close();
+        }
+
+        [Fact]
         public async void MediaControllerPlayTranscodeTest()
         {
             if (!(await MediaController.Play(idCatalogItemFirstVideo.GUID, "Hd480") is FileStreamResult stream))

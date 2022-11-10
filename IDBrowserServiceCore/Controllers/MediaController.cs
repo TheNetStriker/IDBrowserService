@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Context;
 using System;
@@ -23,6 +24,7 @@ using System.Linq;
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace IDBrowserServiceCore.Controllers
@@ -84,22 +86,31 @@ namespace IDBrowserServiceCore.Controllers
         {
             if (token is null) return StaticFunctions.BadRequestArgumentNull(nameof(token));
 
-            var now = DateTime.UtcNow;
-            JwtSecurityToken jwtSecurityToken = new JwtSecurityTokenHandler().ReadJwtToken(token);
-
-            if (jwtSecurityToken.ValidFrom < now && jwtSecurityToken.ValidTo > now)
+            var tokenValidationParameters = new TokenValidationParameters
             {
-                Claim mediaGuidClaim = jwtSecurityToken.Claims.SingleOrDefault(x => x.Type == "MediaGuid");
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(serviceSettings.TokenSecretKey)),
+                ValidIssuer = serviceSettings.TokenIssuer,
+                ValidAudience = serviceSettings.TokenAudience,
+                // set clockskew to zero so tokens expire exactly at token expiration time (instead of 5 minutes later)
+                ClockSkew = TimeSpan.Zero
+            };
 
-                if (mediaGuidClaim == null) {
-                    return BadRequest("Claim missing!");
+            try
+            {
+                var jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
+                ClaimsPrincipal claimsPrincipal = jwtSecurityTokenHandler.ValidateToken(token, tokenValidationParameters, out _);
+
+                string mediaGuid = claimsPrincipal.FindFirstValue("MediaGuid");
+
+                if (string.IsNullOrEmpty(mediaGuid))
+                {
+                    return BadRequest("MediaGuid claim missing!");
                 }
-
-                string mediaGuid = mediaGuidClaim.Value;
 
                 return await PlayInternal(mediaGuid, videosize);
             }
-            else
+            catch (SecurityTokenException)
             {
                 return BadRequest("Token exired!");
             }
