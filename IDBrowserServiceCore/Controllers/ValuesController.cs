@@ -21,7 +21,6 @@ using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 
@@ -37,7 +36,7 @@ namespace IDBrowserServiceCore.Controllers
         private readonly ILogger<ValuesController> logger;
         private readonly IDiagnosticContext diagnosticContext;
         private readonly ServiceSettings serviceSettings;
-        private TransactionOptions readUncommittedTransactionOptions;
+        private readonly TransactionOptions readUncommittedTransactionOptions;
         private readonly IDImagerDB db;
         private readonly IDImagerThumbsDB dbThumbs;
         private readonly IDatabaseCache databaseCache;
@@ -332,7 +331,7 @@ namespace IDBrowserServiceCore.Controllers
         /// </summary>
         /// <param name="propertyGuid">File path guid to query recursive.</param>
         /// <param name="propertyGuids">List to add the guids.</param>
-        public async Task AddSubpropertyGuids(string propertyGuid, List<string> propertyGuids)
+        private async Task AddSubpropertyGuids(string propertyGuid, List<string> propertyGuids)
         {
             var subfolderQuery = from tbl in db.idProp
                                  where tbl.ParentGUID == propertyGuid
@@ -423,7 +422,7 @@ namespace IDBrowserServiceCore.Controllers
         /// </summary>
         /// <param name="filePathGuid">File path guid to query recursive.</param>
         /// <param name="filePathGuids">List to add the guids.</param>
-        public async Task AddSubfolderFilePathGuids(string filePathGuid, List<string> filePathGuids)
+        private async Task AddSubfolderFilePathGuids(string filePathGuid, List<string> filePathGuids)
         {
             var subfolderQuery = from tbl in db.idFilePath
                                  where tbl.ParentGUID == filePathGuid

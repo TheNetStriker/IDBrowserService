@@ -1,6 +1,7 @@
 ﻿using IDBrowserServiceCore.Data;
 using IDBrowserServiceCore.Data.IDImager;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,7 +13,7 @@ namespace IDBrowserServiceCore.Services
     /// </summary>
     public class DatabaseCache : IDatabaseCache
     {
-        private readonly IDImagerDB _db;
+        private readonly IServiceScopeFactory _scopeFactory;
 
         private int IdPropCount { get; set; }
         private int IdCatalogItemDefinitionCount { get; set; }
@@ -30,10 +31,10 @@ namespace IDBrowserServiceCore.Services
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="db">IDImagerDB</param>
-        public DatabaseCache(IDImagerDB db)
+        /// <param name="scopeFactory">IServiceScopeFactory</param>
+        public DatabaseCache(IServiceScopeFactory scopeFactory)
         {
-            _db = db;
+            _scopeFactory = scopeFactory;
         }
 
         /// <summary>
@@ -41,43 +42,46 @@ namespace IDBrowserServiceCore.Services
         /// </summary>
         public async Task CheckAndUpdateCacheAsync()
         {
-            int currentIdPropCount = await _db.idProp.CountAsync();
-            int currentidCatalogItemDefinitionCount = await _db.idCatalogItemDefinition.CountAsync();
+            using var scope = _scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<IDImagerDB>();
+
+            int currentIdPropCount = await db.idProp.CountAsync();
+            int currentidCatalogItemDefinitionCount = await db.idCatalogItemDefinition.CountAsync();
 
             if (VPropCategoryCache == null
                 || VPropCache == null
                 || IdPropCount != currentIdPropCount
                 || IdCatalogItemDefinitionCount != currentidCatalogItemDefinitionCount)
             {
-                var queryVPropCategorySource = from tbl in _db.v_PropCategory
-                            where !tbl.CategoryName.Equals("Internal")
-                            orderby tbl.CategoryName
-                            select new ImageProperty
-                            {
-                                GUID = tbl.GUID,
-                                Name = tbl.CategoryName,
-                                ImageCount = tbl.idPhotoCount,
-                                SubPropertyCount = _db.idProp.Where(x => x.ParentGUID == tbl.GUID).Count()
-                            };
+                var queryVPropCategorySource = from tbl in db.v_PropCategory
+                                               where !tbl.CategoryName.Equals("Internal")
+                                               orderby tbl.CategoryName
+                                               select new ImageProperty
+                                               {
+                                                   GUID = tbl.GUID,
+                                                   Name = tbl.CategoryName,
+                                                   ImageCount = tbl.idPhotoCount,
+                                                   SubPropertyCount = db.idProp.Where(x => x.ParentGUID == tbl.GUID).Count()
+                                               };
 
                 var vPropCategory = await queryVPropCategorySource.ToListAsync();
 
-                var queryVProp = from tbl in _db.v_prop
-                            orderby tbl.PropName
-                            select new ImageProperty
-                            {
-                                GUID = tbl.GUID,
-                                ParentGUID = tbl.ParentGUID,
-                                Name = tbl.PropName,
-                                ImageCount = tbl.idPhotoCount,
-                                SubPropertyCount = _db.idProp.Where(x => x.ParentGUID == tbl.GUID).Count()
-                            };
+                var queryVProp = from tbl in db.v_prop
+                                 orderby tbl.PropName
+                                 select new ImageProperty
+                                 {
+                                     GUID = tbl.GUID,
+                                     ParentGUID = tbl.ParentGUID,
+                                     Name = tbl.PropName,
+                                     ImageCount = tbl.idPhotoCount,
+                                     SubPropertyCount = db.idProp.Where(x => x.ParentGUID == tbl.GUID).Count()
+                                 };
 
                 var vprop = await queryVProp.ToListAsync();
 
                 VPropCategoryCache = vPropCategory;
                 VPropCache = vprop;
-                
+
                 IdPropCount = currentIdPropCount;
                 IdCatalogItemDefinitionCount = currentidCatalogItemDefinitionCount;
             }

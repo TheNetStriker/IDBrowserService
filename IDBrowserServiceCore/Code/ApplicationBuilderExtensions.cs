@@ -4,9 +4,8 @@ using Microsoft.AspNetCore.Hosting.Builder;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Hosting;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -43,17 +42,19 @@ namespace IDBrowserServiceCore.Code
         public static IApplicationBuilder UseBranchWithServices(this IApplicationBuilder app, IEnumerable<PathString> paths,
             Action<IServiceCollection> servicesConfiguration, Action<IApplicationBuilder> appBuilderConfiguration)
         {
-            var webHost = new WebHostBuilder()
-                .ConfigureServices(s => {
-                    s.AddSingleton<IServer, DummyServer>();
-                })
-                .ConfigureServices(servicesConfiguration)
-                .UseStartup<EmptyStartup>()
-                .UseSerilog(Log.Logger)
-                .Build();
+            WebApplicationOptions options = new() { Args = [] };
+            var webHostBuilder = WebApplication.CreateEmptyBuilder(options);
+
+            webHostBuilder.Services.AddSingleton<IServer, DummyServer>();
+
+            webHostBuilder.Host.UseSerilog(Log.Logger);
+
+            servicesConfiguration.Invoke(webHostBuilder.Services);
+
+            var webHost = webHostBuilder.Build();
 
             var serviceProvider = webHost.Services;
-            var serverFeatures = webHost.ServerFeatures;
+            var serverFeatures = new FeatureCollection();
 
             var appBuilderFactory = serviceProvider.GetRequiredService<IApplicationBuilderFactory>();
             var branchBuilder = appBuilderFactory.CreateBuilder(serverFeatures);
@@ -96,13 +97,6 @@ namespace IDBrowserServiceCore.Code
             webHost.Start();
 
             return app;
-        }
-
-        private class EmptyStartup
-        {
-            public void ConfigureServices(IServiceCollection services) { }
-
-            public void Configure(IApplicationBuilder app) { }
         }
 
         private class DummyServer : IServer

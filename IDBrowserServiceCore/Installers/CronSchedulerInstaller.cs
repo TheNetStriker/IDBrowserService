@@ -11,7 +11,7 @@ namespace IDBrowserServiceCore.Installers
     /// </summary>
     public static class CronSchedulerInstaller
     {
-        private static int _schedulerCounter;
+        private static int _schedulerCount;
 
         /// <summary>
         /// Add's cron scheduler services.
@@ -22,13 +22,11 @@ namespace IDBrowserServiceCore.Installers
         public static IServiceCollection AddCronSchedulerServices(this IServiceCollection services,
             ServiceSettings serviceSettings, string name)
         {
-            _schedulerCounter += 1;
+            _schedulerCount += 1;
 
             services.AddQuartz(q =>
             {
                 q.SchedulerName = $"Scheduler_{name}";
-
-                q.UseMicrosoftDependencyInjectionJobFactory();
 
                 if (serviceSettings.EnableDatabaseCache)
                 {
@@ -78,7 +76,7 @@ namespace IDBrowserServiceCore.Installers
             quartz.AddTrigger(opts => opts
                 .ForJob(jobKey)
                 .WithIdentity(jobName + "-startup-trigger")
-                .StartAt(DateTimeOffset.Now.AddSeconds(_schedulerCounter * 60))
+                .StartAt(DateTimeOffset.Now.AddSeconds(_schedulerCount * 60))
                 .WithSimpleSchedule(x => x.WithIntervalInSeconds(0)));
         }
     }

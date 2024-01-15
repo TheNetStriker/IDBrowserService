@@ -461,11 +461,11 @@
             v_prop Cache
             </summary>
         </member>
-        <member name="M:IDBrowserServiceCore.Services.DatabaseCache.#ctor(IDBrowserServiceCore.Data.IDImager.IDImagerDB)">
+        <member name="M:IDBrowserServiceCore.Services.DatabaseCache.#ctor(Microsoft.Extensions.DependencyInjection.IServiceScopeFactory)">
             <summary>
             Constructor
             </summary>
-            <param name="db">IDImagerDB</param>
+            <param name="scopeFactory">IServiceScopeFactory</param>
         </member>
         <member name="M:IDBrowserServiceCore.Services.DatabaseCache.CheckAndUpdateCacheAsync">
             <summary>
