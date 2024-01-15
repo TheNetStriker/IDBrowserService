@@ -35,9 +35,9 @@ namespace IDBrowserServiceCore.Jobs
         {
             try
             {
-                logger.LogInformation($"Job {nameof(UpdateDatabaseCacheJob)} started by trigger: {context.Trigger.Key.Name}");
+                logger.LogInformation("Job {UpdateDatabaseCacheJob} started by trigger: {TriggerName}", nameof(UpdateDatabaseCacheJob), context.Trigger.Key.Name);
                 await databaseCache.CheckAndUpdateCacheAsync();
-                logger.LogInformation($"Job {nameof(UpdateDatabaseCacheJob)} finished by trigger: {context.Trigger.Key.Name}");
+                logger.LogInformation("Job {UpdateDatabaseCacheJob} finished by trigger: {TriggerName}", nameof(UpdateDatabaseCacheJob), context.Trigger.Key.Name);
             }
             catch (Exception ex)
             {
