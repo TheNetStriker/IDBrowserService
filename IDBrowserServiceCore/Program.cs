@@ -75,7 +75,8 @@ else
                             .AddMvc(option => option.EnableEndpointRouting = false)
                             .AddXmlSerializerFormatters();
 
-                        services.AddSingleton<IDatabaseCache, DatabaseCache>();
+                        services.AddMemoryCache();
+                        services.AddScoped<IDatabaseCache, DatabaseCache>();
                         services.AddSingleton<ServiceSettings>(serviceSettings);
 
                         if (configuration.UseSwagger)

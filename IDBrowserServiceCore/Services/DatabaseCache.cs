@@ -1,7 +1,7 @@
 ﻿using IDBrowserServiceCore.Data;
 using IDBrowserServiceCore.Data.IDImager;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Caching.Memory;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,7 +13,8 @@ namespace IDBrowserServiceCore.Services
     /// </summary>
     public class DatabaseCache : IDatabaseCache
     {
-        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly IDImagerDB _db;
+        private readonly IMemoryCache _memoryCache;
 
         private int IdPropCount { get; set; }
         private int IdCatalogItemDefinitionCount { get; set; }
@@ -21,20 +22,42 @@ namespace IDBrowserServiceCore.Services
         /// <summary>
         /// v_PropCategory Cache
         /// </summary>
-        public List<ImageProperty> VPropCategoryCache { get; set; }
+        public List<ImageProperty> VPropCategoryCache
+        { 
+            get
+            {
+                return _memoryCache.Get<List<ImageProperty>>(nameof(VPropCategoryCache));
+            }
+            set
+            {
+                _memoryCache.Set(nameof(VPropCategoryCache), value);
+            }
+        }
 
         /// <summary>
         /// v_prop Cache
         /// </summary>
-        public List<ImageProperty> VPropCache { get; set; }
+        public List<ImageProperty> VPropCache
+        {
+            get
+            {
+                return _memoryCache.Get<List<ImageProperty>>(nameof(VPropCache));
+            }
+            set
+            {
+                _memoryCache.Set(nameof(VPropCache), value);
+            }
+        }
 
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="scopeFactory">IServiceScopeFactory</param>
-        public DatabaseCache(IServiceScopeFactory scopeFactory)
+        /// <param name="db">IDImagerDB</param>
+        /// <param name="memoryCache">IMemoryCache</param>
+        public DatabaseCache(IDImagerDB db, IMemoryCache memoryCache)
         {
-            _scopeFactory = scopeFactory;
+            _db = db;
+            _memoryCache = memoryCache;
         }
 
         /// <summary>
@@ -42,18 +65,15 @@ namespace IDBrowserServiceCore.Services
         /// </summary>
         public async Task CheckAndUpdateCacheAsync()
         {
-            using var scope = _scopeFactory.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<IDImagerDB>();
-
-            int currentIdPropCount = await db.idProp.CountAsync();
-            int currentidCatalogItemDefinitionCount = await db.idCatalogItemDefinition.CountAsync();
+            int currentIdPropCount = await _db.idProp.CountAsync();
+            int currentidCatalogItemDefinitionCount = await _db.idCatalogItemDefinition.CountAsync();
 
             if (VPropCategoryCache == null
                 || VPropCache == null
                 || IdPropCount != currentIdPropCount
                 || IdCatalogItemDefinitionCount != currentidCatalogItemDefinitionCount)
             {
-                var queryVPropCategorySource = from tbl in db.v_PropCategory
+                var queryVPropCategorySource = from tbl in _db.v_PropCategory
                                                where !tbl.CategoryName.Equals("Internal")
                                                orderby tbl.CategoryName
                                                select new ImageProperty
@@ -61,12 +81,12 @@ namespace IDBrowserServiceCore.Services
                                                    GUID = tbl.GUID,
                                                    Name = tbl.CategoryName,
                                                    ImageCount = tbl.idPhotoCount,
-                                                   SubPropertyCount = db.idProp.Where(x => x.ParentGUID == tbl.GUID).Count()
+                                                   SubPropertyCount = _db.idProp.Where(x => x.ParentGUID == tbl.GUID).Count()
                                                };
 
                 var vPropCategory = await queryVPropCategorySource.ToListAsync();
 
-                var queryVProp = from tbl in db.v_prop
+                var queryVProp = from tbl in _db.v_prop
                                  orderby tbl.PropName
                                  select new ImageProperty
                                  {
@@ -74,7 +94,7 @@ namespace IDBrowserServiceCore.Services
                                      ParentGUID = tbl.ParentGUID,
                                      Name = tbl.PropName,
                                      ImageCount = tbl.idPhotoCount,
-                                     SubPropertyCount = db.idProp.Where(x => x.ParentGUID == tbl.GUID).Count()
+                                     SubPropertyCount = _db.idProp.Where(x => x.ParentGUID == tbl.GUID).Count()
                                  };
 
                 var vprop = await queryVProp.ToListAsync();
