@@ -16,6 +16,9 @@ using System.Collections.Generic;
 using System.Reflection;
 using System;
 using IDBrowserServiceCore.Data.IDImager;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Mvc.Authorization;
 
 Environment.SetEnvironmentVariable("BASEDIR", AppDomain.CurrentDomain.BaseDirectory);
 
@@ -55,7 +58,7 @@ else
 
     IDBrowserConfiguration configuration = new();
     Configuration.Bind(configuration);
-    
+
     try
     {
         if (configuration.Sites != null)
@@ -66,13 +69,54 @@ else
                 SiteSettings siteSettings = siteKeyValuePair.Value;
                 ConnectionStringSettings connectionStringSettings = siteSettings.ConnectionStrings;
                 ServiceSettings serviceSettings = siteSettings.ServiceSettings;
+                bool openIdEnabled = !String.IsNullOrEmpty(siteSettings.ServiceSettings.OpenIdConfigurationAddress);
 
                 //https://www.strathweb.com/2017/04/running-multiple-independent-asp-net-core-pipelines-side-by-side-in-the-same-application/
                 app.UseBranchWithServices("/" + strSiteName,
                     services =>
                     {
+                        if (openIdEnabled)
+                        {
+                            services
+                                .AddAuthentication(options =>
+                                {
+                                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                                    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                                })
+                                .AddJwtBearer(o =>
+                                {
+                                    o.MetadataAddress = siteSettings.ServiceSettings.OpenIdConfigurationAddress;
+
+                                    o.TokenValidationParameters = new TokenValidationParameters
+                                    {
+                                        ValidateIssuerSigningKey = true,
+                                        ValidateIssuer = true,
+                                        ValidateAudience = false,
+                                        ValidateLifetime = true,
+                                    };
+
+                                    if (app.Environment.IsDevelopment())
+                                    {
+                                        o.RequireHttpsMetadata = false;
+                                        o.IncludeErrorDetails = true;
+                                    }
+                                });
+
+                            services.AddAuthorizationBuilder()
+                                .AddDefaultPolicy("Default", policy => policy.RequireRole("site-" + strSiteName));
+                        }
+
                         services
-                            .AddMvc(option => option.EnableEndpointRouting = false)
+                            .AddMvc(option => 
+                            { 
+                                option.EnableEndpointRouting = false;
+
+                                if (!openIdEnabled)
+                                {
+                                    option.Filters.Add(new AllowAnonymousFilter());
+                                }
+                            })
                             .AddXmlSerializerFormatters();
 
                         services.AddMemoryCache();
@@ -90,6 +134,32 @@ else
                                     Version = "v1",
                                     Description = "Webservice for IDBrowser Android app."
                                 });
+
+                                if (openIdEnabled)
+                                {
+                                    c.AddSecurityDefinition("OpenId", new OpenApiSecurityScheme
+                                    {
+                                        Type = SecuritySchemeType.OpenIdConnect,
+                                        OpenIdConnectUrl = new Uri(siteSettings.ServiceSettings.OpenIdConfigurationAddress),
+                                    });
+
+                                    OpenApiSecurityScheme openIdSecurityScheme = new()
+                                    {
+                                        Reference = new OpenApiReference
+                                        {
+                                            Id = "OpenId",
+                                            Type = ReferenceType.SecurityScheme,
+                                        },
+                                        In = ParameterLocation.Header,
+                                        Name = "Bearer",
+                                        Scheme = "Bearer",
+                                    };
+
+                                    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                                    {
+                                        { openIdSecurityScheme, Array.Empty<string>() },
+                                    });
+                                }
 
                                 // Set the comments path for the Swagger JSON and UI.
                                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -117,6 +187,12 @@ else
                     },
                     appBuilder =>
                     {
+                        if (openIdEnabled)
+                        {
+                            appBuilder.UseAuthentication();
+                            appBuilder.UseAuthorization();
+                        }
+
                         if (configuration.UseResponseCompression)
                             appBuilder.UseResponseCompression();
 
@@ -132,6 +208,11 @@ else
                             appBuilder.UseSwaggerUI(c =>
                             {
                                 c.SwaggerEndpoint($"/{strSiteName}/swagger/v1/swagger.json", "IDBrowserServiceCore V1");
+
+                                if (openIdEnabled)
+                                {
+                                    c.OAuthClientId("idbrowser");
+                                }
                             });
                         }
                     });

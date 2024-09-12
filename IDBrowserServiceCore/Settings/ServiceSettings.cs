@@ -17,6 +17,7 @@ namespace IDBrowserServiceCore.Settings
         public bool DisableInsecureMediaPlayApi { get; set; }
         public bool EnableDatabaseCache { get; set; }
         public CronJobs CronJobs { get; set; }
+        public string OpenIdConfigurationAddress { get; set; }
 
         public ServiceSettings()
         {

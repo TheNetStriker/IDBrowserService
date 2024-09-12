@@ -6,6 +6,7 @@ using IDBrowserServiceCore.Data.IDImagerThumbs;
 using IDBrowserServiceCore.Services;
 using IDBrowserServiceCore.Settings;
 using ImageMagick;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -31,6 +32,7 @@ namespace IDBrowserServiceCore.Controllers
     /// </summary>
     [Route("api/[controller]/[action]")]
     [Route("Service.svc/[action]")] //Compatibility to old service
+    [Authorize]
     public class ValuesController : Controller
     {
         private readonly ILogger<ValuesController> logger;

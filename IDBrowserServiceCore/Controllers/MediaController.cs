@@ -2,6 +2,7 @@
 using IDBrowserServiceCore.Code;
 using IDBrowserServiceCore.Data.IDImager;
 using IDBrowserServiceCore.Settings;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
@@ -24,6 +25,7 @@ namespace IDBrowserServiceCore.Controllers
     /// Controller for video streaming
     /// </summary>
     [Route("api/[controller]/[action]")]
+    [Authorize]
     public class MediaController : Controller
     {
         private readonly IDImagerDB db;

@@ -68,7 +68,7 @@ namespace IDBrowserServiceCore.Code
                     context.RequestServices = scope.ServiceProvider;
 
                     var httpContextAccessor = context.RequestServices
-                                                     .GetService<IHttpContextAccessor>();
+                        .GetService<IHttpContextAccessor>();
 
                     if (httpContextAccessor != null)
                         httpContextAccessor.HttpContext = context;

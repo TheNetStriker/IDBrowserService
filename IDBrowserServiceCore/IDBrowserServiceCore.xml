@@ -187,6 +187,23 @@
             <param name="argumentName">Missing argument name</param>
             <returns>BadRequestObjectResult</returns>
         </member>
+        <member name="T:IDBrowserServiceCore.Controllers.ApplicationController">
+            <summary>
+            Controller for application
+            </summary>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ApplicationController.#ctor(IDBrowserServiceCore.Settings.ServiceSettings)">
+            <summary>
+            Controller constructor
+            </summary>
+            <param name="serviceSettings">ServiceSettings</param>
+        </member>
+        <member name="M:IDBrowserServiceCore.Controllers.ApplicationController.GetApplicationConfig">
+            <summary>
+            Returns the application configuration.
+            </summary>
+            <returns>ApplicationConfig</returns>
+        </member>
         <member name="T:IDBrowserServiceCore.Controllers.MediaController">
             <summary>
             Controller for video streaming
