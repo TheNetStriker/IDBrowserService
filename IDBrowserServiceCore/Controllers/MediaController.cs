@@ -25,7 +25,6 @@ namespace IDBrowserServiceCore.Controllers
     /// Controller for video streaming
     /// </summary>
     [Route("api/[controller]/[action]")]
-    [Authorize]
     public class MediaController : Controller
     {
         private readonly IDImagerDB db;
@@ -57,6 +56,7 @@ namespace IDBrowserServiceCore.Controllers
         /// <returns>Http video stream</returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [Authorize]
         public async Task<IActionResult> Play([Required] string guid, string videosize)
         {
             if (serviceSettings.DisableInsecureMediaPlayApi)
