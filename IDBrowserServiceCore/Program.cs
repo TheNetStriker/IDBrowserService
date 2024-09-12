@@ -19,6 +19,7 @@ using IDBrowserServiceCore.Data.IDImager;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using System.Net.Http;
 
 Environment.SetEnvironmentVariable("BASEDIR", AppDomain.CurrentDomain.BaseDirectory);
 
@@ -90,9 +91,10 @@ else
 
                                     o.TokenValidationParameters = new TokenValidationParameters
                                     {
+                                        ValidAudience = siteSettings.ServiceSettings.OpenIdAudience,
                                         ValidateIssuerSigningKey = true,
                                         ValidateIssuer = true,
-                                        ValidateAudience = false,
+                                        ValidateAudience = true,
                                         ValidateLifetime = true,
                                     };
 
@@ -100,6 +102,17 @@ else
                                     {
                                         o.RequireHttpsMetadata = false;
                                         o.IncludeErrorDetails = true;
+                                    }
+
+                                    if (siteSettings.ServiceSettings.OpenIdDisableServerCertificateValidation)
+                                    {
+                                        o.BackchannelHttpHandler = new HttpClientHandler
+                                        {
+                                            ServerCertificateCustomValidationCallback = delegate
+                                            {
+                                                return true;
+                                            }
+                                        };
                                     }
                                 });
 
