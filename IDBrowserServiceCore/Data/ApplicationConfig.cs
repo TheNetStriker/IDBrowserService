@@ -2,6 +2,7 @@
 {
     public class ApplicationConfig
     {
+        public bool UserIsAuthenticated { get; set; }
         public string OpenIdConfigurationAddress { get; set; }
     }
 }

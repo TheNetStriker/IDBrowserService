@@ -31,6 +31,7 @@ namespace IDBrowserServiceCore.Controllers
         {
             var applicationConfig = new ApplicationConfig()
             {
+                UserIsAuthenticated = HttpContext.User.Identity.IsAuthenticated,
                 OpenIdConfigurationAddress = serviceSettings.OpenIdConfigurationAddress
             };
 

@@ -56,7 +56,6 @@ namespace IDBrowserServiceCore.Controllers
         /// <returns>Http video stream</returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [Authorize]
         public async Task<IActionResult> Play([Required] string guid, string videosize)
         {
             if (serviceSettings.DisableInsecureMediaPlayApi)
@@ -105,7 +104,7 @@ namespace IDBrowserServiceCore.Controllers
             }
             catch (SecurityTokenException)
             {
-                return BadRequest("Token exired!");
+                return BadRequest("Token expired!");
             }
         }
 

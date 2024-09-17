@@ -24,7 +24,7 @@
         "Sites__maw__ServiceSettings__CronJobs__UpdateDatabaseCacheJob": "0 */15 * * * ?",
         "ASPNETCORE_ENVIRONMENT": "Development",
         "Sites__mad__ConnectionStrings__DBType": "Postgres",
-        "Sites__mad__ServiceSettings__TokenSecretKey": "W}+$T9#]Lm^92)5Do6MR9777$W8d969",
+        "Sites__mad__ServiceSettings__TokenSecretKey": "7DCk!gxx6l$TPd7STxVmKuUt0LbaEJ4TtSTYNEokniKw2bTyJ5ccI6*ARZf$0KbgDLQFEuhEk*SZ1C2a&tsgJZIdwSK^nyojKCS2ms1NPHFKMq$^Y^qQWjcw6^Z23Yr4kyXB@2MI3RBRt$OePoDQX3$FkyvN$K1U%BpAMuAGs1XiZTKBA8X@ga?",
         "Sites__mad__ServiceSettings__TokenIssuer": "IDBrowserServiceCore_Site_mad",
         "Sites__mad__ServiceSettings__TokenAudience": "David",
         "Sites__mad__ServiceSettings__TokenExpiration": "01:00:00",
@@ -40,7 +40,7 @@
         "Sites__maw__ServiceSettings__TranscodeDirectory": "D:\\Temp\\Transcode\\maw",
         "Sites__maw__ConnectionStrings__IDImager": "Host=172.17.2.17;Database=photosupreme_maw;Username=idimager_main;Password=idi_main_2606;",
         "Sites__maw__ConnectionStrings__IDImagerThumbs": "Host=172.17.2.17;Database=photosupreme_maw_thumbs;Username=idimager_main;Password=idi_main_2606;",
-        "Sites__maw__ServiceSettings__TokenSecretKey": "W}+$T9#]Lm^92)5Do6MR9777$W8d969",
+        "Sites__maw__ServiceSettings__TokenSecretKey": "7DCk!gxx6l$TPd7STxVmKuUt0LbaEJ4TtSTYNEokniKw2bTyJ5ccI6*ARZf$0KbgDLQFEuhEk*SZ1C2a&tsgJZIdwSK^nyojKCS2ms1NPHFKMq$^Y^qQWjcw6^Z23Yr4kyXB@2MI3RBRt$OePoDQX3$FkyvN$K1U%BpAMuAGs1XiZTKBA8X@ga?",
         "Sites__maw__ServiceSettings__TokenIssuer": "IDBrowserServiceCore_Site_maw",
         "Sites__maw__ServiceSettings__TokenAudience": "Test",
         "Sites__maw__ServiceSettings__TokenExpiration": "01:00:00",
@@ -52,13 +52,15 @@
         "Sites__mad__ServiceSettings__TranscodeDirectory": "D:\\Temp\\Transcode\\mad",
         "Sites__mad__ConnectionStrings__IDImager": "Host=172.17.2.17;Database=photosupreme_mad;Username=idimager_main;Password=idi_main_2606;",
         "Sites__mad__ConnectionStrings__IDImagerThumbs": "Host=172.17.2.17;Database=photosupreme_mad_thumbs;Username=idimager_main;Password=idi_main_2606;",
-        "Sites__mad__ServiceSettings__TokenSecretKey": "W}+$T9#]Lm^92)5Do6MR9777$W8d969",
+        "Sites__mad__ServiceSettings__TokenSecretKey": "7DCk!gxx6l$TPd7STxVmKuUt0LbaEJ4TtSTYNEokniKw2bTyJ5ccI6*ARZf$0KbgDLQFEuhEk*SZ1C2a&tsgJZIdwSK^nyojKCS2ms1NPHFKMq$^Y^qQWjcw6^Z23Yr4kyXB@2MI3RBRt$OePoDQX3$FkyvN$K1U%BpAMuAGs1XiZTKBA8X@ga?",
         "Sites__mad__ServiceSettings__TokenIssuer": "IDBrowserServiceCore_Site_mad",
         "Sites__mad__ServiceSettings__TokenAudience": "Test",
         "Sites__mad__ServiceSettings__TokenExpiration": "01:00:00",
         "Sites__mad__ServiceSettings__DisableInsecureMediaPlayApi": "true",
         "Sites__mad__ServiceSettings__EnableDatabaseCache": "true",
-        "Sites__mad__ServiceSettings__CronJobs__UpdateDatabaseCacheJob": "30 */15 * * * ?"
+        "Sites__mad__ServiceSettings__CronJobs__UpdateDatabaseCacheJob": "30 */15 * * * ?",
+        "Sites__mad__ServiceSettings__OpenIdConfigurationAddress": "https://auth.masshardt.ch/realms/idbrowser/.well-known/openid-configuration",
+        "Sites__mad__ServiceSettings__OpenIdAudience": "account"
       }
     },
     "VideoTranscode": {
