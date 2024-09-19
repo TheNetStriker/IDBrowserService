@@ -1142,6 +1142,22 @@ namespace IDBrowserServiceCore.Controllers
                     db.idProp.Add(newIdProp);
                     await db.SaveChangesAsync();
 
+                    if (databaseCache.VPropCache != null && serviceSettings.EnableDatabaseCache)
+                    {
+                        databaseCache.VPropCache.Add(new ImageProperty
+                        {
+                            GUID = newIdProp.GUID,
+                            ParentGUID = newIdProp.ParentGUID,
+                            Name = newIdProp.PropName,
+                            ImageCount = 0,
+                            SubPropertyCount = 0
+                        });
+
+                        databaseCache.VPropCache = databaseCache.VPropCache
+                            .OrderBy(x => x.Name)
+                            .ToList();
+                    }
+
                     LogHttpConnection(string.Format("AddImageProperty with propertyName: {0}, parentGUID {1}, lft {2}, rgt {3}",
                         propertyName, parentGUID, newIdProp.lft, newIdProp.rgt));
                     return "OK";
