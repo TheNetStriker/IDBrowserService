@@ -18,6 +18,7 @@ namespace IDBrowserServiceCore.Settings
         public bool EnableDatabaseCache { get; set; }
         public CronJobs CronJobs { get; set; }
         public string OpenIdConfigurationAddress { get; set; }
+        public string OpenIdAccountManagementAddress { get; set; }
         public bool OpenIdDisableServerCertificateValidation { get; set; }
         public string OpenIdAudience { get; set; }
 
