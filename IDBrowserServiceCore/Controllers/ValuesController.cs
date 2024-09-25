@@ -813,7 +813,10 @@ namespace IDBrowserServiceCore.Controllers
                     using (TransactionScope scope = new TransactionScope(TransactionScopeOption.Required,
                         readUncommittedTransactionOptions, TransactionScopeAsyncFlowOption.Enabled))
                     {
-                        catalogItem = await db.idCatalogItem.Include(x => x.idFilePath).SingleOrDefaultAsync(x => x.GUID == imageGuid);
+                        catalogItem = await db.idCatalogItem
+                            .Include(x => x.idFilePath)
+                            .Include(x => x.idCache_FilePath)
+                            .SingleOrDefaultAsync(x => x.GUID == imageGuid);
                         scope.Complete();
                     }
 
