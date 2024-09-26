@@ -42,7 +42,12 @@ else
 
     var builder = WebApplication.CreateBuilder(args);
 
-    builder.WebHost.UseConfiguration(Configuration);
+    builder.WebHost.ConfigureKestrel(options =>
+    {
+        var kestrelSection = builder.Configuration.GetSection("Kestrel");
+        options.Configure(kestrelSection);
+        kestrelSection.Bind(options);
+    });
     builder.Host.UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
         .ReadFrom.Configuration(Configuration));
 
@@ -58,16 +63,6 @@ else
 
     IDBrowserConfiguration configuration = new();
     Configuration.Bind(configuration);
-
-    app.Use(async (context, next) =>
-    {
-        if (!context.Request.Protocol.Equals("HTTP/2"))
-        {
-            Log.Error($"IP: {context.Connection.RemoteIpAddress} Path: {context.Request.Path} Protocol: {context.Request.Protocol}");
-        }
-
-        await next.Invoke();
-    });
 
     try
     {
