@@ -13,6 +13,7 @@
       "launchBrowser": true,
       "launchUrl": "mad/api/values/GetImageProperties",
       "environmentVariables": {
+        "Kestrel__Endpoints__Http__Url": "http://*:5000",
         "Sites__maw__ServiceSettings__TranscodeDirectory": "D:\\Temp\\Transcode\\maw",
         "Sites__maw__ConnectionStrings__IDImager": "Host=172.17.2.17;Database=photosupreme_maw;Username=idimager_main;Password=idi_main_2606;",
         "Sites__maw__ConnectionStrings__DBType": "Postgres",
@@ -36,6 +37,8 @@
     "Console": {
       "commandName": "Project",
       "environmentVariables": {
+        "Kestrel__Endpoints__Http__Url": "http://*:5000",
+        "Kestrel__Endpoints__Https__Url": "https://*:5001",
         "Sites__maw__ConnectionStrings__DBType": "Postgres",
         "Sites__maw__ServiceSettings__TranscodeDirectory": "D:\\Temp\\Transcode\\maw",
         "Sites__maw__ConnectionStrings__IDImager": "Host=172.17.2.17;Database=photosupreme_maw;Username=idimager_main;Password=idi_main_2606;",
@@ -58,15 +61,14 @@
         "Sites__mad__ServiceSettings__TokenExpiration": "01:00:00",
         "Sites__mad__ServiceSettings__DisableInsecureMediaPlayApi": "true",
         "Sites__mad__ServiceSettings__EnableDatabaseCache": "true",
-        "Sites__mad__ServiceSettings__CronJobs__UpdateDatabaseCacheJob": "30 */15 * * * ?",
-        "Sites__mad__ServiceSettings__OpenIdConfigurationAddress": "https://auth.masshardt.ch/realms/idbrowser/.well-known/openid-configuration",
-        "Sites__mad__ServiceSettings__OpenIdAudience": "account"
+        "Sites__mad__ServiceSettings__CronJobs__UpdateDatabaseCacheJob": "30 */15 * * * ?"
       }
     },
     "VideoTranscode": {
       "commandName": "Project",
       "commandLineArgs": "TranscodeAllVideos mad Hd480 2 Error",
       "environmentVariables": {
+        "Kestrel__Endpoints__Http__Url": "http://*:5000",
         "Sites__maw__ServiceSettings__TranscodeDirectory": "D:\\Temp\\Transcode\\maw",
         "Sites__maw__ConnectionStrings__IDImager": "Host=172.17.2.17;Database=photosupreme_maw;Username=idimager_main;Password=idi_main_2606;",
         "Sites__maw__ConnectionStrings__DBType": "Postgres",

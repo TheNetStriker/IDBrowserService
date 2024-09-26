@@ -15,7 +15,6 @@ namespace IDBrowserServiceCore.Settings
             UseSwagger = true;
         }
 
-        public string Urls { get; set; }
         public List<string> ImageFileExtensions { get; set; }
         public List<string> VideoFileExtensions { get; set; }
         public bool UseResponseCompression { get; set; }
