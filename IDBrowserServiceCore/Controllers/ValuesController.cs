@@ -1064,6 +1064,7 @@ namespace IDBrowserServiceCore.Controllers
         /// <param name="parentGUID">Parent image property or image category guid</param>
         /// <returns>"OK" if property was added.</returns>
         [HttpGet("{propertyName}/{parentGUID}")]
+        [Produces("text/plain")]
         public async Task<ActionResult<string>> AddImageProperty(string propertyName, string parentGUID)
         {
             using (LogContext.PushProperty(nameof(propertyName), propertyName))
