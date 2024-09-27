@@ -1085,11 +1085,18 @@ namespace IDBrowserServiceCore.Controllers
 
                     idUser user = await db.idUser.FirstAsync();
                     DateTime dtNow = DateTime.Now;
-                    String guid = Guid.NewGuid().ToString();
+                    String newIdPropGuid = Guid.NewGuid().ToString().ToUpper();
 
-                    while (await db.idProp.Where(x => x.GUID == guid).CountAsync() > 0)
+                    while (await db.idProp.Where(x => x.GUID == newIdPropGuid).CountAsync() > 0)
                     {
-                        guid = Guid.NewGuid().ToString();
+                        newIdPropGuid = Guid.NewGuid().ToString().ToUpper();
+                    }
+
+                    String newIdSearchDataGuid = Guid.NewGuid().ToString().ToUpper();
+
+                    while (await db.idSearchData.Where(x => x.GUID == newIdSearchDataGuid).CountAsync() > 0)
+                    {
+                        newIdSearchDataGuid = Guid.NewGuid().ToString().ToUpper();
                     }
 
                     //Update nested set rgt
@@ -1114,7 +1121,7 @@ namespace IDBrowserServiceCore.Controllers
 
                     idProp newIdProp = new idProp
                     {
-                        GUID = guid,
+                        GUID = newIdPropGuid,
                         ParentGUID = parentGUID,
                         PropName = propertyName,
                         PropValue = "",
@@ -1144,6 +1151,34 @@ namespace IDBrowserServiceCore.Controllers
                     };
 
                     db.idProp.Add(newIdProp);
+
+                    idCache_Prop newIdCache_Prop = new idCache_Prop
+                    {
+                        PropGuid = newIdPropGuid,
+                        CategoryGuid = parentGUID
+                    };
+                    db.idCache_Prop.Add(newIdCache_Prop);
+
+                    idSearchData newIdSearchData = new idSearchData
+                    {
+                        GUID = newIdSearchDataGuid,
+                        RelatedGUID = newIdPropGuid,
+                        ContentType = "PROP",
+                        ContentGroup = "PROPNAME",
+                        ContentValue = propertyName
+                    };
+                    db.idSearchData.Add(newIdSearchData);
+
+                    foreach (string propertyNameSplit in propertyName.Split(' '))
+                    {
+                        idSearchDataValue newIdSearchDataValue = new idSearchDataValue
+                        {
+                            GUID = newIdSearchDataGuid,
+                            ContentValue = propertyNameSplit
+                        };
+                        db.idSearchDataValue.Add(newIdSearchDataValue);
+                    }
+
                     await db.SaveChangesAsync();
 
                     if (databaseCache.VPropCache != null && serviceSettings.EnableDatabaseCache)

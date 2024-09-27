@@ -20,12 +20,14 @@ namespace IDBrowserServiceCore.Data.IDImager
         public virtual DbSet<idCatalogItemDefinition> idCatalogItemDefinition { get; set; }
         public virtual DbSet<idFilePath> idFilePath { get; set; }
         public virtual DbSet<idCache_FilePath> idCache_FilePath { get; set; }
+        public virtual DbSet<idCache_Prop> idCache_Prop { get; set; }
         public virtual DbSet<idMediumInfo> idMediumInfo { get; set; }
         public virtual DbSet<idImageData> idImageData { get; set; }
         public virtual DbSet<idImageVersion> idImageVersion { get; set; }
         public virtual DbSet<idProp> idProp { get; set; }
         public virtual DbSet<idPropCategory> idPropCategory { get; set; }
         public virtual DbSet<idSearchData> idSearchData { get; set; }
+        public virtual DbSet<idSearchDataValue> idSearchDataValue { get; set; }
         public virtual DbSet<idUser> idUser { get; set; }
         public virtual DbSet<v_prop> v_prop { get; set; }
         public virtual DbSet<v_PropCategory> v_PropCategory { get; set; }
