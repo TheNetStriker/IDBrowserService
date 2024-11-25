@@ -231,7 +231,8 @@ namespace IDBrowserServiceCoreTest
                        .AddSingleton<IDiagnosticContext>(diagnosticContext)
                        .AddTransient<ValuesController, ValuesController>()
                        .AddTransient<MediaController, MediaController>()
-                       .AddSingleton<IDatabaseCache, DatabaseCache>();
+                       .AddSingleton<IDatabaseCache, DatabaseCache>()
+                       .AddMemoryCache();
 
                     serviceProvider = serviceCollection.BuildServiceProvider();
                 }
@@ -296,27 +297,27 @@ namespace IDBrowserServiceCoreTest
         }
 
         [Fact]
-        public async void GetImagePropertiesTest()
+        public async Task GetImagePropertiesTest()
         {
             ActionResult<List<ImageProperty>> result = await ValuesController.GetImageProperties(null);
             result = await ValuesController.GetImageProperties(result.Value.First().GUID);
         }
 
         [Fact]
-        public async void GetImagePropertyThumbnailTest()
+        public async Task GetImagePropertyThumbnailTest()
         {
             String imagePropertyGuid = GetNextImagePropertyGuid();
             await ValuesController.GetImagePropertyThumbnail(imagePropertyGuid, "true");
         }
 
         [Fact]
-        public async void GetCatalogItemsTest()
+        public async Task GetCatalogItemsTest()
         {
             await ValuesController.GetCatalogItems("true", GetNextImagePropertyGuid());
         }
 
         [Fact]
-        public async void GetImageThumbnailTest()
+        public async Task GetImageThumbnailTest()
         {
             ActionResult<Stream> result = await ValuesController.GetImageThumbnail("T", GetNextImageGuid());
             if (!(result.Result is FileStreamResult stream1))
@@ -331,7 +332,7 @@ namespace IDBrowserServiceCoreTest
         }
 
         [Fact]
-        public async void GetImageTest()
+        public async Task GetImageTest()
         {
             foreach (string guid in ImageGuids)
             {
@@ -344,7 +345,7 @@ namespace IDBrowserServiceCoreTest
         }
 
         [Fact]
-        public async void GetResizedImageTest()
+        public async Task GetResizedImageTest()
         {
             foreach (string guid in ImageGuids)
             {
@@ -357,13 +358,13 @@ namespace IDBrowserServiceCoreTest
         }
 
         [Fact]
-        public async void GetImageInfoTest()
+        public async Task GetImageInfoTest()
         {
             await ValuesController.GetImageInfo(GetNextImageGuid());
         }
 
         [Fact]
-        public async void SearchImagePropertiesTest()
+        public async Task SearchImagePropertiesTest()
         {
             ActionResult<List<ImagePropertyRecursive>> result = await ValuesController.SearchImageProperties("David Masshardt");
             if (result.Value.Count == 0)
@@ -371,7 +372,7 @@ namespace IDBrowserServiceCoreTest
         }
 
         [Fact]
-        public async void GetCatalogItemImagePropertiesTest()
+        public async Task GetCatalogItemImagePropertiesTest()
         {
             ActionResult<List<ImagePropertyRecursive>> result = await ValuesController.GetCatalogItemImageProperties(GetNextImageGuid());
             if (result.Value.Count == 0)
@@ -379,7 +380,7 @@ namespace IDBrowserServiceCoreTest
         }
 
         [Fact]
-        public async void GetFilePathsTest()
+        public async Task GetFilePathsTest()
         {
             ActionResult<List<FilePath>> result = await ValuesController.GetFilePaths();
             if (result.Value.Count == 0)
@@ -387,7 +388,7 @@ namespace IDBrowserServiceCoreTest
         }
 
         [Fact]
-        public async void SaveImageThumbnailTest()
+        public async Task SaveImageThumbnailTest()
         {
             List<string> types = new List<string>() { "T", "R", "M" };
 
@@ -399,7 +400,7 @@ namespace IDBrowserServiceCoreTest
         }
 
         [Fact]
-        public async void SaveVideoThumbnailTest()
+        public async Task SaveVideoThumbnailTest()
         {         
             List<string> types = new List<string>() { "T", "R", "M" };
 
@@ -411,19 +412,19 @@ namespace IDBrowserServiceCoreTest
         }
 
         [Fact]
-        public async void AddCatalogItemDefinitionTest()
+        public async Task AddCatalogItemDefinitionTest()
         {
             await ValuesController.AddCatalogItemDefinition(idPropFirst.GUID, idCatalogItemFirstImage.GUID);
         }
 
         [Fact]
-        public async void DeleteCatalogItemDefinitionTest()
+        public async Task DeleteCatalogItemDefinitionTest()
         {
             await ValuesController.DeleteCatalogItemDefinition(idPropFirst.GUID, idCatalogItemFirstImage.GUID);
         }
 
         [Fact]
-        public async void MediaControllerPlayTest()
+        public async Task MediaControllerPlayTest()
         {
             if (!(await MediaController.Play(idCatalogItemFirstVideo.GUID, null) is FileStreamResult stream))
                 throw new Exception("No stream received");
@@ -432,7 +433,7 @@ namespace IDBrowserServiceCoreTest
         }
 
         [Fact]
-        public async void MediaControllerPlaySecureTest()
+        public async Task MediaControllerPlaySecureTest()
         {
             var token = await ValuesController.GetMediaToken(idCatalogItemFirstVideo.GUID);
 
@@ -443,7 +444,7 @@ namespace IDBrowserServiceCoreTest
         }
 
         [Fact]
-        public async void MediaControllerPlayTranscodeTest()
+        public async Task MediaControllerPlayTranscodeTest()
         {
             if (!(await MediaController.Play(idCatalogItemFirstVideo.GUID, "Hd480") is FileStreamResult stream))
                 throw new Exception("No stream received");
@@ -452,13 +453,13 @@ namespace IDBrowserServiceCoreTest
         }
 
         [Fact]
-        public async void DatabaseCacheTest()
+        public async Task DatabaseCacheTest()
         {
             await DatabaseCache.CheckAndUpdateCacheAsync();
         }
 
         [Fact]
-        public async void VideoTranscodeTest()
+        public async Task VideoTranscodeTest()
         {
             string videoSize = "Hd480";
 

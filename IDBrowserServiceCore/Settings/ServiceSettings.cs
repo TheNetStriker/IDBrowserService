@@ -6,8 +6,8 @@ namespace IDBrowserServiceCore.Settings
     public class ServiceSettings
     {
         public bool CreateThumbnails { get; set; }
-        public int MThumbmailWidth { get; set; }
-        public int MThumbnailHeight { get; set; }
+        public uint MThumbmailWidth { get; set; }
+        public uint MThumbnailHeight { get; set; }
         public List<FilePathReplaceSettings> FilePathReplace { get; set; }
         public string TranscodeDirectory { get; set; }
         public string TokenSecretKey { get; set; }

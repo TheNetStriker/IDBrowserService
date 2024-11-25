@@ -659,8 +659,8 @@ namespace IDBrowserServiceCore.Controllers
 
                 if (width != null && height != null)
                 {
-                    int intWidth = int.Parse(width);
-                    int intHeight = int.Parse(height);
+                    uint intWidth = uint.Parse(width);
+                    uint intHeight = uint.Parse(height);
 
                     if (image.Width > intWidth && image.Height > intHeight)
                     {

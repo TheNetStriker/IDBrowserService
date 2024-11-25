@@ -169,8 +169,8 @@ namespace IDBrowserServiceCore.Code.XmpRecipe
 
                         if (recipeEnabledElement.Value.Equals("1"))
                         {
-                            int intWidth = Int32.Parse(widthElement.Value);
-                            int intHeight = Int32.Parse(heightElement.Value);
+                            uint intWidth = uint.Parse(widthElement.Value);
+                            uint intHeight = uint.Parse(heightElement.Value);
 
                             XmpResize xmpResize = new XmpResize
                             {
@@ -328,10 +328,10 @@ namespace IDBrowserServiceCore.Code.XmpRecipe
 
                     int intLeftPixel = Convert.ToInt32(image.Width * xmpCrop.Left);
                     int intTopPixel = Convert.ToInt32(image.Height * xmpCrop.Top);
-                    int intRightPixel = Convert.ToInt32(image.Width * xmpCrop.Right);
-                    int intBottomPixel = Convert.ToInt32(image.Height * xmpCrop.Bottom);
-                    int intWidth = intRightPixel - intLeftPixel;
-                    int intHeight = intBottomPixel - intTopPixel;
+                    uint intRightPixel = Convert.ToUInt32(image.Width * xmpCrop.Right);
+                    uint intBottomPixel = Convert.ToUInt32(image.Height * xmpCrop.Bottom);
+                    uint intWidth = (uint)(intRightPixel - intLeftPixel);
+                    uint intHeight = (uint)(intBottomPixel - intTopPixel);
 
                     MagickGeometry magickGeometry = new MagickGeometry(intLeftPixel, intTopPixel, intWidth, intHeight);
                     image.Crop(magickGeometry);
@@ -355,8 +355,8 @@ namespace IDBrowserServiceCore.Code.XmpRecipe
                     {
                         //http://www.imagemagick.org/Usage/distorts/#rotate_methods
 
-                        int w = image.Width;
-                        int h = image.Height;
+                        uint w = image.Width;
+                        uint h = image.Height;
                         double aa = xmpStraighten.Angle * Math.PI / 180;
                         double srt = (w * Math.Abs(Math.Sin(aa)) + h * Math.Abs(Math.Cos(aa))) / Math.Min(w,h);
                         

@@ -68,8 +68,8 @@ namespace IDBrowserServiceCore.Code
 
                 foreach (String type in types)
                 {
-                    int imageWidth;
-                    int imageHeight;
+                    uint imageWidth;
+                    uint imageHeight;
 
                     if (type.Equals("T"))
                     {
@@ -188,7 +188,7 @@ namespace IDBrowserServiceCore.Code
             return output;
         }
 
-        public static void Resize(MagickImage image, int width, int height)
+        public static void Resize(MagickImage image, uint width, uint height)
         {
             if (image.Width > width && image.Height > height)
             {
