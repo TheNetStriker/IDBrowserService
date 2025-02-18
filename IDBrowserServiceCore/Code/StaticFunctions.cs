@@ -97,14 +97,14 @@ namespace IDBrowserServiceCore.Code
 
                     if (Enum.TryParse<MagickFormat>(catalogItem.idFileType, true, out MagickFormat magickFormat))
                     {
-                        magickReadSettings = new MagickReadSettings { Format = magickFormat };
+                        magickReadSettings = new MagickReadSettings { Format = magickFormat, FrameCount = 1 };
                     }
 
                     imageStream.Position = 0;
 
                     MagickImage image = new MagickImage(imageStream, magickReadSettings)
                     {
-                        Format = MagickFormat.Jpeg,
+                        Format = MagickFormat.Jpeg
                     }; 
 
                     image.Resize(imageWidth, imageHeight);
