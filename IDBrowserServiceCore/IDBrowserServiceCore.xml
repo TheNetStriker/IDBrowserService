@@ -27,6 +27,16 @@
             <param name="servicesConfiguration">DI container configuration</param>
             <param name="appBuilderConfiguration">Application pipeline configuration for the created branch</param>
         </member>
+        <member name="T:IDBrowserServiceCore.Code.BlacklistSessionHandler">
+            <summary>
+            Blocks blacklisted sessions set by OpenId Backchannel logout.
+            </summary>
+        </member>
+        <member name="T:IDBrowserServiceCore.Code.BlacklistSessionRequirement">
+            <summary>
+            Blocks blacklisted sessions set by OpenId Backchannel logout.
+            </summary>
+        </member>
         <member name="M:IDBrowserServiceCore.Code.ConsoleFunctions.TranscodeAllVideos(IDBrowserServiceCore.Settings.IDBrowserConfiguration,System.Threading.CancellationToken,System.String,System.String,Serilog.Events.LogEventLevel,System.Int32)">
             <summary>
             Transcode's all videos of a site
@@ -192,11 +202,11 @@
             Controller for application
             </summary>
         </member>
-        <member name="M:IDBrowserServiceCore.Controllers.ApplicationController.#ctor(IDBrowserServiceCore.Settings.ServiceSettings)">
+        <member name="M:IDBrowserServiceCore.Controllers.ApplicationController.#ctor(IDBrowserServiceCore.Settings.OpenIdSettings)">
             <summary>
             Controller constructor
             </summary>
-            <param name="serviceSettings">ServiceSettings</param>
+            <param name="openIdSettings">OpenIdSettings</param>
         </member>
         <member name="M:IDBrowserServiceCore.Controllers.ApplicationController.GetApplicationConfig">
             <summary>
@@ -468,22 +478,13 @@
             Database cache service
             </summary>
         </member>
-        <member name="P:IDBrowserServiceCore.Services.DatabaseCache.VPropCategoryCache">
-            <summary>
-            v_PropCategory Cache
-            </summary>
-        </member>
-        <member name="P:IDBrowserServiceCore.Services.DatabaseCache.VPropCache">
-            <summary>
-            v_prop Cache
-            </summary>
-        </member>
-        <member name="M:IDBrowserServiceCore.Services.DatabaseCache.#ctor(IDBrowserServiceCore.Data.IDImager.IDImagerDB,Microsoft.Extensions.Caching.Memory.IMemoryCache)">
+        <member name="M:IDBrowserServiceCore.Services.DatabaseCache.#ctor(IDBrowserServiceCore.Data.IDImager.IDImagerDB,ZiggyCreatures.Caching.Fusion.IFusionCache,IDBrowserServiceCore.Settings.SiteSettings)">
             <summary>
             Constructor
             </summary>
             <param name="db">IDImagerDB</param>
-            <param name="memoryCache">IMemoryCache</param>
+            <param name="cache">IFusionCache</param>
+            <param name="siteSettings">SiteSettings</param>
         </member>
         <member name="M:IDBrowserServiceCore.Services.DatabaseCache.CheckAndUpdateCacheAsync">
             <summary>
@@ -495,20 +496,31 @@
             Database cache service interface
             </summary>
         </member>
-        <member name="P:IDBrowserServiceCore.Services.IDatabaseCache.VPropCategoryCache">
+        <member name="M:IDBrowserServiceCore.Services.IDatabaseCache.GetVPropCategoryCacheAsync">
             <summary>
-            v_PropCategory Cache
+            Get v_PropCategory Cache
             </summary>
         </member>
-        <member name="P:IDBrowserServiceCore.Services.IDatabaseCache.VPropCache">
+        <member name="M:IDBrowserServiceCore.Services.IDatabaseCache.GetVPropCacheAsync">
             <summary>
-            v_prop Cache
+            Get v_prop Cache
+            </summary>
+        </member>
+        <member name="M:IDBrowserServiceCore.Services.IDatabaseCache.SetVPropCategoryCacheAsync(System.Collections.Generic.List{IDBrowserServiceCore.Data.ImageProperty})">
+            <summary>
+            Set v_PropCategory Cache
+            </summary>
+        </member>
+        <member name="M:IDBrowserServiceCore.Services.IDatabaseCache.SetVPropCacheAsync(System.Collections.Generic.List{IDBrowserServiceCore.Data.ImageProperty})">
+            <summary>
+            Set v_prop Cache
             </summary>
         </member>
         <member name="M:IDBrowserServiceCore.Services.IDatabaseCache.CheckAndUpdateCacheAsync">
             <summary>
             Checks if the cache needs updating.
             </summary>
+            <returns>Task</returns>
         </member>
         <member name="T:IDBrowserServiceCore.Settings.CronJobs">
             <summary>
@@ -519,6 +531,16 @@
             <summary>
             Cron expression to update database cache. (Default is every 15 Minutes "0 */15 * * * ?")
             Cache is only updated if new image properties are added/deleted or images get a new image property assigned or removed.
+            </summary>
+        </member>
+        <member name="P:IDBrowserServiceCore.Settings.CronJobs.UpdateDatabaseCache_MemoryCacheExpiration">
+            <summary>
+            Memory cache expiration timespan.
+            </summary>
+        </member>
+        <member name="P:IDBrowserServiceCore.Settings.CronJobs.UpdateDatabaseCache_DistributedCacheExpiration">
+            <summary>
+            Distributed cache expiration timespan.
             </summary>
         </member>
         <member name="M:IDBrowserServiceCore.Settings.CronJobs.#ctor">

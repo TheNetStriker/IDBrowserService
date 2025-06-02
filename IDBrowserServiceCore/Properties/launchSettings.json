@@ -52,8 +52,8 @@
         "Sites__maw__ServiceSettings__DisableInsecureMediaPlayApi": "true",
         "Sites__maw__ServiceSettings__EnableDatabaseCache": "true",
         "Sites__maw__ServiceSettings__CronJobs__UpdateDatabaseCacheJob": "0 */15 * * * ?",
-        "Sites__maw__ServiceSettings__OpenIdConfigurationAddress": "https://auth.masshardt.ch/realms/idbrowser/.well-known/openid-configuration",
-        "Sites__maw__ServiceSettings__OpenIdAudience": "account",
+        "Sites__maw__ServiceSettings__CronJobs__UpdateDatabaseCache_MemoryCacheExpiration": "00:20:00",
+        "Sites__maw__ServiceSettings__CronJobs__UpdateDatabaseCache_DistributedCacheExpiration": "24.00:00:00",
         "ASPNETCORE_ENVIRONMENT": "Development",
         "Sites__mad__ConnectionStrings__DBType": "Postgres",
         "Sites__mad__ServiceSettings__TranscodeDirectory": "D:\\Temp\\Transcode\\mad",
@@ -66,8 +66,11 @@
         "Sites__mad__ServiceSettings__DisableInsecureMediaPlayApi": "true",
         "Sites__mad__ServiceSettings__EnableDatabaseCache": "true",
         "Sites__mad__ServiceSettings__CronJobs__UpdateDatabaseCacheJob": "30 */15 * * * ?",
-        "Sites__mad__ServiceSettings__OpenIdConfigurationAddress": "https://auth.masshardt.ch/realms/idbrowser/.well-known/openid-configuration",
-        "Sites__mad__ServiceSettings__OpenIdAudience": "account"
+        "Sites__mad__ServiceSettings__CronJobs__UpdateDatabaseCache_MemoryCacheExpiration": "00:20:00",
+        "Sites__mad__ServiceSettings__CronJobs__UpdateDatabaseCache_DistributedCacheExpiration": "24.00:00:00",
+        "OpenId__ConfigurationAddress": "https://auth.masshardt.ch/realms/masshardt/.well-known/openid-configuration",
+        "OpenId__Audience": "idbrowser",
+        "RedisConnection": "127.0.0.1:6379"
       }
     },
     "VideoTranscode": {

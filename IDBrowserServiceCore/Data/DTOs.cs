@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
 namespace IDBrowserServiceCore.Data
@@ -9,7 +8,6 @@ namespace IDBrowserServiceCore.Data
     {
         public string GUID { get; set; }
 
-        [JsonIgnore]
         public string ParentGUID { get; set; }
 
         public string Name { get; set; }

@@ -1,4 +1,5 @@
 ﻿using IDBrowserServiceCore.Data;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -10,18 +11,29 @@ namespace IDBrowserServiceCore.Services
     public interface IDatabaseCache
     {
         /// <summary>
-        /// v_PropCategory Cache
+        /// Get v_PropCategory Cache
         /// </summary>
-        public List<ImageProperty> VPropCategoryCache { get; set; }
+        public ValueTask<List<ImageProperty>> GetVPropCategoryCacheAsync();
 
         /// <summary>
-        /// v_prop Cache
+        /// Get v_prop Cache
         /// </summary>
-        public List<ImageProperty> VPropCache { get; set; }
+        public ValueTask<List<ImageProperty>> GetVPropCacheAsync();
+
+        /// <summary>
+        /// Set v_PropCategory Cache
+        /// </summary>
+        public ValueTask SetVPropCategoryCacheAsync(List<ImageProperty> value);
+
+        /// <summary>
+        /// Set v_prop Cache
+        /// </summary>
+        public ValueTask SetVPropCacheAsync(List<ImageProperty> value);
 
         /// <summary>
         /// Checks if the cache needs updating.
         /// </summary>
+        /// <returns>Task</returns>
         public Task CheckAndUpdateCacheAsync();
     }
 }

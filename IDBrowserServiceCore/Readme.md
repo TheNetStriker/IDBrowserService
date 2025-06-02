@@ -1,12 +1,13 @@
-
 # IDBrowserServiceCore
 
 Currently actively maintained .Net Core based webservice. Works under Mac, Linux and Windows with support for MSSQL and Postgresql Databases. It should also work on ARM based systems, with exception of the image transform functions. (The ImageMagick.Net project is not yes compatible with ARM processors)
 
 # Docker
+
 For easy installation under Linux a Docker container can be installed.
 
 Minimal start command:
+
 ```
 docker run -t -i -d -p 5000:80 \
 --name idbrowserservicecore \
@@ -24,14 +25,18 @@ docker run -t -i -d -p 5000:80 \
 -e Sites__site1__ServiceSettings__TokenExpiration="01:00:00" \
 thenetstriker/idbrowserservicecore:1.2.1
 ```
+
 Additional application environment variables:
+
 ```
 -e Urls="http://*:5000" \
 -e Serilog__MinimumLevel="Error" \
 -e UseResponseCompression="true" \
 -e UseSwagger="true" \
 ```
+
 Additional site environment variables:
+
 ```
 -e Sites__site1__ServiceSettings__CreateThumbnails="true" \
 -e Sites__site1__ServiceSettings__MThumbmailWidth="1680" \
@@ -40,46 +45,58 @@ Additional site environment variables:
 -e Sites__site1__ServiceSettings__EnableDatabaseCache="true" \
 -e Sites__site1__ServiceSettings__CronJobs__UpdateDatabaseCacheJob="0 */15 * * * ?" \
 ```
+
 It is also possible to configure multiple sites. Just copy all -e environment variables and replace site1 with the second site name.
 
 # Prerequisites
 
-* Asp.Net 5.0 runtime
+- Asp.Net 5.0 runtime
 
-* FFMpeg for Video transformation and video thumbnails (Must also be added to the PATH environment variable)
+- FFMpeg for Video transformation and video thumbnails (Must also be added to the PATH environment variable)
 
 # Setup
 
 ## appsettings.json
+
 ### global settings
-| Settings | Description |
-| --- | --- |
-| Urls | Url to host the webservice. Multiple URL's can be set using a semicolon as delimiter. |
-| ImageFileExtensions | List of file extensions for images. (Used for batch thumbnail generation) |
-| VideoFileExtensions | List of file extensions for videos. (Used for batch thumbnail generation and video transformation) |
-| UseResponseCompression | Enables http response compression (gzip and brotli) |
-| UseSwagger | Enables webservice swagger documentation on /SitName/swagger. |
-| Serilog | Logging configuration |
+
+| Settings                    | Description                                                                                        |
+| --------------------------- | -------------------------------------------------------------------------------------------------- |
+| Urls                        | Url to host the webservice. Multiple URL's can be set using a semicolon as delimiter.              |
+| ImageFileExtensions         | List of file extensions for images. (Used for batch thumbnail generation)                          |
+| VideoFileExtensions         | List of file extensions for videos. (Used for batch thumbnail generation and video transformation) |
+| UseResponseCompression      | Enables http response compression (gzip and brotli)                                                |
+| UseSwagger                  | Enables webservice swagger documentation on /SitName/swagger.                                      |
+| Serilog                     | Logging configuration                                                                              |
+| RedisConnection             | Optional Redis connection string for caching                                                       |
+| OpenId.ConfigurationAddress | OpenId configuration address                                                                       |
+| OpenId.Audience             | OpenId Audience                                                                                    |
+
 ## sites.json
+
 In this file is is possible to define multiple sites with different Photosupreme databases. This way a single service can provide access to multiple Photosupreme databases. The name of the site must then be used in the url. (e.g. http://192.168.1.1/SiteName/values/GetImageProperties) Please take a look at the Site Settings section and the example.sites.json how to configure a new site.
+
 ### Site settings
-| Settings | Description |
-| --- | --- |
-| ConnectionStrings.DBType | Database type to connect to. (MsSql or Postgresql) |
-| ConnectionStrings.IDImager | Connection string of the Photosupreme database on MsSql or Postgresql. (Connection strings for MsSql and Postgressql are different. Please find some examples for the Entity framework on the internet) |
-| ConnectionStrings.IDImagerThumbs | Connection string of the Photosupreme thumbs database on MsSql or Postgresql. (Connection strings for MsSql and Postgressql are different. Please find some examples for the Entity framework on the internet) |
-| ServiceSettings.CreateThumbnails | If set to "true" the service will try to generate thumbnails if they don't exist. |
-| ServiceSettings.MThumbmailWidth | Thumbnail width for thumbnail generation. |
-| ServiceSettings.MThumbnailHeight | Thumbnail height for thumbnail generation. |
-| ServiceSettings.FilePathReplace | Using this settings the file paths in the database can be adapted to the local path where the service is running. (e.g. if the database was created under windows and the service runs under Linux) |
-| ServiceSettings.TranscodeDirectory | Directory to put transcoded video files for this site. |
-| ServiceSettings.TokenSecretKey| Secret key for token generation for the secure media play api. (min 256 bytes) |
-| ServiceSettings.TokenIssuer | Token issuer name for token generation. |
-| ServiceSettings.TokenAudience | Token audience name for token generation. |
-| ServiceSettings.TokenExpiration | Time until token expires. (Format Hour:Minute:Second) |
-| ServiceSettings.DisableInsecureMediaPlayApi| If set to true the unsecure media play api will be disabled. |
-| ServiceSettings.EnableDatabaseCache| Added in version 1.9. Enables database cache if set to true. This only caches the most expensive queries for the image properties with photo count. Cache is updated with the UpdateDatabaseCacheJob cron job. |
-| ServiceSettings.CronJobs.UpdateDatabaseCacheJob| Added in version 1.9. Cron expression to update database cache. (Default is every 15 Minutes "0 */15 * * * ?") Cache is only updated if new image properties are added/deleted or images get a new image property assigned or removed. |
+
+| Settings                                                                | Description                                                                                                                                                                                                                              |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ConnectionStrings.DBType                                                | Database type to connect to. (MsSql or Postgresql)                                                                                                                                                                                       |
+| ConnectionStrings.IDImager                                              | Connection string of the Photosupreme database on MsSql or Postgresql. (Connection strings for MsSql and Postgressql are different. Please find some examples for the Entity framework on the internet)                                  |
+| ConnectionStrings.IDImagerThumbs                                        | Connection string of the Photosupreme thumbs database on MsSql or Postgresql. (Connection strings for MsSql and Postgressql are different. Please find some examples for the Entity framework on the internet)                           |
+| ServiceSettings.CreateThumbnails                                        | If set to "true" the service will try to generate thumbnails if they don't exist.                                                                                                                                                        |
+| ServiceSettings.MThumbmailWidth                                         | Thumbnail width for thumbnail generation.                                                                                                                                                                                                |
+| ServiceSettings.MThumbnailHeight                                        | Thumbnail height for thumbnail generation.                                                                                                                                                                                               |
+| ServiceSettings.FilePathReplace                                         | Using this settings the file paths in the database can be adapted to the local path where the service is running. (e.g. if the database was created under windows and the service runs under Linux)                                      |
+| ServiceSettings.TranscodeDirectory                                      | Directory to put transcoded video files for this site.                                                                                                                                                                                   |
+| ServiceSettings.TokenSecretKey                                          | Secret key for token generation for the secure media play api. (min 256 bytes)                                                                                                                                                           |
+| ServiceSettings.TokenIssuer                                             | Token issuer name for token generation.                                                                                                                                                                                                  |
+| ServiceSettings.TokenAudience                                           | Token audience name for token generation.                                                                                                                                                                                                |
+| ServiceSettings.TokenExpiration                                         | Time until token expires. (Format Hour:Minute:Second)                                                                                                                                                                                    |
+| ServiceSettings.DisableInsecureMediaPlayApi                             | If set to true the unsecure media play api will be disabled.                                                                                                                                                                             |
+| ServiceSettings.EnableDatabaseCache                                     | Added in version 1.9. Enables database cache if set to true. This only caches the most expensive queries for the image properties with photo count. Cache is updated with the UpdateDatabaseCacheJob cron job.                           |
+| ServiceSettings.CronJobs.UpdateDatabaseCacheJob                         | Added in version 1.9. Cron expression to update database cache. (Default is every 15 Minutes "0 _/15 _ \* \* ?") Cache is only updated if new image properties are added/deleted or images get a new image property assigned or removed. |
+| ServiceSettings.CronJobs.UpdateDatabaseCache_MemoryCacheExpiration      | Database memory cache expiration TimeStamp (Format 0.00:00:00)                                                                                                                                                                           |
+| ServiceSettings.CronJobs.UpdateDatabaseCache_DistributedCacheExpiration | Database redis cache expiration TimeStamp (Format 0.00:00:00)                                                                                                                                                                            |
 
 # Security
 
@@ -90,10 +107,13 @@ Authentification using client certificates only works vor the values api. For th
 # Starting the service
 
 The service can simply be started using the commandline
+
 ```
 dotnet IDBrowserServiceCore.dll
 ```
+
 Under Linux the service can be started automatically using a systemctl service using the following config:
+
 ```
 [Unit]
 Description=IDBrowser Service Core
@@ -107,30 +127,42 @@ RestartSec=10
 KillSignal=SIGINT
 SyslogIdentifier=dotnet-IDBrowserServiceCore
 User=www-data
-Environment=ASPNETCORE_ENVIRONMENT=Production 
+Environment=ASPNETCORE_ENVIRONMENT=Production
 
 [Install]
 WantedBy=multi-user.target
 ```
 
 # Commandline commands
+
 The IDBrowserServiceCore.dll can also execute batch jobs from the commandline. At the moment there are the following commandline commands available:
+
 ## TranscodeAllVideos
+
 This command transcodes all videos to a specific resultion into the TranscodeDirectory. The command requires the name of the site and the resolution (Hd480, Hd720, Hd1018) as parameters and optionally the number of FFmpeg instances (default 2) and the log level (default Error, possible values Verbose, Debug, Information, Warning, Error and Fatal). Here is an example:
+
 ```
 dotnet IDBrowserServiceCore.dll TranscodeAllVideos MySite Hd480 2 Error
 ```
+
 When using the Docker container use the following command:
+
 ```
 docker exec -it idbrowserservicecore dotnet IDBrowserServiceCore.dll TranscodeAllVideos MySite Hd480 2 Error
 ```
+
 ## GenerateThumbnails
+
 This command generates all missing thumbnails in the database. The command needs the site name as additional parameter. Here is an example:
+
 ```
 dotnet IDBrowserServiceCore.dll GenerateThumbnails MySite
 ```
+
 When using the Docker container use the following command:
+
 ```
 docker exec -it idbrowserservicecore dotnet IDBrowserServiceCore.dll GenerateThumbnails MySite
 ```
+
 After that several optional Parameters can be specified to reduce the amount of images to be checked. There is also an option to overwrite existing thumnnails. This command uses the ImageFileExtensions and the VideoFileExtensions settings from the appsettings.json file to get a list of images and videos to process.

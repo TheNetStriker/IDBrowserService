@@ -1,4 +1,6 @@
-﻿namespace IDBrowserServiceCore.Settings
+﻿using System;
+
+namespace IDBrowserServiceCore.Settings
 {
     /// <summary>
     /// Cron job settings
@@ -12,12 +14,24 @@
         public string UpdateDatabaseCacheJob { get; set; }
 
         /// <summary>
+        /// Memory cache expiration timespan.
+        /// </summary>
+        public TimeSpan UpdateDatabaseCache_MemoryCacheExpiration { get; set; }
+
+        /// <summary>
+        /// Distributed cache expiration timespan.
+        /// </summary>
+        public TimeSpan UpdateDatabaseCache_DistributedCacheExpiration { get; set; }
+
+        /// <summary>
         /// Set's default settings.
         /// </summary>
         public CronJobs()
         {
             // Default values
             UpdateDatabaseCacheJob = "0 */15 * * * ?";
+            UpdateDatabaseCache_MemoryCacheExpiration = TimeSpan.FromMinutes(20);
+            UpdateDatabaseCache_DistributedCacheExpiration = TimeSpan.FromHours(24);
         }
     }
 }

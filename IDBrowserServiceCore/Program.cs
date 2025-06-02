@@ -1,25 +1,35 @@
-﻿using System.IO;
-using IDBrowserServiceCore.Code;
-using IDBrowserServiceCore.Settings;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Serilog;
+﻿using IDBrowserServiceCore.Code;
+using IDBrowserServiceCore.Data.IDImager;
 using IDBrowserServiceCore.Data.IDImagerThumbs;
 using IDBrowserServiceCore.Installers;
 using IDBrowserServiceCore.Services;
-using Microsoft.AspNetCore.ResponseCompression;
-using Microsoft.OpenApi.Models;
-using System.Collections.Generic;
-using System.Reflection;
-using System;
-using IDBrowserServiceCore.Data.IDImager;
+using IDBrowserServiceCore.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.Extensions.Caching.Redis;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Protocols;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using Serilog;
+using System;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Net.Http;
+using System.Reflection;
+using System.Threading;
+using ZiggyCreatures.Caching.Fusion;
+using ZiggyCreatures.Caching.Fusion.Serialization.SystemTextJson;
 
 Environment.SetEnvironmentVariable("BASEDIR", AppDomain.CurrentDomain.BaseDirectory);
 
@@ -40,6 +50,11 @@ else
         .AddEnvironmentVariables()
         .Build();
 
+    IDBrowserConfiguration configuration = new();
+    Configuration.Bind(configuration);
+
+    bool openIdEnabled = !string.IsNullOrEmpty(configuration.OpenId.ConfigurationAddress);
+
     var builder = WebApplication.CreateBuilder(args);
 
     builder.WebHost.ConfigureKestrel(options =>
@@ -51,6 +66,34 @@ else
     builder.Host.UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
         .ReadFrom.Configuration(Configuration));
 
+    var fusionCacheBuilder = builder.Services.AddFusionCache()
+        .WithDefaultEntryOptions(options =>
+        {
+            options.Duration = TimeSpan.FromMinutes(1);
+        })
+        .WithSerializer(new FusionCacheSystemTextJsonSerializer());
+
+    if (configuration.RedisConnection != null)
+    {
+        fusionCacheBuilder
+            .WithDistributedCache(
+                new RedisCache(new RedisCacheOptions() { Configuration = configuration.RedisConnection })
+            );
+    }
+
+    if (openIdEnabled)
+    {
+        builder.Services.AddSingleton(provider =>
+        {
+            var configManager = new ConfigurationManager<OpenIdConnectConfiguration>(
+                configuration.OpenId.ConfigurationAddress,
+                new OpenIdConnectConfigurationRetriever(),
+                new HttpDocumentRetriever());
+
+            return configManager;
+        });
+    }
+
     var app = builder.Build();
 
     // Configure the HTTP request pipeline.
@@ -60,9 +103,6 @@ else
     }
 
     app.UseSerilogRequestLogging();
-
-    IDBrowserConfiguration configuration = new();
-    Configuration.Bind(configuration);
 
     try
     {
@@ -74,12 +114,17 @@ else
                 SiteSettings siteSettings = siteKeyValuePair.Value;
                 ConnectionStringSettings connectionStringSettings = siteSettings.ConnectionStrings;
                 ServiceSettings serviceSettings = siteSettings.ServiceSettings;
-                bool openIdEnabled = !String.IsNullOrEmpty(siteSettings.ServiceSettings.OpenIdConfigurationAddress);
+                OpenIdSettings openIdSettings = configuration.OpenId;
+
+                siteSettings.SiteName = strSiteName;
 
                 //https://www.strathweb.com/2017/04/running-multiple-independent-asp-net-core-pipelines-side-by-side-in-the-same-application/
                 app.UseBranchWithServices("/" + strSiteName,
                     services =>
                     {
+                        // Shared services
+                        services.AddSingleton(sp => app.Services.GetRequiredService<IFusionCache>());
+                        
                         if (openIdEnabled)
                         {
                             services
@@ -91,11 +136,14 @@ else
                                 })
                                 .AddJwtBearer(o =>
                                 {
-                                    o.MetadataAddress = siteSettings.ServiceSettings.OpenIdConfigurationAddress;
+                                    var configManager = app.Services
+                                        .GetRequiredService<ConfigurationManager<OpenIdConnectConfiguration>>();
+
+                                    o.ConfigurationManager = configManager;
 
                                     o.TokenValidationParameters = new TokenValidationParameters
                                     {
-                                        ValidAudience = siteSettings.ServiceSettings.OpenIdAudience,
+                                        ValidAudience = openIdSettings.Audience,
                                         ValidateIssuerSigningKey = true,
                                         ValidateIssuer = true,
                                         ValidateAudience = true,
@@ -108,7 +156,7 @@ else
                                         o.IncludeErrorDetails = true;
                                     }
 
-                                    if (siteSettings.ServiceSettings.OpenIdDisableServerCertificateValidation)
+                                    if (openIdSettings.DisableServerCertificateValidation)
                                     {
                                         o.BackchannelHttpHandler = new HttpClientHandler
                                         {
@@ -121,12 +169,18 @@ else
                                 });
 
                             services.AddAuthorizationBuilder()
-                                .AddDefaultPolicy("Default", policy => policy.RequireRole("site-" + strSiteName));
+                                .AddDefaultPolicy("Default", policy =>
+                                {
+                                    policy.RequireRole("site-" + strSiteName);
+                                    policy.AddRequirements(new BlacklistSessionRequirement());
+                                });
+
+                            services.AddSingleton<IAuthorizationHandler, BlacklistSessionHandler>();
                         }
 
                         services
-                            .AddMvc(option => 
-                            { 
+                            .AddMvc(option =>
+                            {
                                 option.EnableEndpointRouting = false;
 
                                 if (!openIdEnabled)
@@ -136,9 +190,10 @@ else
                             })
                             .AddXmlSerializerFormatters();
 
-                        services.AddMemoryCache();
                         services.AddScoped<IDatabaseCache, DatabaseCache>();
-                        services.AddSingleton<ServiceSettings>(serviceSettings);
+                        services.AddSingleton(siteSettings);
+                        services.AddSingleton(serviceSettings);
+                        services.AddSingleton(openIdSettings);
 
                         if (configuration.UseSwagger)
                         {
@@ -157,7 +212,7 @@ else
                                     c.AddSecurityDefinition("OpenId", new OpenApiSecurityScheme
                                     {
                                         Type = SecuritySchemeType.OpenIdConnect,
-                                        OpenIdConnectUrl = new Uri(siteSettings.ServiceSettings.OpenIdConfigurationAddress),
+                                        OpenIdConnectUrl = new Uri(openIdSettings.ConfigurationAddress),
                                     });
 
                                     OpenApiSecurityScheme openIdSecurityScheme = new()
@@ -242,6 +297,59 @@ else
     }
 
     app.MapGet("/", () => "Service online!");
+
+    if (openIdEnabled)
+    {
+        // OpenID Backchannel logout api
+        app.MapPost("logout", async ([FromForm(Name = "logout_token")] string logoutToken,
+            [FromServices] IFusionCache cache,
+            [FromServices] ConfigurationManager<OpenIdConnectConfiguration> configManager,
+            CancellationToken cancellationToken = default) =>
+        {
+            if (string.IsNullOrEmpty(logoutToken))
+            {
+                return Results.BadRequest("No logout_token received");
+            }
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            if (!tokenHandler.CanReadToken(logoutToken))
+            {
+                return Results.BadRequest("Invalid logout_token format");
+            }
+
+            var config = await configManager.GetConfigurationAsync(CancellationToken.None);
+
+            var validationParameters = new TokenValidationParameters
+            {
+                ValidIssuer = config.Issuer,
+                ValidAudience = configuration.OpenId.Audience,
+                IssuerSigningKeys = config.SigningKeys,
+                ValidateIssuerSigningKey = true,
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = false
+            };
+
+            try
+            {
+                var principal = tokenHandler.ValidateToken(logoutToken, validationParameters, out var validatedToken);
+                var sessionId = principal.FindFirst("sid")?.Value;
+
+                var entryOptions = new FusionCacheEntryOptions
+                {
+                    Duration = TimeSpan.FromHours(1)
+                };
+
+                await cache.SetAsync($"session_blacklist:{sessionId}", true, entryOptions, ["session_blacklist"], cancellationToken);
+
+                return Results.Ok();
+            }
+            catch (SecurityTokenException)
+            {
+                return Results.Unauthorized();
+            }
+        }).DisableAntiforgery();
+    }
 
     app.Run();
 }

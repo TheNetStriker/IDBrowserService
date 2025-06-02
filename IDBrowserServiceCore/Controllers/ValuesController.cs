@@ -95,15 +95,16 @@ namespace IDBrowserServiceCore.Controllers
                     else
                         LogHttpConnection(string.Format("GetImageProperties with guid: {0}", guid));
 
-                    List<ImageProperty> listImageProperty;
+                    List<ImageProperty> listImageProperty = null;
 
                     if (guid == null)
                     {
-                        if (databaseCache.VPropCategoryCache != null && serviceSettings.EnableDatabaseCache)
+                        if (serviceSettings.EnableDatabaseCache)
                         {
-                            listImageProperty = databaseCache.VPropCategoryCache;
+                            listImageProperty = await databaseCache.GetVPropCategoryCacheAsync();
                         }
-                        else
+
+                        if (listImageProperty == null)
                         {
                             var query = from tbl in db.v_PropCategory
                                         where !tbl.CategoryName.Equals("Internal")
@@ -121,13 +122,19 @@ namespace IDBrowserServiceCore.Controllers
                     }
                     else
                     {
-                        if (databaseCache.VPropCache != null && serviceSettings.EnableDatabaseCache)
+                        if (serviceSettings.EnableDatabaseCache)
                         {
-                            listImageProperty = databaseCache.VPropCache
-                                .Where(x => x.ParentGUID.Equals(guid))
-                                .ToList();
+                            listImageProperty = await databaseCache.GetVPropCacheAsync();
+                            
+                            if (listImageProperty != null)
+                            {
+                                listImageProperty = listImageProperty
+                                    .Where(x => x.ParentGUID.Equals(guid))
+                                    .ToList();
+                            }
                         }
-                        else
+
+                        if (listImageProperty == null)
                         {
                             var query = from tbl in db.v_prop
                                         where tbl.ParentGUID == guid
@@ -1181,20 +1188,27 @@ namespace IDBrowserServiceCore.Controllers
 
                     await db.SaveChangesAsync();
 
-                    if (databaseCache.VPropCache != null && serviceSettings.EnableDatabaseCache)
+                    if (serviceSettings.EnableDatabaseCache)
                     {
-                        databaseCache.VPropCache.Add(new ImageProperty
-                        {
-                            GUID = newIdProp.GUID,
-                            ParentGUID = newIdProp.ParentGUID,
-                            Name = newIdProp.PropName,
-                            ImageCount = 0,
-                            SubPropertyCount = 0
-                        });
+                        var vPropCache = await databaseCache.GetVPropCacheAsync();
 
-                        databaseCache.VPropCache = databaseCache.VPropCache
-                            .OrderBy(x => x.Name)
-                            .ToList();
+                        if (vPropCache != null)
+                        {
+                            vPropCache.Add(new ImageProperty
+                            {
+                                GUID = newIdProp.GUID,
+                                ParentGUID = newIdProp.ParentGUID,
+                                Name = newIdProp.PropName,
+                                ImageCount = 0,
+                                SubPropertyCount = 0
+                            });
+
+                            vPropCache = vPropCache
+                                .OrderBy(x => x.Name)
+                                .ToList();
+
+                            await databaseCache.SetVPropCacheAsync(vPropCache);
+                        }
                     }
 
                     LogHttpConnection(string.Format("AddImageProperty with propertyName: {0}, parentGUID {1}, lft {2}, rgt {3}",

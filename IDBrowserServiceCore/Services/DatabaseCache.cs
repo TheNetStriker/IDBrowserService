@@ -1,10 +1,12 @@
 ﻿using IDBrowserServiceCore.Data;
 using IDBrowserServiceCore.Data.IDImager;
+using IDBrowserServiceCore.Settings;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace IDBrowserServiceCore.Services
 {
@@ -14,50 +16,34 @@ namespace IDBrowserServiceCore.Services
     public class DatabaseCache : IDatabaseCache
     {
         private readonly IDImagerDB _db;
-        private readonly IMemoryCache _memoryCache;
+        private readonly IFusionCache _cache;
+
+        private readonly string _vPropCategoryCacheKey;
+        private readonly string _vPropCacheKey;
+        private readonly FusionCacheEntryOptions _entryOptions;
 
         private int IdPropCount { get; set; }
         private int IdCatalogItemDefinitionCount { get; set; }
 
         /// <summary>
-        /// v_PropCategory Cache
-        /// </summary>
-        public List<ImageProperty> VPropCategoryCache
-        { 
-            get
-            {
-                return _memoryCache.Get<List<ImageProperty>>(nameof(VPropCategoryCache));
-            }
-            set
-            {
-                _memoryCache.Set(nameof(VPropCategoryCache), value);
-            }
-        }
-
-        /// <summary>
-        /// v_prop Cache
-        /// </summary>
-        public List<ImageProperty> VPropCache
-        {
-            get
-            {
-                return _memoryCache.Get<List<ImageProperty>>(nameof(VPropCache));
-            }
-            set
-            {
-                _memoryCache.Set(nameof(VPropCache), value);
-            }
-        }
-
-        /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="db">IDImagerDB</param>
-        /// <param name="memoryCache">IMemoryCache</param>
-        public DatabaseCache(IDImagerDB db, IMemoryCache memoryCache)
+        /// <param name="cache">IFusionCache</param>
+        /// <param name="siteSettings">SiteSettings</param>
+        public DatabaseCache(IDImagerDB db, IFusionCache cache, SiteSettings siteSettings)
         {
             _db = db;
-            _memoryCache = memoryCache;
+            _cache = cache;
+
+            _vPropCategoryCacheKey = $"{siteSettings.SiteName}:VPropCategoryCache";
+            _vPropCacheKey = $"{siteSettings.SiteName}:VPropCache";
+
+            _entryOptions = new FusionCacheEntryOptions
+            {
+                Duration = siteSettings.ServiceSettings.CronJobs.UpdateDatabaseCache_MemoryCacheExpiration,
+                DistributedCacheDuration = siteSettings.ServiceSettings.CronJobs.UpdateDatabaseCache_DistributedCacheExpiration,
+            };
         }
 
         /// <summary>
@@ -68,8 +54,12 @@ namespace IDBrowserServiceCore.Services
             int currentIdPropCount = await _db.idProp.CountAsync();
             int currentidCatalogItemDefinitionCount = await _db.idCatalogItemDefinition.CountAsync();
 
-            if (VPropCategoryCache == null
-                || VPropCache == null
+            List<ImageProperty> vPropCategoryCache = await GetVPropCategoryCacheAsync();
+
+            List<ImageProperty> vPropCache = await GetVPropCacheAsync();
+
+            if (vPropCategoryCache == null
+                || vPropCache == null
                 || IdPropCount != currentIdPropCount
                 || IdCatalogItemDefinitionCount != currentidCatalogItemDefinitionCount)
             {
@@ -99,12 +89,32 @@ namespace IDBrowserServiceCore.Services
 
                 var vprop = await queryVProp.ToListAsync();
 
-                VPropCategoryCache = vPropCategory;
-                VPropCache = vprop;
+                await SetVPropCategoryCacheAsync(vPropCategory);
+                await SetVPropCacheAsync(vprop);
 
                 IdPropCount = currentIdPropCount;
                 IdCatalogItemDefinitionCount = currentidCatalogItemDefinitionCount;
             }
+        }
+
+        public ValueTask<List<ImageProperty>> GetVPropCategoryCacheAsync()
+        {
+            return _cache.GetOrDefaultAsync<List<ImageProperty>>(_vPropCategoryCacheKey, null);
+        }
+
+        public ValueTask<List<ImageProperty>> GetVPropCacheAsync()
+        {
+            return _cache.GetOrDefaultAsync<List<ImageProperty>>(_vPropCacheKey, null);
+        }
+
+        public ValueTask SetVPropCategoryCacheAsync(List<ImageProperty> value)
+        {
+            return _cache.SetAsync(_vPropCategoryCacheKey, value, _entryOptions);
+        }
+
+        public ValueTask SetVPropCacheAsync(List<ImageProperty> value)
+        {
+            return _cache.SetAsync(_vPropCacheKey, value, _entryOptions);
         }
     }
 }

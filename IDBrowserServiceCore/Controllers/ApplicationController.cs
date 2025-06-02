@@ -11,15 +11,15 @@ namespace IDBrowserServiceCore.Controllers
     [Route("api/[controller]/[action]")]
     public class ApplicationController : Controller
     {
-        private readonly ServiceSettings serviceSettings;
+        private readonly OpenIdSettings _openIdSettings;
 
         /// <summary>
         /// Controller constructor
         /// </summary>
-        /// <param name="serviceSettings">ServiceSettings</param>
-        public ApplicationController(ServiceSettings serviceSettings)
+        /// <param name="openIdSettings">OpenIdSettings</param>
+        public ApplicationController(OpenIdSettings openIdSettings)
         {
-            this.serviceSettings = serviceSettings ?? throw new ArgumentNullException(nameof(serviceSettings));
+            _openIdSettings = openIdSettings ?? throw new ArgumentNullException(nameof(openIdSettings));
         }
 
         /// <summary>
@@ -32,8 +32,8 @@ namespace IDBrowserServiceCore.Controllers
             var applicationConfig = new ApplicationConfig()
             {
                 UserIsAuthenticated = HttpContext.User.Identity.IsAuthenticated,
-                OpenIdConfigurationAddress = serviceSettings.OpenIdConfigurationAddress,
-                OpenIdAccountManagementAddress = serviceSettings.OpenIdAccountManagementAddress,
+                OpenIdConfigurationAddress = _openIdSettings.ConfigurationAddress,
+                OpenIdAccountManagementAddress = _openIdSettings.AccountManagementAddress,
             };
 
             return applicationConfig;
