@@ -13,13 +13,12 @@ namespace IDBrowserServiceCore.Data.IDImager
         [StringLength(50)]
         public string RelatedGUID { get; set; }
 
-        [StringLength(150)]
+        [StringLength(500)]
         public string ContentType { get; set; }
 
-        [StringLength(150)]
+        [StringLength(500)]
         public string ContentGroup { get; set; }
 
-        [StringLength(4000)]
         public string ContentValue { get; set; }
     }
 }
