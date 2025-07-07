@@ -26,6 +26,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
+using ZiggyCreatures.Caching.Fusion;
+using ZiggyCreatures.Caching.Fusion.Serialization.SystemTextJson;
 
 namespace IDBrowserServiceCoreTest
 {
@@ -224,6 +226,7 @@ namespace IDBrowserServiceCoreTest
                        .AddDbContextPool<IDImagerThumbsDB>(options => options.UseNpgsql(DbThumbsConnectionString)
                            .ReplaceService<ISqlGenerationHelper, PostgresSqlGenerationHelper>())
                        .AddSingleton<ServiceSettings>(Settings)
+                       .AddSingleton<SiteSettings>(IDBrowserConfiguration.Sites.First().Value)
                        .AddSingleton<ILoggerFactory>(services => new SerilogLoggerFactory(Logger, false))
                        .AddSingleton<ILogger<ValuesController>>(loggerFactory.CreateLogger<ValuesController>())
                        .AddSingleton<ILogger<MediaController>>(loggerFactory.CreateLogger<MediaController>())
@@ -231,8 +234,14 @@ namespace IDBrowserServiceCoreTest
                        .AddSingleton<IDiagnosticContext>(diagnosticContext)
                        .AddTransient<ValuesController, ValuesController>()
                        .AddTransient<MediaController, MediaController>()
-                       .AddSingleton<IDatabaseCache, DatabaseCache>()
-                       .AddMemoryCache();
+                       .AddSingleton<IDatabaseCache, DatabaseCache>();
+
+                    serviceCollection.AddFusionCache()
+                        .WithDefaultEntryOptions(options =>
+                        {
+                            options.Duration = TimeSpan.FromMinutes(1);
+                        })
+                        .WithSerializer(new FusionCacheSystemTextJsonSerializer());
 
                     serviceProvider = serviceCollection.BuildServiceProvider();
                 }
