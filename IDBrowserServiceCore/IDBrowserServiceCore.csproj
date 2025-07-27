@@ -30,7 +30,7 @@
 
   <ItemGroup>
     <PackageReference Include="Goblinfactory.Konsole" Version="6.2.2" />
-    <PackageReference Include="Magick.NET-Q16-HDRI-AnyCPU" Version="14.2.0" />
+    <PackageReference Include="Magick.NET-Q16-HDRI-AnyCPU" Version="14.7.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.Caching.Redis" Version="2.3.0" />
@@ -42,6 +42,9 @@
     <PackageReference Include="Serilog.Sinks.Async" Version="2.1.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="7.1.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.2.1" />
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    <PackageReference Include="System.Net.Security" Version="4.3.2" />
+    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
     <PackageReference Include="xFFmpeg.NET" Version="7.2.0" />
     <PackageReference Include="ZiggyCreatures.FusionCache" Version="2.2.0" />
     <PackageReference Include="ZiggyCreatures.FusionCache.Serialization.SystemTextJson" Version="2.2.0" />
