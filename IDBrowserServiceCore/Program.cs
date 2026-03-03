@@ -19,7 +19,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -215,21 +215,17 @@ else
                                         OpenIdConnectUrl = new Uri(openIdSettings.ConfigurationAddress),
                                     });
 
-                                    OpenApiSecurityScheme openIdSecurityScheme = new()
+                                    c.AddSecurityDefinition("bearer", new OpenApiSecurityScheme
                                     {
-                                        Reference = new OpenApiReference
-                                        {
-                                            Id = "OpenId",
-                                            Type = ReferenceType.SecurityScheme,
-                                        },
-                                        In = ParameterLocation.Header,
-                                        Name = "Bearer",
-                                        Scheme = "Bearer",
-                                    };
+                                        Type = SecuritySchemeType.Http,
+                                        Scheme = "bearer",
+                                        BearerFormat = "JWT",
+                                        Description = "JWT Authorization header using the Bearer scheme."
+                                    });
 
-                                    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                                    c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
                                     {
-                                        { openIdSecurityScheme, Array.Empty<string>() },
+                                        [new OpenApiSecuritySchemeReference("bearer", document)] = []
                                     });
                                 }
 
