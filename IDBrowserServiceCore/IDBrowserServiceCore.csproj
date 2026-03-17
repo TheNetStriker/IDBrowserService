@@ -30,7 +30,7 @@
 
   <ItemGroup>
     <PackageReference Include="Goblinfactory.Konsole" Version="6.2.2" />
-    <PackageReference Include="Magick.NET-Q16-HDRI-AnyCPU" Version="14.10.4" />
+    <PackageReference Include="Magick.NET-Q16-HDRI-AnyCPU" Version="14.11.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Caching.Redis" Version="2.3.0" />
