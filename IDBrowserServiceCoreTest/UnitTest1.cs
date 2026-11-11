@@ -220,6 +220,8 @@ namespace IDBrowserServiceCoreTest
                     var serviceCollection = new ServiceCollection()
                        .AddDbContextPool<IDImagerDB>(options => options.UseNpgsql(DbConnectionString)
                            .ReplaceService<ISqlGenerationHelper, PostgresSqlGenerationHelper>())
+                       .AddPooledDbContextFactory<IDImagerDB>(options => options.UseNpgsql(DbConnectionString)
+                           .ReplaceService<ISqlGenerationHelper, PostgresSqlGenerationHelper>())
                        .AddDbContextPool<IDImagerThumbsDB>(options => options.UseNpgsql(DbThumbsConnectionString)
                            .ReplaceService<ISqlGenerationHelper, PostgresSqlGenerationHelper>())
                        .AddSingleton<ServiceSettings>(Settings)
@@ -462,6 +464,44 @@ namespace IDBrowserServiceCoreTest
         public async Task DatabaseCacheTest()
         {
             await DatabaseCache.CheckAndUpdateCacheAsync();
+        }
+
+        /// <summary>
+        /// Simulates VLC's behaviour of issuing two concurrent HTTP range requests at playback start:
+        /// one for bytes 0-N (start) and one for the end of the file (moov atom probe).
+        /// Both map to concurrent calls to Play() for the same guid+videosize while the
+        /// transcoded file does not yet exist. The test verifies that:
+        ///   1. Both calls complete without throwing (no IOException from FileShare.None / double-write).
+        ///   2. Both calls return a FileStreamResult (not a BadRequestObjectResult).
+        /// A failure here means the fix is needed; a pass means the fix is working.
+        /// </summary>
+        [Fact]
+        public async Task ConcurrentTranscodeDoesNotFailTest()
+        {
+            string videoSize = "Hd480";
+
+            // Delete any pre-existing transcode so both concurrent requests arrive with no cached file.
+            string strTranscodeFilePath = StaticFunctions.GetTranscodeFilePath(idCatalogItemFirstVideo.GUID,
+                Settings.TranscodeDirectory, videoSize);
+
+            if (File.Exists(strTranscodeFilePath))
+                File.Delete(strTranscodeFilePath);
+
+            // Fire two Play calls simultaneously, as VLC does when probing the start and end of the file.
+            Task<IActionResult> request1 = Task.Run(() => MediaController.Play(idCatalogItemFirstVideo.GUID, videoSize));
+            Task<IActionResult> request2 = Task.Run(() => MediaController.Play(idCatalogItemFirstVideo.GUID, videoSize));
+
+            IActionResult[] results = await Task.WhenAll(request1, request2);
+
+            foreach (IActionResult result in results)
+            {
+                if (result is FileStreamResult fileStreamResult)
+                    fileStreamResult.FileStream.Close();
+                else if (result is BadRequestObjectResult badRequest)
+                    Assert.Fail($"Play returned BadRequest instead of a stream: {badRequest.Value}");
+                else
+                    Assert.Fail($"Play returned unexpected result type: {result.GetType().Name}");
+            }
         }
 
         [Fact]

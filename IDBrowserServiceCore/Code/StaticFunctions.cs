@@ -2,19 +2,17 @@
 using FFmpeg.NET;
 using FFmpeg.NET.Enums;
 using IDBrowserServiceCore.Code.XmpRecipe;
-using IDBrowserServiceCore.Data;
 using IDBrowserServiceCore.Data.IDImager;
 using IDBrowserServiceCore.Data.IDImagerThumbs;
 using IDBrowserServiceCore.Data.PostgresHelpers;
 using IDBrowserServiceCore.Settings;
 using ImageMagick;
-using Konsole;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.Extensions.Configuration;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -27,9 +25,13 @@ namespace IDBrowserServiceCore.Code
 {
     public class StaticFunctions
     {
+        // Per-path locks that prevent two concurrent requests from running ffmpeg on the same output file.
+        private static readonly ConcurrentDictionary<string, SemaphoreSlim> _transcodeLocks = new();
+
         public static FileStream GetImageFileStream(string filePath)
         {
-            FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            // FileShare.Read allows multiple concurrent readers (e.g. VLC probing start + end of file).
+            FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             return fileStream;
         }
 
@@ -228,17 +230,30 @@ namespace IDBrowserServiceCore.Code
         public async static Task TranscodeVideo(Engine ffmpegEngine, CancellationToken cancellationToken, string filePath, string transcodeFilePath,
             ConversionOptions conversionOptions)
         {
-            if (!File.Exists(transcodeFilePath))
+            // One semaphore per unique output path: concurrent requests for the same file
+            // wait here instead of launching parallel ffmpeg processes on the same output file.
+            SemaphoreSlim semaphore = _transcodeLocks.GetOrAdd(transcodeFilePath, _ => new SemaphoreSlim(1, 1));
+
+            await semaphore.WaitAsync(cancellationToken);
+            try
             {
-                var inputFile = new InputFile(filePath);
-                var outputFile = new OutputFile(transcodeFilePath);
+                // Re-check inside the lock: a previous waiter may have already written the file.
+                if (!File.Exists(transcodeFilePath))
+                {
+                    var inputFile = new InputFile(filePath);
+                    var outputFile = new OutputFile(transcodeFilePath);
 
-                FileInfo transcodeFileInfo = new(transcodeFilePath);
+                    FileInfo transcodeFileInfo = new(transcodeFilePath);
 
-                if (!transcodeFileInfo.Directory.Exists)
-                    transcodeFileInfo.Directory.Create();
+                    if (!transcodeFileInfo.Directory.Exists)
+                        transcodeFileInfo.Directory.Create();
 
-                await ffmpegEngine.ConvertAsync(inputFile, outputFile, conversionOptions, cancellationToken);
+                    await ffmpegEngine.ConvertAsync(inputFile, outputFile, conversionOptions, cancellationToken);
+                }
+            }
+            finally
+            {
+                semaphore.Release();
             }
         }
 
@@ -279,14 +294,19 @@ namespace IDBrowserServiceCore.Code
                 {
                     VideoSize = videoSize,
                     CustomWidth = width,
-                    CustomHeight = height
+                    CustomHeight = height,
+                    // Move the moov atom to the start of the file so clients (e.g. VLC) can
+                    // begin playback without seeking to the end first, avoiding a second HTTP
+                    // range request that can time out through a reverse proxy.
+                    ExtraArguments = "-movflags +faststart"
                 };
             }
             else
             {
                 return new ConversionOptions
                 {
-                    VideoSize = videoSize
+                    VideoSize = videoSize,
+                    ExtraArguments = "-movflags +faststart"
                 };
             }
         }

@@ -27,7 +27,7 @@ namespace IDBrowserServiceCore.Controllers
     [Route("api/[controller]/[action]")]
     public class MediaController : Controller
     {
-        private readonly IDImagerDB db;
+        private readonly IDbContextFactory<IDImagerDB> dbContextFactory;
         private readonly ILogger<MediaController> logger;
         private readonly IDiagnosticContext diagnosticContext;
         private readonly ServiceSettings serviceSettings;
@@ -35,14 +35,14 @@ namespace IDBrowserServiceCore.Controllers
         /// <summary>
         /// Controller constructor
         /// </summary>
-        /// <param name="db">IDImagerDB</param>
+        /// <param name="dbContextFactory">IDImagerDB context factory</param>
         /// <param name="serviceSettings">ServiceSettings</param>
         /// <param name="logger">Logger</param>
         /// <param name="diagnosticContext">Logger diagnostic context</param>
-        public MediaController(IDImagerDB db, ServiceSettings serviceSettings,
+        public MediaController(IDbContextFactory<IDImagerDB> dbContextFactory, ServiceSettings serviceSettings,
             ILogger<MediaController> logger, IDiagnosticContext diagnosticContext)
         {
-            this.db = db ?? throw new ArgumentNullException(nameof(logger));
+            this.dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
             this.serviceSettings = serviceSettings ?? throw new ArgumentNullException(nameof(serviceSettings));
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.diagnosticContext = diagnosticContext ?? throw new ArgumentNullException(nameof(diagnosticContext));
@@ -118,6 +118,8 @@ namespace IDBrowserServiceCore.Controllers
                 try
                 {
                     if (string.IsNullOrEmpty(guid)) return BadRequest("Missing guid parameter");
+
+                    await using IDImagerDB db = await dbContextFactory.CreateDbContextAsync();
 
                     idCatalogItem catalogItem = await db.idCatalogItem
                         .Include(x => x.idFilePath)

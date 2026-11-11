@@ -248,6 +248,8 @@ else
 
                         services.AddDbContextPool<IDImagerDB>(options => StaticFunctions
                             .SetDbContextOptions(options, connectionStringSettings.DBType, connectionStringSettings.IDImager));
+                        services.AddPooledDbContextFactory<IDImagerDB>(options => StaticFunctions
+                            .SetDbContextOptions(options, connectionStringSettings.DBType, connectionStringSettings.IDImager));
                         services.AddDbContextPool<IDImagerThumbsDB>(options => StaticFunctions
                             .SetDbContextOptions(options, connectionStringSettings.DBType, connectionStringSettings.IDImagerThumbs));
 

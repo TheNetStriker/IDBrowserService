@@ -219,11 +219,11 @@
             Controller for video streaming
             </summary>
         </member>
-        <member name="M:IDBrowserServiceCore.Controllers.MediaController.#ctor(IDBrowserServiceCore.Data.IDImager.IDImagerDB,IDBrowserServiceCore.Settings.ServiceSettings,Microsoft.Extensions.Logging.ILogger{IDBrowserServiceCore.Controllers.MediaController},Serilog.IDiagnosticContext)">
+        <member name="M:IDBrowserServiceCore.Controllers.MediaController.#ctor(Microsoft.EntityFrameworkCore.IDbContextFactory{IDBrowserServiceCore.Data.IDImager.IDImagerDB},IDBrowserServiceCore.Settings.ServiceSettings,Microsoft.Extensions.Logging.ILogger{IDBrowserServiceCore.Controllers.MediaController},Serilog.IDiagnosticContext)">
             <summary>
             Controller constructor
             </summary>
-            <param name="db">IDImagerDB</param>
+            <param name="dbContextFactory">IDImagerDB context factory</param>
             <param name="serviceSettings">ServiceSettings</param>
             <param name="logger">Logger</param>
             <param name="diagnosticContext">Logger diagnostic context</param>

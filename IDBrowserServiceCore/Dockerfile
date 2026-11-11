@@ -29,6 +29,10 @@ COPY --from=publish /app/publish/runtimes/ runtimes/
 
 RUN apt-get update && apt-get install -y curl
 
-HEALTHCHECK --interval=1m --timeout=3s CMD curl --fail http://localhost:80 || exit 1 
+HEALTHCHECK --interval=1m --timeout=3s CMD curl --fail http://localhost:80 || exit 1
+
+RUN usermod -a -G users app
+
+USER app
 
 ENTRYPOINT ["dotnet", "IDBrowserServiceCore.dll"]

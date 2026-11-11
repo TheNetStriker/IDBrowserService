@@ -3,8 +3,8 @@
     "testSite": {
       "ConnectionStrings": {
         "DBType": "Postgres",
-        "IDImager": "Host=172.17.2.17;Database=photosupreme_mad;Username=idimager_main;Password=idi_main_2606;",
-        "IDImagerThumbs": "Host=172.17.2.17;Database=photosupreme_mad_thumbs;Username=idimager_main;Password=idi_main_2606;"
+        "IDImager": "Host=172.24.1.3;Database=photosupreme_mad;Username=idimager_main;Password=idi_main_2606;",
+        "IDImagerThumbs": "Host=172.24.1.3;Database=photosupreme_mad_thumbs;Username=idimager_main;Password=idi_main_2606;"
       },
       "ServiceSettings": {
         "CreateThumbnails": true,
