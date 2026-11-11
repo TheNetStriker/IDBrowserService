@@ -13,7 +13,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -21,30 +20,20 @@ namespace IDBrowserServiceCore.Code
 {
     public class ConsoleFunctions
     {
-        public static bool? isWindows;
-        public static bool IsWindows
-        {
-            get
-            {
-                if (isWindows == null)
-                    isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-
-                return isWindows.Value;
-            }
-        }
-
         /// <summary>
         /// Transcode's all videos of a site
         /// </summary>
         /// <param name="configuration">Json configuration of IDBrowserService as IDBrowserConfiguration class</param>
-        /// <param name="cancellationToken">CancellationToken</param>
+        /// <param name="cancellationTokenSource">CancellationTokenSource (passed to ProgressTaskFactory for Ctrl+C handling)</param>
         /// <param name="siteName">Site name to transcode</param>
         /// <param name="videoSize">Video size to transcode. (e.g. Hd480, Hd720, Hd1080)</param>
         /// <param name="taskCount">FFmpeg task count (Default 2)</param>
         /// <param name="logLevel">Serilog log level</param>
-        public static void TranscodeAllVideos(IDBrowserConfiguration configuration, CancellationToken cancellationToken,
+        public static void TranscodeAllVideos(IDBrowserConfiguration configuration, CancellationTokenSource cancellationTokenSource,
             string siteName, string videoSize, Serilog.Events.LogEventLevel logLevel, int taskCount)
         {
+            CancellationToken cancellationToken = cancellationTokenSource.Token;
+
             LoggingLevelSwitch loggingLevelSwitch = new LoggingLevelSwitch
             {
                 MinimumLevel = logLevel
@@ -64,113 +53,88 @@ namespace IDBrowserServiceCore.Code
                 .Include(x => x.idCache_FilePath)
                 .Where(x => configuration.VideoFileExtensions.Contains(x.idFileType));
 
-            ProgressTaskFactory progressTaskFactory = new ProgressTaskFactory(taskCount, 100, 60, Log.Logger);
-
-            Task windowChangeListenerTask = new Task(() =>
+            using (ProgressTaskFactory progressTaskFactory = new ProgressTaskFactory(taskCount, 100, 60, Log.Logger, cancellationTokenSource))
             {
-                int width = Console.WindowWidth;
-                int height = Console.WindowHeight;
+                List<TranscodeVideoBatchInfo> listTranscodeVideoBatch = new List<TranscodeVideoBatchInfo>();
 
-                while (!cancellationToken.IsCancellationRequested)
+                foreach (idCatalogItem catalogItem in query)
                 {
-                    if (width != Console.WindowWidth || height != Console.WindowHeight)
-                    {
-                        width = Console.WindowWidth;
-                        height = Console.WindowHeight;
+                    catalogItem.GetHeightAndWidth(out int originalVideoWidth, out int originalVideoHeight);
 
-                        progressTaskFactory.RedrawConsoleWindows(100, 60);
+                    string strTranscodeFilePath = StaticFunctions.GetTranscodeFilePath(catalogItem.GUID,
+                        siteSettings.ServiceSettings.TranscodeDirectory, videoSize);
+                    FileInfo transcodeFileInfo = new FileInfo(strTranscodeFilePath);
+
+                    if (!transcodeFileInfo.Exists)
+                    {
+                        string strOriginalFilePath = StaticFunctions.GetImageFilePath(catalogItem, siteSettings.ServiceSettings.FilePathReplace);
+
+                        TranscodeVideoBatchInfo transcodeVideoBatchInfo = new TranscodeVideoBatchInfo(catalogItem.GUID, originalVideoWidth, originalVideoHeight,
+                            strOriginalFilePath, strTranscodeFilePath);
+
+                        listTranscodeVideoBatch.Add(transcodeVideoBatchInfo);
+                    }
+                }
+
+                db.Dispose();
+
+                int intTotalCount = listTranscodeVideoBatch.Count();
+                int intCounter = 1;
+                TranscodeVideoBatchInfo lastTranscodeVideoBatch = listTranscodeVideoBatch.LastOrDefault();
+
+                foreach (TranscodeVideoBatchInfo transcodeVideoBatchInfo in listTranscodeVideoBatch)
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                        break;
+
+                    string strTranscodeFilePath = StaticFunctions.GetTranscodeFilePath(transcodeVideoBatchInfo.GUID,
+                        siteSettings.ServiceSettings.TranscodeDirectory, videoSize);
+
+                    StaticFunctions.GetTranscodeVideoSize(videoSize, transcodeVideoBatchInfo.VideoWidth, transcodeVideoBatchInfo.VideoHeight,
+                        out VideoSize targetVideoSize, out int targetVideoWidth, out int targetVideoHeight);
+
+                    var conversionOptions = StaticFunctions.GetConversionOptions(targetVideoSize, transcodeVideoBatchInfo.VideoWidth,
+                        transcodeVideoBatchInfo.VideoHeight);
+
+                    progressTaskFactory.WriteLog(string.Format("Transcoding file {0} of {1} with guid {2} and path \"{3}\" from resolution {4}x{5} to {6}x{7} ",
+                            intCounter, intTotalCount, transcodeVideoBatchInfo.GUID, transcodeVideoBatchInfo.VideoFileInfo.FullName, transcodeVideoBatchInfo.VideoWidth,
+                            transcodeVideoBatchInfo.VideoHeight, targetVideoWidth, targetVideoHeight),
+                        true, LogEventLevel.Information);
+
+                    ProgressTask progressTask = progressTaskFactory.GetIdleProgressTask();
+
+                    if (cancellationToken.IsCancellationRequested)
+                        break;
+
+                    if (progressTask == null)
+                    {
+                        progressTask = progressTaskFactory
+                            .WaitForAnyTask()
+                            .Result;
                     }
 
-                    cancellationToken.WaitHandle.WaitOne(100);
-                }
-            }, cancellationToken);
+                    if (cancellationToken.IsCancellationRequested)
+                        break;
 
-            windowChangeListenerTask.Start();
+                    string progressBarText = string.Format("{0} ({1} of {2})", transcodeVideoBatchInfo.TranscodeFileInfo.Name, intCounter, intTotalCount);
 
-            if (!IsWindows)
-            {
-                // Log output scrolling not supported at the moment because Console.MoveBufferArea is currently not supported under Linux and MacOs.
-                // But we can write a single infoline.
-                progressTaskFactory.WriteLog("Log output in console not supported under Linux at the moment. Please take a look at the ConsoleFunctions.log in Logs directory.",
-                    true, LogEventLevel.Information);
-            }
+                    progressTask.Task = new Task(() => {
+                        TranscodeVideoProgressTask(transcodeVideoBatchInfo, videoSize, cancellationToken, progressTask, progressBarText);
+                    });
 
-            List<TranscodeVideoBatchInfo> listTranscodeVideoBatch = new List<TranscodeVideoBatchInfo>();
+                    progressTask.Task.Start();
 
-            foreach (idCatalogItem catalogItem in query)
-            {
-                catalogItem.GetHeightAndWidth(out int originalVideoWidth, out int originalVideoHeight);
+                    // If we are on the last item we have to wait for all tasks to complete
+                    if (transcodeVideoBatchInfo == lastTranscodeVideoBatch)
+                    {
+                        progressTaskFactory.WaitForAllTasks();
+                    }
 
-                string strTranscodeFilePath = StaticFunctions.GetTranscodeFilePath(catalogItem.GUID,
-                    siteSettings.ServiceSettings.TranscodeDirectory, videoSize);
-                FileInfo transcodeFileInfo = new FileInfo(strTranscodeFilePath);
-
-                if (!transcodeFileInfo.Exists)
-                {
-                    string strOriginalFilePath = StaticFunctions.GetImageFilePath(catalogItem, siteSettings.ServiceSettings.FilePathReplace);
-
-                    TranscodeVideoBatchInfo transcodeVideoBatchInfo = new TranscodeVideoBatchInfo(catalogItem.GUID, originalVideoWidth, originalVideoHeight,
-                        strOriginalFilePath, strTranscodeFilePath);
-
-                    listTranscodeVideoBatch.Add(transcodeVideoBatchInfo);
-                }
-            }
-
-            db.Dispose();
-
-            int intTotalCount = listTranscodeVideoBatch.Count();
-            int intCounter = 1;
-            TranscodeVideoBatchInfo lastTranscodeVideoBatch = listTranscodeVideoBatch.LastOrDefault();
-
-            foreach (TranscodeVideoBatchInfo transcodeVideoBatchInfo in listTranscodeVideoBatch)
-            {
-                if (cancellationToken.IsCancellationRequested)
-                    return;
-
-                string strTranscodeFilePath = StaticFunctions.GetTranscodeFilePath(transcodeVideoBatchInfo.GUID,
-                    siteSettings.ServiceSettings.TranscodeDirectory, videoSize);
-
-                StaticFunctions.GetTranscodeVideoSize(videoSize, transcodeVideoBatchInfo.VideoWidth, transcodeVideoBatchInfo.VideoHeight,
-                    out VideoSize targetVideoSize, out int targetVideoWidth, out int targetVideoHeight);
-
-                var conversionOptions = StaticFunctions.GetConversionOptions(targetVideoSize, transcodeVideoBatchInfo.VideoWidth,
-                    transcodeVideoBatchInfo.VideoHeight);
-
-                progressTaskFactory.WriteLog(string.Format("Transcoding file {0} of {1} with guid {2} and path \"{3}\" from resolution {4}x{5} to {6}x{7} ",
-                        intCounter, intTotalCount, transcodeVideoBatchInfo.GUID, transcodeVideoBatchInfo.VideoFileInfo.FullName, transcodeVideoBatchInfo.VideoWidth,
-                        transcodeVideoBatchInfo.VideoHeight, targetVideoWidth, targetVideoHeight),
-                    IsWindows, LogEventLevel.Information);
-
-                ProgressTask progressTask = progressTaskFactory.GetIdleProgressTask();
-
-                if (cancellationToken.IsCancellationRequested)
-                    return;
-                    
-                if (progressTask == null)
-                {
-                    progressTask = progressTaskFactory
-                        .WaitForAnyTask()
-                        .Result;
+                    intCounter++;
                 }
 
-                if (cancellationToken.IsCancellationRequested)
-                    return;
-               
-                string progressBarText = string.Format("{0} ({1} of {2})", transcodeVideoBatchInfo.TranscodeFileInfo.Name, intCounter, intTotalCount);
-
-                progressTask.Task = new Task(() => {
-                    TranscodeVideoProgressTask(transcodeVideoBatchInfo, videoSize, cancellationToken, progressTask, progressBarText);
-                });
-
-                progressTask.Task.Start();
-
-                // If we are on the last item we have to wait for all tasks to complete
-                if (transcodeVideoBatchInfo == lastTranscodeVideoBatch)
-                {
-                    progressTaskFactory.WaitForAllTasks();
-                }
-                
-                intCounter++;
+                // Wait for any still-running tasks to finish (e.g. after cancellation)
+                progressTaskFactory.WaitForAllTasks();
             }
 
             Log.CloseAndFlush();
@@ -195,7 +159,7 @@ namespace IDBrowserServiceCore.Code
                 {
                     progressTask.ProgressTaskFactory.WriteLog(string.Format("FFmpeg error on file \"{0}\" => {1}",
                             transcodeVideoBatchInfo.VideoFileInfo.FullName, eventArgs.Exception.ToString()),
-                        IsWindows, LogEventLevel.Error);
+                        true, LogEventLevel.Error);
                 };
 
                 ffmpegEngine.Progress += (sender, eventArgs) =>
@@ -218,7 +182,7 @@ namespace IDBrowserServiceCore.Code
                 {
                     progressTask.ProgressTaskFactory.WriteLog(string.Format("Transcoding on file \"{0}\" failed, file does not exist.",
                             transcodeVideoBatchInfo.VideoFileInfo.FullName),
-                        IsWindows, LogEventLevel.Error);
+                        true, LogEventLevel.Error);
                     progressTask.RefreshProgressBar(0, progressBarText + " (failed)");
                 }
                 else if (transcodeVideoBatchInfo.TranscodeFileInfo.Length == 0)
@@ -226,7 +190,7 @@ namespace IDBrowserServiceCore.Code
                     transcodeVideoBatchInfo.TranscodeFileInfo.Delete();
                     progressTask.ProgressTaskFactory.WriteLog(string.Format("Transcoding failed on file \"{0}\", file size is zero. Unfinished transcoded file \"{1}\" deleted.",
                             transcodeVideoBatchInfo.VideoFileInfo.FullName, transcodeVideoBatchInfo.TranscodeFileInfo.FullName),
-                        IsWindows, LogEventLevel.Error);
+                        true, LogEventLevel.Error);
                     progressTask.RefreshProgressBar(0, progressBarText + " (failed)");
                 }
                 else
@@ -245,7 +209,7 @@ namespace IDBrowserServiceCore.Code
                     transcodeVideoBatchInfo.TranscodeFileInfo.Delete();
                     progressTask.ProgressTaskFactory.WriteLog(string.Format("Unfinished transcoded file \"{0}\" deleted.",
                             transcodeVideoBatchInfo.TranscodeFileInfo.FullName),
-                        IsWindows, LogEventLevel.Error);
+                        true, LogEventLevel.Error);
                 }
 
                 if (ex.GetType() == typeof(AggregateException)
@@ -253,11 +217,11 @@ namespace IDBrowserServiceCore.Code
                     && ex.InnerException.GetType() == typeof(TaskCanceledException))
                 {
 
-                    progressTask.ProgressTaskFactory.WriteLog("Transcoding cancelled", IsWindows, Serilog.Events.LogEventLevel.Information);
+                    progressTask.ProgressTaskFactory.WriteLog("Transcoding cancelled", true, Serilog.Events.LogEventLevel.Information);
                 }
                 else
                 {
-                    progressTask.ProgressTaskFactory.WriteLog(ex.ToString(), IsWindows, Serilog.Events.LogEventLevel.Information);
+                    progressTask.ProgressTaskFactory.WriteLog(ex.ToString(), true, Serilog.Events.LogEventLevel.Information);
                 }
 
                 return;

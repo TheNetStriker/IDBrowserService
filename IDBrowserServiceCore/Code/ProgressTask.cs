@@ -1,67 +1,47 @@
-﻿using Konsole;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using Terminal.Gui.Views;
 
 namespace IDBrowserServiceCore.Code
 {
     public class ProgressTask
     {
         public Task Task { get; set; }
-        private ProgressBar progressBar;
         public ProgressTaskFactory ProgressTaskFactory { get; private set; }
 
-        private object progressBarLock;
+        private readonly int index;
         private int progressBarCurrent;
         private string progressBarText;
 
-        public ProgressTask(ProgressTaskFactory progressTaskFactory, object progressBarLock, IConsole konsoleWindow,
-            int maxProgress, int textWidth)
+        public ProgressTask(ProgressTaskFactory progressTaskFactory, int index)
         {
-            this.progressBarLock = progressBarLock;
             ProgressTaskFactory = progressTaskFactory;
-
+            this.index = index;
             progressBarCurrent = 0;
-            progressBarText = "";
-
-            InitProgressBar(konsoleWindow, maxProgress, textWidth);
-        }
-
-        private void InitProgressBar(IConsole konsoleWindow, int maxProgress, int textWidth)
-        {
-            progressBar = new ProgressBar(konsoleWindow, maxProgress, textWidth);
+            progressBarText = string.Empty;
         }
 
         /// <summary>
-        /// Forces a redraw of the progress bar (e.g. in case of console size changed)
+        /// Updates the progress bar with the current percentage and label text.
         /// </summary>
-        /// <param name="konsoleWindow">IConsole window</param>
-        /// <param name="maxProgress">Max progress</param>
-        /// <param name="textWidth">Progress bar text width</param>
-        public void RedrawProgressBar(IConsole konsoleWindow, int maxProgress, int textWidth)
-        {
-            lock (progressBarLock)
-            {
-                InitProgressBar(konsoleWindow, maxProgress, textWidth);
-                progressBar.Refresh(progressBarCurrent, progressBarText);
-            }
-        }
-
-        /// <summary>
-        /// Updates progress bar
-        /// </summary>
-        /// <param name="current">Current percent</param>
-        /// <param name="text">Status text</param>
+        /// <param name="current">Progress percentage 0–100.</param>
+        /// <param name="text">Label text to display on the bar.</param>
         public void RefreshProgressBar(int current, string text)
         {
             progressBarCurrent = current;
             progressBarText = text;
-            
-            lock (progressBarLock)
-            { 
-                progressBar.Refresh(current, text); 
-            }               
+
+            float fraction = current / 100f;
+
+            ProgressTaskFactory.InvokeOnUiThread(() =>
+            {
+                ProgressBar pb = ProgressTaskFactory.GetProgressBar(index);
+                pb.Fraction = fraction;
+                pb.SetNeedsDraw();
+
+                Label lbl = ProgressTaskFactory.GetFileLabel(index);
+                lbl.Text = text;
+                lbl.SetNeedsDraw();
+            });
         }
     }
 }

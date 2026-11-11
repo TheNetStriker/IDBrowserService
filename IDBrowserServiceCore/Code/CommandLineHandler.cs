@@ -49,13 +49,17 @@ namespace IDBrowserServiceCore.Code
 
                     CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
+                    // Note: Console.CancelKeyPress is not fired while Terminal.Gui owns the
+                    // terminal. Ctrl+C is intercepted inside ProgressTaskFactory instead.
+                    // This handler remains as a fallback for environments where Terminal.Gui
+                    // is not running (e.g. no interactive terminal).
                     Console.CancelKeyPress += (object sender, ConsoleCancelEventArgs e) =>
                     {
                         cancellationTokenSource.Cancel();
                         e.Cancel = true;
                     };
 
-                    ConsoleFunctions.TranscodeAllVideos(configuration, cancellationTokenSource.Token, strSiteName,
+                    ConsoleFunctions.TranscodeAllVideos(configuration, cancellationTokenSource, strSiteName,
                         strVideoSize, logLevel, taskCount);
                     Console.WriteLine("Transcoding complete");
                 }
