@@ -210,11 +210,11 @@ namespace IDBrowserServiceCore.Code
         /// <param name="originalVideoHeight">Optional original video height</param>
         /// <returns>Transform task</returns>
         public async static Task TranscodeVideo(Engine ffmpegEngine, CancellationToken cancellationToken, string filePath, string transcodeFilePath,
-            string transcodeVideoSize, int originalVideoWidth = 0, int originalVideoHeight = 0)
+            string transcodeVideoSize, int originalVideoWidth = 0, int originalVideoHeight = 0, string hwAccel = null)
         {
             GetTranscodeVideoSize(transcodeVideoSize, originalVideoWidth, originalVideoHeight, out VideoSize targetVideoSize,
                 out int targetVideoWidth, out int targetVideoHeight);
-            var conversionOptions = GetConversionOptions(targetVideoSize, targetVideoWidth, targetVideoHeight);
+            var conversionOptions = GetConversionOptions(targetVideoSize, targetVideoWidth, targetVideoHeight, hwAccel);
             await TranscodeVideo(ffmpegEngine, cancellationToken, filePath, transcodeFilePath, conversionOptions);
         }
 
@@ -289,10 +289,19 @@ namespace IDBrowserServiceCore.Code
         /// </summary>
         /// <param name="videoSize">FFmpeg videosize</param>
         /// <param name="width">Video width</param>
-        /// <param name="height">Vidoe height</param>
+        /// <param name="height">Video height</param>
+        /// <param name="hwAccel">Optional hardware acceleration method (e.g. "qsv", "cuda"). Null or empty uses software encoding.</param>
         /// <returns></returns>
-        public static ConversionOptions GetConversionOptions(VideoSize videoSize, int width, int height)
+        public static ConversionOptions GetConversionOptions(VideoSize videoSize, int width, int height, string hwAccel = null)
         {
+            HWAccel hwAccelValue = HWAccel.None;
+            if (!string.IsNullOrEmpty(hwAccel))
+            {
+                if (!Enum.TryParse(hwAccel, ignoreCase: true, out hwAccelValue))
+                    throw new ArgumentException($"Unsupported TranscodeHWAccel value \"{hwAccel}\". " +
+                        $"Valid values: {string.Join(", ", Enum.GetNames(typeof(HWAccel)))}");
+            }
+
             if (videoSize == VideoSize.Custom)
             {
                 return new ConversionOptions
@@ -300,6 +309,10 @@ namespace IDBrowserServiceCore.Code
                     VideoSize = videoSize,
                     CustomWidth = width,
                     CustomHeight = height,
+                    HWAccel = hwAccelValue,
+                    // HWAccelOutputFormatCopy must be false when encoding to a file;
+                    // true would attempt to keep frames in GPU memory for the muxer, which fails.
+                    HWAccelOutputFormatCopy = false,
                     // Move the moov atom to the start of the file so clients (e.g. VLC) can
                     // begin playback without seeking to the end first, avoiding a second HTTP
                     // range request that can time out through a reverse proxy.
@@ -311,6 +324,8 @@ namespace IDBrowserServiceCore.Code
                 return new ConversionOptions
                 {
                     VideoSize = videoSize,
+                    HWAccel = hwAccelValue,
+                    HWAccelOutputFormatCopy = false,
                     ExtraArguments = "-movflags +faststart"
                 };
             }

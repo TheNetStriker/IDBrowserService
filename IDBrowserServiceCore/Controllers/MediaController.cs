@@ -161,13 +161,15 @@ namespace IDBrowserServiceCore.Controllers
                                 // The original file is returned for now; on the next play the
                                 // cached transcode will be used.
                                 _ = Task.Run(() => StaticFunctions.TranscodeVideo(ffmpegEngine, CancellationToken.None,
-                                    strFilePath, strTranscodeFilePath, videosize, originalVideoWidth, originalVideoHeight));
+                                    strFilePath, strTranscodeFilePath, videosize, originalVideoWidth, originalVideoHeight,
+                                    serviceSettings.TranscodeHWAccel));
                             }
                             else
                             {
                                 // Block until the transcode is complete, then serve the result.
                                 await StaticFunctions.TranscodeVideo(ffmpegEngine, default, strFilePath,
-                                    strTranscodeFilePath, videosize, originalVideoWidth, originalVideoHeight);
+                                    strTranscodeFilePath, videosize, originalVideoWidth, originalVideoHeight,
+                                    serviceSettings.TranscodeHWAccel);
 
                                 if (!System.IO.File.Exists(strTranscodeFilePath))
                                     return BadRequest("Transcoding failed, file does not exist.");

@@ -97,7 +97,7 @@
             <param name="writeToConsole">Whether to append to the on-screen log panel.</param>
             <param name="logLevel">Serilog log level.</param>
         </member>
-        <member name="M:IDBrowserServiceCore.Code.StaticFunctions.TranscodeVideo(FFmpeg.NET.Engine,System.Threading.CancellationToken,System.String,System.String,System.String,System.Int32,System.Int32)">
+        <member name="M:IDBrowserServiceCore.Code.StaticFunctions.TranscodeVideo(FFmpeg.NET.Engine,System.Threading.CancellationToken,System.String,System.String,System.String,System.Int32,System.Int32,System.String)">
             <summary>
             Transcodes video to different resolution and mp4
             </summary>
@@ -136,13 +136,14 @@
             </summary>
             <returns>FFmpeg Engine</returns>
         </member>
-        <member name="M:IDBrowserServiceCore.Code.StaticFunctions.GetConversionOptions(FFmpeg.NET.Enums.VideoSize,System.Int32,System.Int32)">
+        <member name="M:IDBrowserServiceCore.Code.StaticFunctions.GetConversionOptions(FFmpeg.NET.Enums.VideoSize,System.Int32,System.Int32,System.String)">
             <summary>
             Returns FFmpeg conversion options
             </summary>
             <param name="videoSize">FFmpeg videosize</param>
             <param name="width">Video width</param>
-            <param name="height">Vidoe height</param>
+            <param name="height">Video height</param>
+            <param name="hwAccel">Optional hardware acceleration method (e.g. "qsv", "cuda"). Null or empty uses software encoding.</param>
             <returns></returns>
         </member>
         <member name="M:IDBrowserServiceCore.Code.StaticFunctions.GetTranscodeVideoSize(System.String,System.Int32,System.Int32,FFmpeg.NET.Enums.VideoSize@,System.Int32@,System.Int32@)">
@@ -520,6 +521,14 @@
         <member name="M:IDBrowserServiceCore.Settings.CronJobs.#ctor">
             <summary>
             Set's default settings.
+            </summary>
+        </member>
+        <member name="P:IDBrowserServiceCore.Settings.ServiceSettings.TranscodeHWAccel">
+            <summary>
+            Optional ffmpeg hardware acceleration method for transcoding.
+            Valid values: None, cuda, cuvid, dxva2, qsv, d3d11va.
+            Leave null or empty to use software encoding (default).
+            Run 'ffmpeg -hwaccels' on the server to see what is available.
             </summary>
         </member>
         <member name="T:Program">

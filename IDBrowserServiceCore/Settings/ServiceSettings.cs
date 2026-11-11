@@ -17,6 +17,13 @@ namespace IDBrowserServiceCore.Settings
         public bool DisableInsecureMediaPlayApi { get; set; }
         public bool EnableDatabaseCache { get; set; }
         public bool TranscodeInBackground { get; set; }
+        /// <summary>
+        /// Optional ffmpeg hardware acceleration method for transcoding.
+        /// Valid values: None, cuda, cuvid, dxva2, qsv, d3d11va.
+        /// Leave null or empty to use software encoding (default).
+        /// Run 'ffmpeg -hwaccels' on the server to see what is available.
+        /// </summary>
+        public string TranscodeHWAccel { get; set; }
         public CronJobs CronJobs { get; set; }
 
         public ServiceSettings()
