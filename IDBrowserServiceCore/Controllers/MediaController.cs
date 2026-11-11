@@ -17,6 +17,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Security.Claims;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace IDBrowserServiceCore.Controllers
@@ -113,8 +114,6 @@ namespace IDBrowserServiceCore.Controllers
             using (LogContext.PushProperty(nameof(guid), guid))
             using (LogContext.PushProperty(nameof(videosize), videosize))
             {
-                FileInfo transcodeFileInfo = null;
-
                 try
                 {
                     if (string.IsNullOrEmpty(guid)) return BadRequest("Missing guid parameter");
@@ -137,34 +136,54 @@ namespace IDBrowserServiceCore.Controllers
 
                         catalogItem.GetHeightAndWidth(out int originalVideoWidth, out int originalVideoHeight);
 
-                        Engine ffmpegEngine = StaticFunctions.GetFFmpegEngine();
-
-                        ffmpegEngine.Error += (sender, eventArgs) =>
-                        {
-                            logger.LogError(eventArgs.Exception.ToString());
-                        };
-
                         string strTranscodeFilePath = StaticFunctions.GetTranscodeFilePath(guid,
                             serviceSettings.TranscodeDirectory, videosize);
 
-                        await StaticFunctions.TranscodeVideo(ffmpegEngine, default, strFilePath, strTranscodeFilePath,
-                            videosize, originalVideoWidth, originalVideoHeight);
-
-                        transcodeFileInfo = new FileInfo(strTranscodeFilePath);
-
-                        if (!transcodeFileInfo.Exists)
+                        if (System.IO.File.Exists(strTranscodeFilePath))
                         {
-                            return BadRequest("Transcoding failed, file does not exist.");
+                            // Transcode is already cached: serve it directly.
+                            strFilePath = strTranscodeFilePath;
+                            mimeType = "video/mp4";
                         }
-                        else if (transcodeFileInfo.Length == 0)
+                        else
                         {
-                            transcodeFileInfo.Delete();
-                            return BadRequest(string.Format("Transcoding failed on file \"{0}\", file size is zero. Unfinished transcoded file \"{1}\" deleted.",
-                                strFilePath, strTranscodeFilePath));
-                        }
+                            Engine ffmpegEngine = StaticFunctions.GetFFmpegEngine();
 
-                        strFilePath = strTranscodeFilePath;
-                        mimeType = "video/mp4";
+                            ffmpegEngine.Error += (sender, eventArgs) =>
+                            {
+                                logger.LogError(eventArgs.Exception.ToString());
+                            };
+
+                            if (serviceSettings.TranscodeInBackground)
+                            {
+                                // Start ffmpeg in the background so this request is not held open
+                                // while encoding runs (which would time out at the reverse proxy).
+                                // The original file is returned for now; on the next play the
+                                // cached transcode will be used.
+                                _ = Task.Run(() => StaticFunctions.TranscodeVideo(ffmpegEngine, CancellationToken.None,
+                                    strFilePath, strTranscodeFilePath, videosize, originalVideoWidth, originalVideoHeight));
+                            }
+                            else
+                            {
+                                // Block until the transcode is complete, then serve the result.
+                                await StaticFunctions.TranscodeVideo(ffmpegEngine, default, strFilePath,
+                                    strTranscodeFilePath, videosize, originalVideoWidth, originalVideoHeight);
+
+                                if (!System.IO.File.Exists(strTranscodeFilePath))
+                                    return BadRequest("Transcoding failed, file does not exist.");
+
+                                FileInfo transcodeFileInfo = new FileInfo(strTranscodeFilePath);
+                                if (transcodeFileInfo.Length == 0)
+                                {
+                                    transcodeFileInfo.Delete();
+                                    return BadRequest($"Transcoding failed on file \"{strFilePath}\", file size is zero. " +
+                                        $"Unfinished transcoded file \"{strTranscodeFilePath}\" deleted.");
+                                }
+
+                                strFilePath = strTranscodeFilePath;
+                                mimeType = "video/mp4";
+                            }
+                        }
                     }
 
                     Stream inputStream = StaticFunctions.GetImageFileStream(strFilePath);
@@ -177,9 +196,6 @@ namespace IDBrowserServiceCore.Controllers
                 }
                 catch (Exception ex)
                 {
-                    if (transcodeFileInfo != null && transcodeFileInfo.Exists)
-                        transcodeFileInfo.Delete();
-
                     logger.LogError(ex.ToString());
                     return BadRequest(ex.ToString());
                 }

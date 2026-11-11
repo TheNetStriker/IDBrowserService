@@ -234,7 +234,12 @@ namespace IDBrowserServiceCore.Code
             // wait here instead of launching parallel ffmpeg processes on the same output file.
             SemaphoreSlim semaphore = _transcodeLocks.GetOrAdd(transcodeFilePath, _ => new SemaphoreSlim(1, 1));
 
-            await semaphore.WaitAsync(cancellationToken);
+            // If encoding is already running for this path (semaphore is taken), return immediately.
+            // The caller is a fire-and-forget background task that serves the original file as a
+            // fallback, so there is nothing to gain from queuing behind the in-progress encode.
+            if (!await semaphore.WaitAsync(0, cancellationToken))
+                return;
+
             try
             {
                 // Re-check inside the lock: a previous waiter may have already written the file.

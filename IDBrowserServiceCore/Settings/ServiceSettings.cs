@@ -16,6 +16,7 @@ namespace IDBrowserServiceCore.Settings
         public TimeSpan TokenExpiration { get; set; }
         public bool DisableInsecureMediaPlayApi { get; set; }
         public bool EnableDatabaseCache { get; set; }
+        public bool TranscodeInBackground { get; set; }
         public CronJobs CronJobs { get; set; }
 
         public ServiceSettings()

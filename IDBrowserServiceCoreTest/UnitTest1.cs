@@ -471,9 +471,9 @@ namespace IDBrowserServiceCoreTest
         /// one for bytes 0-N (start) and one for the end of the file (moov atom probe).
         /// Both map to concurrent calls to Play() for the same guid+videosize while the
         /// transcoded file does not yet exist. The test verifies that:
-        ///   1. Both calls complete without throwing (no IOException from FileShare.None / double-write).
-        ///   2. Both calls return a FileStreamResult (not a BadRequestObjectResult).
-        /// A failure here means the fix is needed; a pass means the fix is working.
+        ///   1. Both calls return immediately with a FileStreamResult (the original file is served
+        ///      as a fallback while the transcode runs in the background — no blocking on ffmpeg).
+        ///   2. Neither call throws or returns a BadRequestObjectResult.
         /// </summary>
         [Fact]
         public async Task ConcurrentTranscodeDoesNotFailTest()
@@ -487,20 +487,30 @@ namespace IDBrowserServiceCoreTest
             if (File.Exists(strTranscodeFilePath))
                 File.Delete(strTranscodeFilePath);
 
-            // Fire two Play calls simultaneously, as VLC does when probing the start and end of the file.
-            Task<IActionResult> request1 = Task.Run(() => MediaController.Play(idCatalogItemFirstVideo.GUID, videoSize));
-            Task<IActionResult> request2 = Task.Run(() => MediaController.Play(idCatalogItemFirstVideo.GUID, videoSize));
-
-            IActionResult[] results = await Task.WhenAll(request1, request2);
-
-            foreach (IActionResult result in results)
+            // Enable background transcoding so both requests return the original file immediately
+            // without blocking on ffmpeg, which is the scenario being tested.
+            Settings.TranscodeInBackground = true;
+            try
             {
-                if (result is FileStreamResult fileStreamResult)
-                    fileStreamResult.FileStream.Close();
-                else if (result is BadRequestObjectResult badRequest)
-                    Assert.Fail($"Play returned BadRequest instead of a stream: {badRequest.Value}");
-                else
-                    Assert.Fail($"Play returned unexpected result type: {result.GetType().Name}");
+                // Fire two Play calls simultaneously, as VLC does when probing the start and end of the file.
+                Task<IActionResult> request1 = Task.Run(() => MediaController.Play(idCatalogItemFirstVideo.GUID, videoSize));
+                Task<IActionResult> request2 = Task.Run(() => MediaController.Play(idCatalogItemFirstVideo.GUID, videoSize));
+
+                IActionResult[] results = await Task.WhenAll(request1, request2);
+
+                foreach (IActionResult result in results)
+                {
+                    if (result is FileStreamResult fileStreamResult)
+                        fileStreamResult.FileStream.Close();
+                    else if (result is BadRequestObjectResult badRequest)
+                        Assert.Fail($"Play returned BadRequest instead of a stream: {badRequest.Value}");
+                    else
+                        Assert.Fail($"Play returned unexpected result type: {result.GetType().Name}");
+                }
+            }
+            finally
+            {
+                Settings.TranscodeInBackground = false;
             }
         }
 
